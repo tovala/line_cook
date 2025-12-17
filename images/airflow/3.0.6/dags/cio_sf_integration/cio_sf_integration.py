@@ -48,7 +48,7 @@ def cio_sf_integration():
   @task 
   def getTableNames() -> List[str]:
     '''
-    Retrieve table names from Snowflake to then copy data into based on S3 file name.
+    Retrieve list of table names from Snowflake to then copy data into based on S3 file name.
     
     Args:
     None
@@ -72,24 +72,23 @@ def cio_sf_integration():
     return table_names 
   
   @task 
-  def copyData(table_names: List[str]):
-    cio_schema = getTableNames()
+  def copyData(table_name: List[str]):
+    # Copy CIO S3 files into the Snowflake table according to the schema name 
+    table = table_name 
+    copy_into_tables = SQLExecuteQueryOperator(
+      task_id="copy_into_tables", 
+      conn_id="snowflake", 
+      sql=f'''COPY INTO customerio_data_v2.{table}
+              FROM @MASALA.customerio_data_v2.s3_files
+              PATTERN='.*{table}.*.parquet'
+              MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE ;;''',
+      do_xcom_push=True,
+    )
+    print(f'Loaded table {table}')
+    return copy_into_tables
 
-    for table in getTableNames.output: 
-        # Copy CIO S3 files into the Snowflake table according to the schema name 
-        copy_into_tables = SQLExecuteQueryOperator(
-            task_id="copy_into_tables", 
-            conn_id="snowflake", 
-            sql=f'''COPY INTO customerio_data_v2.{cio_schema}
-                    FROM @MASALA.customerio_data_v2.s3_files
-                    PATTERN='.*{cio_schema}.*.parquet'
-                    MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE ;;''',
-            do_xcom_push=True,
-            params={
-            "cio_schema": table 
-            }
-        )
-        copy_into_tables()
+  tables = getTableNames()
+  copyData.expand(table_name=tables)
 
 # DAG call
 cio_sf_integration()
