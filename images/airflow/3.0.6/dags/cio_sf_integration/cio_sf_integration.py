@@ -13,7 +13,6 @@ from airflow.exceptions import AirflowException
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.providers.slack.notifications.slack import SlackNotifier
 from common.slack_notifications import bad_boy, good_boy
-from user_deletes.process_delete_requests_task_group import processDeleteRequests
 from airflow.timetables.trigger import CronTriggerTimetable
 
 
