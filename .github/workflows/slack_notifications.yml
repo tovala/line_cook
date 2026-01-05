@@ -1,0 +1,45 @@
+name: Notify Slack
+
+on:
+  workflow_run:
+    workflows: [MWAA Dags Deploy, MWAA Requirements Deploy]
+    types: [completed]
+env:
+  SLACK_CHANNEL_ID: "C01S2GZ2K52"
+
+jobs:
+  on-success:
+    runs-on: ubuntu-latest
+    name: Send Success Notification to Slack
+    if: ${{ github.event.workflow_run.conclusion == 'success'}}
+    steps:
+      - name: Send Slack Message Success
+        uses: slackapi/slack-github-action@v2.1.1
+        id: send-success
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_USER_OAUTH_ACCESS_TOKEN }}
+          payload: |
+            channel: ${{ env.SLACK_CHANNEL_ID }}
+            text: ":party_cat: Github Action Success! ${{ github.event.workflow_run.name }} completed successfully."
+      - name: Send Message Result
+        run: echo "Data - ${{steps.send-success.outputs}}"
+
+
+  on-failure:
+    runs-on: ubuntu-latest
+    name: Send Failure Notification to Slack
+    if: ${{ github.event.workflow_run.conclusion == 'failure'}}
+    steps:
+      - name: Send Slack Message Failure
+        uses: slackapi/slack-github-action@v2.1.1
+        id: send-failure
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_USER_OAUTH_ACCESS_TOKEN }}
+          payload: |
+            channel: ${{ env.SLACK_CHANNEL_ID }}
+            text: ":dumpster_fire: Github Action Failure! ${{ github.event.workflow_run.name }} completed but failed. Latest Deployment may not be available in Prod!!"
+      - name: Send Message Result
+        run: echo "Data - ${{steps.send-failure.outputs}}"
+  

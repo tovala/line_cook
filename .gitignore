@@ -29,3 +29,21 @@ coverage.xml
 
 # Intellij
 *.idea*
+
+# Additional Added .gitignore
+# Ignore any Airflow variables files (could contain sensitive values)
+Airflow/variables/
+
+# Ignore Airflow local dev log files
+Airflow/logs/
+
+# Ignore Airflow local .DS_Store
+Airflow/dags/.DS_Store
+
+#Python
+__pycache__
+
+.DS_Store
+
+#ignore local dev 
+.vscode
