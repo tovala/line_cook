@@ -41,30 +41,27 @@
         ```
 
 ### Using MWAA Local Development Environment
-1. Stand Up MWAA local
+1. **Stand Up MWAA local**
 
     1a. Navigate to the `images/airflow/3.0.6/` directory:
+
         
-        ```
         cd images/airflow/3.0.6
-        ```
     1b. From within `images/airflow/3.0.6/`, run:
        
-        ```
-        ./run.sh
-        ```    
-    - MWAA local will build and run all the necessary containers and automatically create the following CloudWatch log groups:
-        - `${MWAA_LOCAL_DEV}-DAGProcessing`
-        - `${MWAA_LOCAL_DEV}-Scheduler`
-        - `${MWAA_LOCAL_DEV}-Worker`
-        - `${MWAA_LOCAL_DEV}-Task`
-        - `${MWAA_LOCAL_DEV}-WebServer`
-2. Open Airflow UI
+        ./run.sh    
+  - MWAA local will build and run all the necessary containers and automatically create the following CloudWatch log groups:
+      - `${MWAA_LOCAL_DEV}-DAGProcessing`
+      - `${MWAA_LOCAL_DEV}-Scheduler`
+      - `${MWAA_LOCAL_DEV}-Worker`
+      - `${MWAA_LOCAL_DEV}-Task`
+      - `${MWAA_LOCAL_DEV}-WebServer`
+2. **Open Airflow UI**
     - In your web browser, navigate to [localhost:8080](http://localhost:8080)
-3. View Dags
+3. **View Dags**
     - In the left-hand navigation bar, select `Dags`
     - Should see all current Tovala data team Dags from `images/airflow/3.0.6/dags`
-4. Local Testing
+4. **Local Testing**
     - This repo approximates the MWAA environment locally for testing
     - For local development and testing, there are 2 directories in the mwaa-local repo to focus on
         - `images/airflow/3.0.6/dags` - Folder containing all dags.
