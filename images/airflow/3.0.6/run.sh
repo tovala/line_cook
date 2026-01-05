@@ -61,10 +61,6 @@ export AWS_SECRET_ACCESS_KEY
 # Set to http://host_name:8080
 MWAA__CORE__API_SERVER_URL="http://webserver:8080"
 
-# BOM Generation
-GENERATE_BILL_OF_MATERIALS="False"
-export GENERATE_BILL_OF_MATERIALS
-
 # MWAA Configuration
 MWAA__CORE__REQUIREMENTS_PATH="/usr/local/airflow/requirements/requirements.txt"
 MWAA__CORE__STARTUP_SCRIPT_PATH="/usr/local/airflow/startup/startup.sh"
