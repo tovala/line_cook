@@ -1,3 +1,81 @@
+# Tovala Data Team Local Airflow Development (Using MWAA local Docker Images)
+## Prerequisites
+1. Check existing brew installed packages - `brew list` - must have the following (it's ok if you have additional packages, as long as you have these):
+    - `Python@3.12`
+    - `postgresql`
+    - `rust`
+    - `virtualenv`
+2. For any packages missing, run `brew install ${package}` (e.g. brew install postgresql)
+3. Confirm with `brew list` that all packages listed in Step 1 are present
+4. Update your PATH to make sure you use Python 3.12 
+    - Update your bash profile (`~/.zshrc`) with the following:
+        ```
+        export PATH="/opt/homebrew/bin/python3.12:/opt/homebrew/bin:$PATH"
+        alias pip="pip3.12"
+        alias python="python3.12"
+        alias python3="python3.12"
+        ```
+    - **IMPORTANT** Order matters with path - so make sure `/opt/hoomebrew/bin/python3.12:` is the first item in the list
+5. Restart terminal for changes to profile to take effect
+6. `python --version` should now return `3.12.12`
+
+## Quickstart
+### Initial Setup Tasks
+**Note: The items in this section only need to be done the first time you set up your local dev environment.**
+1. Add the following environment variables to your bash profile (e.g. `./zshrc` on Mac)
+    ```
+    # Environment variables required to run  MWAA Local
+    export MWAA_LOCAL_DEV="${add your name here}-local-dev" # e.g. "engineername-local-dev"
+    export TOVALA_DATA_REGION="us-east-1"
+    export TOVALA_DATA_AWS_ACCOUNT_ID=307553795271
+    export TOVALA_DATA_AWS_KEY=${add your AWS access key for the data team account here}
+    export TOVALA_DATA_AWS_SECRET=${add your AWS secret key for the data team account here}
+    ```
+    After saving, run `source ~/.zshrc` or restart Terminal for changes to take effect
+
+2. Create venv
+    - In the root directory of your local clone of this repo (`cd line_cook` in Terminal), run:
+        
+        ```
+        python3 create_venvs.py --target development
+        ```
+
+### Using MWAA Local Development Environment
+1. **Stand Up MWAA local**
+
+    1a. Navigate to the `images/airflow/3.0.6/` directory:
+
+        
+        cd images/airflow/3.0.6
+    1b. From within `images/airflow/3.0.6/`, run:
+       
+        ./run.sh    
+  - MWAA local will build and run all the necessary containers and automatically create the following CloudWatch log groups:
+      - `${MWAA_LOCAL_DEV}-DAGProcessing`
+      - `${MWAA_LOCAL_DEV}-Scheduler`
+      - `${MWAA_LOCAL_DEV}-Worker`
+      - `${MWAA_LOCAL_DEV}-Task`
+      - `${MWAA_LOCAL_DEV}-WebServer`
+2. **Open Airflow UI**
+    - In your web browser, navigate to [localhost:8080](http://localhost:8080)
+3. **View Dags**
+    - In the left-hand navigation bar, select `Dags`
+    - Should see all current Tovala data team Dags from `images/airflow/3.0.6/dags`
+4. **Local Testing**
+    - This repo approximates the MWAA environment locally for testing
+    - For local development and testing, there are 2 directories in the mwaa-local repo to focus on
+        - `images/airflow/3.0.6/dags` - Folder containing all dags.
+          - Will sync to prod S3 bucket on merge to `master` via github action to deploy dags
+          - Any code in this directory in a PR **WILL** be deployed to Prod when merged, if code is here in Staging, it means it is ok to be deployed.
+
+        - `images/airflow/3.0.6/requirements/requirements.txt` - Where to add airflow providers/python packages required to run dags.
+          - Will sync to prod S3 bucket on merge to `master` (if changes are detected) via github action to deploy latest requirements.txt
+          - When updated requirements are deployed, the MWAA Prod environment has to be manually updated (~30mins)
+    
+    - **Make sure to clean up Docker containers, images, and volumes when done testing!!**
+
+
+# AWS Parent Repo README
 ## aws-mwaa-docker-images
 
 ## Overview
