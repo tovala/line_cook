@@ -1,0 +1,31 @@
+name: MWAA Requirements Deploy
+on:
+  push:
+    paths:
+    - "images/airflow/3.0.6/requirements/requirements.txt"
+    branches:
+    - master
+env:
+  BUCKET_NAME: "tovala-airflow-prod"
+  AWS_REGION: "us-east-1"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@main
+      
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::307553795271:role/sous_chef_github_actions
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Sync requirements
+        run: |
+          aws s3 cp .images/airflow/3.0.6/requirements/requirements.txt s3://${{ env.BUCKET_NAME }}/requirements.txt
