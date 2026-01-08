@@ -1,6 +1,6 @@
 import datetime
 
-from airflow.sdk import dag, task
+from airflow.providers.common.compat.sdk import dag, task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.timetables.trigger import MultipleCronTriggerTimetable
 from common.slack_notifications import bad_boy, good_boy

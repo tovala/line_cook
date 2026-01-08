@@ -9,7 +9,7 @@ from typing import Any, Dict, List
 from pendulum import duration
 
 
-from airflow.sdk import dag, task, chain, Variable
+from airflow.providers.common.compat.sdk import dag, task, chain, Variable
 from airflow.exceptions import AirflowException
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.providers.slack.notifications.slack import SlackNotifier

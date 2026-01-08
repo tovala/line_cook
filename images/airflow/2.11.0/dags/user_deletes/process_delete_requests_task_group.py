@@ -8,7 +8,7 @@ from requests import HTTPError, RequestException
 from typing import Any, Dict
 
 
-from airflow.sdk import task, task_group, Variable, chain
+from airflow.providers.common.compat.sdk import task, task_group, Variable, chain
 from airflow.exceptions import AirflowException
 
 @task_group(group_id='process_delete_requests')
