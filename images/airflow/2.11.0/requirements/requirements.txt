@@ -1,12 +1,12 @@
 # Add your requirements here
 # Specifies the Airflow version (2.11.0) and the Python version (3.12)
---constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.11.0/constraints-3.12.txt"
+--constraint "usr/local/airflow/dags/constraints/airflow2.11.0_python3.12_updated.txt"
 
 # general purpose
 astronomer-cosmos==1.12.0
+apache-airflow-providers-common-compat==1.11.0
 apache-airflow-providers-snowflake==6.3.1
 apache-airflow-providers-slack==9.1.0
-#apache-airflow-task-sdk
 cryptography==45.0.2
 pendulum==3.1.0
 requests==2.32.3
