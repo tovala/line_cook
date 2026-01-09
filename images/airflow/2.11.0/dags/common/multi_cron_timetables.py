@@ -34,11 +34,6 @@ def decode_interval(value: int | dict) -> datetime.timedelta | relativedelta.rel
     return datetime.timedelta(seconds=value)
 
 
-def decode_run_immediately(value: bool | float) -> bool | datetime.timedelta:
-    if isinstance(value, float):
-        return datetime.timedelta(seconds=value)
-    return value
-
 # serialization helpers - encoders https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/serialization/encoders.py#L75-L120
 def encode_relativedelta(var: relativedelta) -> dict[str, Any]:
     """Encode a relativedelta object."""
@@ -81,12 +76,6 @@ def encode_interval(interval: datetime.timedelta | relativedelta) -> float | dic
     return encode_relativedelta(interval)
 
 
-def encode_run_immediately(value: bool | datetime.timedelta) -> bool | float:
-    if isinstance(value, datetime.timedelta):
-        return value.total_seconds()
-    return value
-
-
 class MultipleCronTriggerTimetable(Timetable):
     """
     Timetable that triggers DAG runs according to multiple cron expressions.
@@ -103,12 +92,11 @@ class MultipleCronTriggerTimetable(Timetable):
         *crons: str,
         timezone: str | Timezone | FixedTimezone,
         interval: datetime.timedelta | relativedelta = datetime.timedelta(),
-        run_immediately: bool | datetime.timedelta = False,
     ) -> None:
         if not crons:
             raise ValueError("cron expression required")
         self._timetables = [
-            CronTriggerTimetable(cron, timezone=timezone, interval=interval, run_immediately=run_immediately)
+            CronTriggerTimetable(cron, timezone=timezone, interval=interval)
             for cron in crons
         ]
         self.description = ", ".join(t.description for t in self._timetables)
@@ -119,18 +107,16 @@ class MultipleCronTriggerTimetable(Timetable):
           *data["expressions"],
           timezone=pendulum.timezone(data["timezone"]),
           interval=decode_interval(data["interval"]),
-          run_immediately=decode_run_immediately(data["run_immediately"]),
       )
 
     def serialize(self) -> dict[str, Any]:
-      # All timetables share the same timezone, interval, and run_immediately
+      # All timetables share the same timezone, interval
       # values, so we can just use the first to represent them.
       timetable = self._timetables[0]
       return {
           "expressions": [t._expression for t in self._timetables],
           "timezone": encode_timezone(timetable._timezone),
           "interval": encode_interval(timetable._interval),
-          "run_immediately": encode_run_immediately(timetable._run_immediately),
       }
 
     @property
