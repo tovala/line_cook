@@ -1,8 +1,8 @@
-name: MWAA Dags Deploy
+name: MWAA Requirements Deploy
 on:
   push:
     paths:
-    - "images/airflow/2.11.0/dags/**"
+    - "images/airflow/2.11.0/plugins/**"
     branches:
     - master
 env:
@@ -23,9 +23,9 @@ jobs:
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::307553795271:role/line_cook_github_actions
+          role-to-assume: arn:aws:iam::307553795271:role/sous_chef_github_actions
           aws-region: ${{ env.AWS_REGION }}
-      
-      - name: Sync dags to S3
+      # TODO: zip plugins and sync to s3
+      - name: Sync requirements
         run: |
-          aws s3 sync .images/airflow/2.11.0/dags s3://${{ env.BUCKET_NAME }}/dags --follow-symlinks --delete
+          aws s3 cp .images/airflow/3.0.6/requirements/requirements.txt s3://${{ env.BUCKET_NAME }}/requirements.txt
