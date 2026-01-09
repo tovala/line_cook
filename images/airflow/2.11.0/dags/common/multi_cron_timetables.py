@@ -18,10 +18,73 @@ from pendulum.tz.timezone import FixedTimezone, Timezone
 from airflow.timetables.base import DagRunInfo, DataInterval, Timetable, TimeRestriction
 from airflow.timetables.trigger import CronTriggerTimetable
 
-from airflow.serialization.decoders import decode_interval, decode_run_immediately
-from airflow.serialization.encoders import encode_interval, encode_run_immediately, encode_timezone
-
 from airflow.plugins_manager import AirflowPlugin
+
+# serialization helpers - decoders https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/serialization/decoders.py#L46-L62
+def decode_relativedelta(var: dict[str, Any]) -> relativedelta.relativedelta:
+    """Dencode a relativedelta object."""
+    if "weekday" in var:
+        var["weekday"] = relativedelta.weekday(*var["weekday"])
+    return relativedelta.relativedelta(**var)
+
+
+def decode_interval(value: int | dict) -> datetime.timedelta | relativedelta.relativedelta:
+    if isinstance(value, dict):
+        return decode_relativedelta(value)
+    return datetime.timedelta(seconds=value)
+
+
+def decode_run_immediately(value: bool | float) -> bool | datetime.timedelta:
+    if isinstance(value, float):
+        return datetime.timedelta(seconds=value)
+    return value
+
+# serialization helpers - encoders https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/serialization/encoders.py#L75-L120
+def encode_relativedelta(var: relativedelta) -> dict[str, Any]:
+    """Encode a relativedelta object."""
+    encoded = {k: v for k, v in var.__dict__.items() if not k.startswith("_") and v}
+    if var.weekday and var.weekday.n:
+        # Every n'th Friday for example
+        encoded["weekday"] = [var.weekday.weekday, var.weekday.n]
+    elif var.weekday:
+        encoded["weekday"] = [var.weekday.weekday]
+    return encoded
+
+
+def encode_timezone(var: str | pendulum.Timezone | pendulum.FixedTimezone) -> str | int:
+    """
+    Encode a Pendulum Timezone for serialization.
+
+    Airflow only supports timezone objects that implements Pendulum's Timezone
+    interface. We try to keep as much information as possible to make conversion
+    round-tripping possible (see ``decode_timezone``). We need to special-case
+    UTC; Pendulum implements it as a FixedTimezone (i.e. it gets encoded as
+    0 without the special case), but passing 0 into ``pendulum.timezone`` does
+    not give us UTC (but ``+00:00``).
+    """
+    if isinstance(var, str):
+        return var
+    if isinstance(var, pendulum.FixedTimezone):
+        if var.offset == 0:
+            return "UTC"
+        return var.offset
+    if isinstance(var, pendulum.Timezone):
+        return var.name
+    raise ValueError(
+        f"DAG timezone should be a pendulum.tz.Timezone, not {var!r}. "
+    )
+
+
+def encode_interval(interval: datetime.timedelta | relativedelta) -> float | dict:
+    if isinstance(interval, datetime.timedelta):
+        return interval.total_seconds()
+    return encode_relativedelta(interval)
+
+
+def encode_run_immediately(value: bool | datetime.timedelta) -> bool | float:
+    if isinstance(value, datetime.timedelta):
+        return value.total_seconds()
+    return value
 
 
 class MultipleCronTriggerTimetable(Timetable):
