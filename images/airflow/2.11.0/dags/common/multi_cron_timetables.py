@@ -2,24 +2,6 @@
 # Apache Airflow source code taken from https://airflow.apache.org/docs/apache-airflow/stable/_modules/airflow/timetables/trigger.html#MultipleCronTriggerTimetable
 # Once migrated to Airflow 3, we can remove this code and access this same functionality via:
 # from airflow.timetables.trigger import MultipleCronTriggerTimetable
-
-
-# Licensed to the Apache Software Foundation (ASF) under one
-# or more contributor license agreements.  See the NOTICE file
-# distributed with this work for additional information
-# regarding copyright ownership.  The ASF licenses this file
-# to you under the Apache License, Version 2.0 (the
-# "License"); you may not use this file except in compliance
-# with the License.  You may obtain a copy of the License at
-#
-#   http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed on an
-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-# KIND, either express or implied.  See the License for the
-# specific language governing permissions and limitations
-# under the License.
 from __future__ import annotations
 
 import datetime
@@ -27,107 +9,19 @@ import functools
 import math
 import operator
 import time
-from typing import TYPE_CHECKING, Any
+import pendulum
+from typing import Any
+from dateutil.relativedelta import relativedelta
+from pendulum import DateTime
+from pendulum.tz.timezone import FixedTimezone, Timezone
 
-from airflow_shared_timezones import coerce_datetime, utcnow
-from airflow.timetables.base import DagRunInfo, DataInterval, Timetable
+from airflow.timetables.base import DagRunInfo, DataInterval, Timetable, TimeRestriction
+from airflow.timetables.trigger import CronTriggerTimetable
 
+from airflow.serialization.decoders import decode_interval, decode_run_immediately
+from airflow.serialization.encoders import encode_interval, encode_run_immediately, encode_timezone
 
-if TYPE_CHECKING:
-    from dateutil.relativedelta import relativedelta
-    from pendulum import DateTime
-    from pendulum.tz.timezone import FixedTimezone, Timezone
-
-    from airflow.timetables.base import TimeRestriction
-
-
-def _serialize_interval(interval: datetime.timedelta | relativedelta) -> float | dict:
-    from airflow.serialization.serialized_objects import encode_relativedelta
-
-    if isinstance(interval, datetime.timedelta):
-        return interval.total_seconds()
-    return encode_relativedelta(interval)
-
-
-def _deserialize_interval(value: int | dict) -> datetime.timedelta | relativedelta:
-    from airflow.serialization.serialized_objects import decode_relativedelta
-
-    if isinstance(value, dict):
-        return decode_relativedelta(value)
-    return datetime.timedelta(seconds=value)
-
-
-def _serialize_run_immediately(value: bool | datetime.timedelta) -> bool | float:
-    if isinstance(value, datetime.timedelta):
-        return value.total_seconds()
-    return value
-
-
-def _deserialize_run_immediately(value: bool | float) -> bool | datetime.timedelta:
-    if isinstance(value, float):
-        return datetime.timedelta(seconds=value)
-    return value
-
-
-class _TriggerTimetable(Timetable):
-    _interval: datetime.timedelta | relativedelta
-
-    def infer_manual_data_interval(self, *, run_after: DateTime) -> DataInterval:
-        return DataInterval(
-            coerce_datetime(run_after - self._interval),
-            run_after,
-        )
-
-    def _calc_first_run(self) -> DateTime:
-        """
-        If no start_time is set, determine the start.
-
-        If True, always prefer past run, if False, never. If None, if within 10% of next run,
-        if timedelta, if within that timedelta from past run.
-        """
-        raise NotImplementedError()
-
-    def _align_to_next(self, current: DateTime) -> DateTime:
-        raise NotImplementedError()
-
-    def _align_to_prev(self, current: DateTime) -> DateTime:
-        raise NotImplementedError()
-
-    def _get_next(self, current: DateTime) -> DateTime:
-        raise NotImplementedError()
-
-    def _get_prev(self, current: DateTime) -> DateTime:
-        raise NotImplementedError()
-
-    def next_dagrun_info(
-        self,
-        *,
-        last_automated_data_interval: DataInterval | None,
-        restriction: TimeRestriction,
-    ) -> DagRunInfo | None:
-        if restriction.catchup:
-            if last_automated_data_interval is not None:
-                next_start_time = self._get_next(last_automated_data_interval.end)
-            elif restriction.earliest is None:
-                next_start_time = self._calc_first_run()
-            else:
-                next_start_time = self._align_to_next(restriction.earliest)
-        else:
-            start_time_candidates = [self._align_to_prev(coerce_datetime(utcnow()))]
-            if last_automated_data_interval is not None:
-                start_time_candidates.append(self._get_next(last_automated_data_interval.end))
-            elif restriction.earliest is None:
-                # Run immediately has no effect if there is restriction on earliest
-                start_time_candidates.append(self._calc_first_run())
-            if restriction.earliest is not None:
-                start_time_candidates.append(self._align_to_next(restriction.earliest))
-            next_start_time = max(start_time_candidates)
-        if restriction.latest is not None and restriction.latest < next_start_time:
-            return None
-        return DagRunInfo.interval(
-            coerce_datetime(next_start_time - self._interval),
-            next_start_time,
-        )
+from airflow.plugins_manager import AirflowPlugin
 
 
 class MultipleCronTriggerTimetable(Timetable):
@@ -154,50 +48,37 @@ class MultipleCronTriggerTimetable(Timetable):
             CronTriggerTimetable(cron, timezone=timezone, interval=interval, run_immediately=run_immediately)
             for cron in crons
         ]
-
         self.description = ", ".join(t.description for t in self._timetables)
-
 
     @classmethod
     def deserialize(cls, data: dict[str, Any]) -> Timetable:
-        from airflow.serialization.serialized_objects import decode_timezone
-
-        return cls(
-            *data["expressions"],
-            timezone=decode_timezone(data["timezone"]),
-            interval=_deserialize_interval(data["interval"]),
-            run_immediately=_deserialize_run_immediately(data["run_immediately"]),
-        )
-
-
+      return cls(
+          *data["expressions"],
+          timezone=pendulum.timezone(data["timezone"]),
+          interval=decode_interval(data["interval"]),
+          run_immediately=decode_run_immediately(data["run_immediately"]),
+      )
 
     def serialize(self) -> dict[str, Any]:
-        from airflow.serialization.serialized_objects import encode_timezone
-
-        # All timetables share the same timezone, interval, and run_immediately
-        # values, so we can just use the first to represent them.
-        timetable = self._timetables[0]
-        return {
-            "expressions": [t._expression for t in self._timetables],
-            "timezone": encode_timezone(timetable._timezone),
-            "interval": _serialize_interval(timetable._interval),
-            "run_immediately": _serialize_run_immediately(timetable._run_immediately),
-        }
-
+      # All timetables share the same timezone, interval, and run_immediately
+      # values, so we can just use the first to represent them.
+      timetable = self._timetables[0]
+      return {
+          "expressions": [t._expression for t in self._timetables],
+          "timezone": encode_timezone(timetable._timezone),
+          "interval": encode_interval(timetable._interval),
+          "run_immediately": encode_run_immediately(timetable._run_immediately),
+      }
 
     @property
     def summary(self) -> str:
         return ", ".join(t.summary for t in self._timetables)
-
-
 
     def infer_manual_data_interval(self, *, run_after: DateTime) -> DataInterval:
         return min(
             (t.infer_manual_data_interval(run_after=run_after) for t in self._timetables),
             key=operator.attrgetter("start"),
         )
-
-
 
     def next_dagrun_info(
         self,
@@ -217,7 +98,6 @@ class MultipleCronTriggerTimetable(Timetable):
         else:
             select_key = functools.partial(self._dagrun_info_sort_key_no_catchup, now=time.time())
         return min(infos, key=select_key)
-
 
     @staticmethod
     def _dagrun_info_sort_key_catchup(info: DagRunInfo | None) -> float:
@@ -253,3 +133,8 @@ class MultipleCronTriggerTimetable(Timetable):
         if (ts := info.logical_date.timestamp()) <= now:
             return -ts
         return ts
+
+
+class MultipleCronTriggerTimetablePlugin(AirflowPlugin):
+    name = "multiple_cron_trigger_timetable_plugin"
+    timetables = [MultipleCronTriggerTimetable]
