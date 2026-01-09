@@ -27,13 +27,11 @@ import functools
 import math
 import operator
 import time
-import pendulum
 from typing import TYPE_CHECKING, Any
 
-from airflow._shared.timezones.timezone import coerce_datetime
+from airflow_shared_timezones import coerce_datetime, utcnow
 from airflow.timetables.base import DagRunInfo, DataInterval, Timetable
 
-UTCNOW = datetime.datetime.now(tz=pendulum.UTC)
 
 if TYPE_CHECKING:
     from dateutil.relativedelta import relativedelta
@@ -115,7 +113,7 @@ class _TriggerTimetable(Timetable):
             else:
                 next_start_time = self._align_to_next(restriction.earliest)
         else:
-            start_time_candidates = [self._align_to_prev(coerce_datetime(UTCNOW))]
+            start_time_candidates = [self._align_to_prev(coerce_datetime(utcnow()))]
             if last_automated_data_interval is not None:
                 start_time_candidates.append(self._get_next(last_automated_data_interval.end))
             elif restriction.earliest is None:

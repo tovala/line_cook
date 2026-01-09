@@ -13,12 +13,12 @@ from typing import Any, List
 @dag(
     on_failure_callback=bad_boy,
     on_success_callback=good_boy,
-    schedule=MultipleCronTriggerTimetable("30 8 * * 1", "25 22 * * 3", timezone="America/Chicago"),
-    start_date=pendulum.datetime(2026, 1, 1, tz="UTC"),
+    schedule=MultipleCronTriggerTimetable('30 8 * * 1', '25 22 * * 3', timezone='America/Chicago'),
+    start_date=pendulum.datetime(2026, 1, 1, tz='UTC'),
     catchup=False,
     tags=['internal'],
     params={
-        "channel_name": "#autofill-notifications"
+        'channel_name': '#autofill-notifications'
     }
 )
 def simple_af_prep():
