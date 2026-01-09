@@ -1,6 +1,6 @@
 # Add your requirements here
 # Specifies the Airflow version (2.11.0) and the Python version (3.12)
---constraint "usr/local/airflow/dags/constraints/airflow2.11.0_python3.12_updated.txt"
+--constraint "/usr/local/airflow/dags/constraints/airflow2.11.0_python3.12_updated.txt"
 
 # general purpose
 astronomer-cosmos==1.12.0
