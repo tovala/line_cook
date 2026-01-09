@@ -6,7 +6,7 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 # from airflow.timetables.trigger import MultipleCronTriggerTimetable
 # Replace with above import statment when migrated to Airflow 3.
-from multi_cron_trigger_timetable import MultipleCronTriggerTimetable
+from timetables.multi_cron_trigger_timetable import MultipleCronTriggerTimetable
 from common.slack_notifications import bad_boy, good_boy
 from typing import Any, List
 
