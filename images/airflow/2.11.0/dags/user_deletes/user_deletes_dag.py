@@ -1,14 +1,15 @@
 
 import datetime
+import pendulum
 
 import json
 import requests
 from requests.auth import HTTPBasicAuth
 from requests import HTTPError, RequestException
 from typing import Any, Dict, List
-from pendulum import duration
 
-
+# in Airflow 3.x.x, use 
+# from airflow.sdk import
 from airflow.providers.common.compat.sdk import dag, task, chain, Variable
 from airflow.exceptions import AirflowException
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
@@ -21,13 +22,14 @@ from airflow.timetables.trigger import CronTriggerTimetable
 @dag(
     on_failure_callback=bad_boy,
     on_success_callback=good_boy,
-    schedule=CronTriggerTimetable("45 7 * * *", timezone="America/Chicago"),
+    schedule=CronTriggerTimetable('45 7 * * *', timezone='America/Chicago'),
+    start_date=pendulum.datetime(2026, 1, 1, tz="UTC"),
     catchup=False,
     default_args={
-       "retries": 2,
-        "retry_delay": duration(seconds=2),
-        "retry_exponential_backoff": True,
-        "max_retry_delay": duration(minutes=5),
+      'retries': 2,
+      'retry_delay': pendulum.duration(seconds=2),
+      'retry_exponential_backoff': True,
+      'max_retry_delay': pendulum.duration(minutes=5),
     },
     tags=['internal', 'cleanup'],
     params={

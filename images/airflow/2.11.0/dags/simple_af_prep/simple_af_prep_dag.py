@@ -1,8 +1,12 @@
 import datetime
+import pendulum
 
 from airflow.providers.common.compat.sdk import dag, task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
-from airflow.timetables.trigger import MultipleCronTriggerTimetable
+
+# from airflow.timetables.trigger import MultipleCronTriggerTimetable
+# Replace with above import statment when migrated to Airflow 3.
+from common.multi_cron_timetables import MultipleCronTriggerTimetable
 from common.slack_notifications import bad_boy, good_boy
 from typing import Any, List
 
@@ -10,6 +14,7 @@ from typing import Any, List
     on_failure_callback=bad_boy,
     on_success_callback=good_boy,
     schedule=MultipleCronTriggerTimetable("30 8 * * 1", "25 22 * * 3", timezone="America/Chicago"),
+    start_date=pendulum.datetime(2026, 1, 1, tz="UTC"),
     catchup=False,
     tags=['internal'],
     params={
