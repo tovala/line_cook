@@ -35,8 +35,11 @@ mkdir -p "${CACHE_DIR}"
 
 # Check if we have a cached Fernet key, if not generate and cache it
 if [ ! -f "${FERNET_KEY_FILE}" ]; then
+    echo "********** HIT GENERATE FERNET KEY**************"
     generate_fernet_key > "${FERNET_KEY_FILE}"
     chmod 600 "${FERNET_KEY_FILE}"
+    echo "****** fernet.key contents *********"
+    cat $FERNET_KEY_FILE
 fi
 
 # Read the Fernet key from cache
