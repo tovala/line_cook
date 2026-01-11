@@ -49,6 +49,7 @@ export FERNET_KEY
 ACCOUNT_ID="$TOVALA_DATA_AWS_ACCOUNT_ID" # Put your account ID here.
 ENV_NAME="$MWAA_LOCAL_DEV" # Choose an environment name here.
 REGION="$TOVALA_DATA_REGION" # Keeping the region us-west-2 as default.
+export REGION
 
 # AWS Credentials
 AWS_ACCESS_KEY_ID="$TOVALA_DATA_AWS_KEY" # Put your credentials here.
