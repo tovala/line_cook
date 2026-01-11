@@ -1,7 +1,7 @@
 from airflow.providers.slack.notifications.slack import SlackNotifier
 from typing import Any, Dict
 
-SLACK_WEBHOOK_CONNECTION_ID = 'team-data-notifications'
+SLACK_WEBHOOK_CONNECTION_ID = 'tovala_slack'
 
 # Shamelessly poached from: https://github.com/enchant3dmango/lugvloei/blob/65726392386200c2420ee8f70b3682834c1ddaad/utilities/slack.py#L105
 def generate_failure_message(context: Dict[str, Any]) ->  Dict[str, Any]:

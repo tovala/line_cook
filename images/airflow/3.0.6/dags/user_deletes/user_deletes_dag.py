@@ -54,7 +54,7 @@ def user_deletes():
 
   @task(
     on_failure_callback=SlackNotifier(
-        slack_conn_id='team-data-notifications',
+        slack_conn_id='tovala_slack',
         text='Snowflake Connection Failure for getUserExceptionIds',
         channel='team-data-notifications'
     ) 
@@ -276,7 +276,7 @@ def user_deletes():
 
   @task(
     on_failure_callback=SlackNotifier(
-        slack_conn_id='team-data-notifications',
+        slack_conn_id='tovala_slack',
         text='Snowflake Connection Failure for getTypeformResponseIds',
         channel='team-data-notifications'
     )
