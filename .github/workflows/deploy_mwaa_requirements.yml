@@ -28,4 +28,4 @@ jobs:
       
       - name: Sync requirements
         run: |
-          aws s3 cp .images/airflow/3.0.6/requirements/requirements.txt s3://${{ env.BUCKET_NAME }}/requirements.txt
+          aws s3 cp ./images/airflow/3.0.6/requirements/requirements.txt s3://${{ env.BUCKET_NAME }}/requirements.txt
