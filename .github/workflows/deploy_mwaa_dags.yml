@@ -5,6 +5,8 @@ on:
     - "images/airflow/3.0.6/dags/**"
     branches:
     - master
+  
+  workflow_dispatch: # allows manual trigger of actions if needed
 env:
   BUCKET_NAME: "tovala-airflow-prod"
   AWS_REGION: "us-east-1"
