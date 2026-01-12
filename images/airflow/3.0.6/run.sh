@@ -35,8 +35,11 @@ mkdir -p "${CACHE_DIR}"
 
 # Check if we have a cached Fernet key, if not generate and cache it
 if [ ! -f "${FERNET_KEY_FILE}" ]; then
+    echo "********** HIT GENERATE FERNET KEY**************"
     generate_fernet_key > "${FERNET_KEY_FILE}"
     chmod 600 "${FERNET_KEY_FILE}"
+    echo "****** fernet.key contents *********"
+    cat $FERNET_KEY_FILE
 fi
 
 # Read the Fernet key from cache
@@ -49,6 +52,7 @@ export FERNET_KEY
 ACCOUNT_ID="$TOVALA_DATA_AWS_ACCOUNT_ID" # Put your account ID here.
 ENV_NAME="$MWAA_LOCAL_DEV" # Choose an environment name here.
 REGION="$TOVALA_DATA_REGION" # Keeping the region us-west-2 as default.
+export REGION
 
 # AWS Credentials
 AWS_ACCESS_KEY_ID="$TOVALA_DATA_AWS_KEY" # Put your credentials here.
