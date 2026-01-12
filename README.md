@@ -74,6 +74,21 @@
     
     - **Make sure to clean up Docker containers, images, and volumes when done testing!!**
 
+### Troubleshooting - Common Issues
+- Fernet Key
+    - Airflow uses a fernet key to encrypt connections and variables - without it, you'll be unable to run Airflow and might see errors like:
+        - localhost errors when attempting to load the webserver
+        - 500 server errors when attempting to add new connections/variables in the UI
+    - If you're experiencing issues, try to clear your cached fernet key and generate a new one:
+        1. In terminal, in your root directory where the line_cook repo is located, run `rm -rf .cache/mwaa-local/`
+        2. in `line_cook/images/airflow/3.0.6`, run `./run.sh`
+        3. You should see something like the following (the actual key should be a different value in a similar format):
+        ```
+        ********** HIT GENERATE FERNET KEY**************
+        ****** fernet.key contents *********
+        {{"FernetKey": "{"FernetKey": "1VHNImUlE76HwVsYqJOBi-DJ79QSt4FXmn2yrbF_tVE="}"}}
+        ```
+        This is your new fernet key, and should remain cached for future local airflow runs. `./run.sh` will take care of pulling and supplying this value, you don't need to record it or keep track.
 
 # AWS Parent Repo README
 ## aws-mwaa-docker-images
