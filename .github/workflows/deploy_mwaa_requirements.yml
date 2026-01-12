@@ -5,6 +5,9 @@ on:
     - "images/airflow/3.0.6/requirements/requirements.txt"
     branches:
     - master
+
+  workflow_dispatch: # allows for manual trigger of action
+
 env:
   BUCKET_NAME: "tovala-airflow-prod"
   AWS_REGION: "us-east-1"
