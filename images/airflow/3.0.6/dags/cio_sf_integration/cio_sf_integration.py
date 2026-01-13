@@ -47,18 +47,16 @@ def cio_sf_integration():
   cio_stage = SQLExecuteQueryOperator(
       task_id='create_cio_stage', 
       conn_id='snowflake', 
-      sql='dags/common/queries/create_stage.sql',
-      parameters={
+      sql='queries/create_stage.sql',
+      params={
         'parent_database': 'MASALA',
         'schema_name': 'CHILI_V2',
         'stage_name': 'cio_stage',
         'url': 's3://tovala-data-customerio/',
-        'storage_integration': 's3_int',
+        'storage_integration': 'CIO_STORAGE_INTEGRATION',
         'file_type': 'parquet',
       },
   )
-
-  cio_stage_name = 'MASALA.CHILI_V2.cio_stage'
 
   # Subset of Customer IO table schemas that we want to load into Snowflake 
   TABLE_NAMES = ['broadcasts', 'campaigns', 'deliveries', 'metrics', 'outputs', 'people', 'subjects']
@@ -77,7 +75,7 @@ def cio_sf_integration():
   CopyFromExternalStageToSnowflakeOperator.partial(
     task_id='copyTable', 
     snowflake_conn_id='snowflake',
-    stage=f'{cio_stage_name}',
+    stage='MASALA.CHILI_V2.cio_stage',
     file_format="(TYPE = 'parquet')",
     copy_options='MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE'
     ).expand_kwargs(process_tables)
