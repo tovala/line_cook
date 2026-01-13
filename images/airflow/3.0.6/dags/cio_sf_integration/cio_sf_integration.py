@@ -66,7 +66,7 @@ def cio_sf_integration():
     expanded_args = []
 
     for table in tables: 
-        expanded_args.append({'table': f'customerio_data_v2.{table}', 'pattern': f'.*{table}.*.parquet'})
+        expanded_args.append({'table': f'CHILI_V2.{table}', 'pattern': f'.*{table}.*.parquet'})
 
     return expanded_args 
 
