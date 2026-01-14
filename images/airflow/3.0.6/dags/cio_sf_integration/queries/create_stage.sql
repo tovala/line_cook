@@ -1,4 +1,4 @@
-CREATE OR REPLACE STAGE {{ params.parent_database }}.{{ params.schema_name }}.{{ params.stage_name }} 
+CREATE IF NOT EXISTS STAGE {{ params.parent_database }}.{{ params.schema_name }}.{{ params.stage_name }} 
     URL = {{ params.url }}
     -- Storage integration objects should only be created once within Snowflake. 
     -- Re-running/replacing them will require an update to AWS role Trust relationships > Trusted entities policy.
