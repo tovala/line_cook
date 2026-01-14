@@ -28,7 +28,7 @@ from common.slack_notifications import bad_boy, good_boy
     },
     tags=['internal', 'data-integration'],
     params={
-        "channel_name": "#team-data-notifications"
+        'channel_name': '#team-data-notifications'
     }
 )
 def cio_sf_integration():
