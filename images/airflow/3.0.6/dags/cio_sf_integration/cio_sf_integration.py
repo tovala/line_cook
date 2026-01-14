@@ -18,7 +18,7 @@ from common.slack_notifications import bad_boy, good_boy
     on_failure_callback=bad_boy,
     on_success_callback=good_boy,
     # Move CIO data into Snowflake tables every day at 7am 
-    schedule=CronTriggerTimetable("0 7 * * *", timezone="America/Chicago"),
+    schedule=CronTriggerTimetable('0 7 * * *', timezone='America/Chicago'),
     catchup=False,
     default_args={
        "retries": 2,
