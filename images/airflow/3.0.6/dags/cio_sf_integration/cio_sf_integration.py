@@ -59,7 +59,7 @@ def cio_sf_integration():
   )
 
   # Subset of Customer IO table schemas that we want to load into Snowflake 
-  TABLE_NAMES = ['broadcasts', 'campaigns', 'deliveries', 'metrics', 'outputs', 'people', 'subjects']
+  TABLE_NAMES = ['broadcasts', 'campaigns', 'campaign_actions', 'deliveries', 'metrics', 'outputs', 'people', 'subjects']
 
   @task()
   def processTableNames(tables: List[str]) -> List[Dict[str, str]]:
