@@ -45,7 +45,7 @@ def cio_sf_integration():
 
   '''
   cio_stage = SQLExecuteQueryOperator(
-      task_id='create_cio_stage', 
+      task_id='createCioStage', 
       conn_id='snowflake', 
       sql='queries/create_stage.sql',
       params={
@@ -72,13 +72,15 @@ def cio_sf_integration():
 
   process_tables = processTableNames(TABLE_NAMES)
 
-  CopyFromExternalStageToSnowflakeOperator.partial(
+  copy_tables = CopyFromExternalStageToSnowflakeOperator.partial(
     task_id='copyTable', 
     snowflake_conn_id='snowflake',
     stage='MASALA.CHILI_V2.cio_stage',
     file_format="(TYPE = 'parquet')",
     copy_options='MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE'
     ).expand_kwargs(process_tables)
+
+  chain([cio_stage, process_tables], copy_tables)
 
 # DAG call
 cio_sf_integration()
