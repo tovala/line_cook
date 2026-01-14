@@ -21,10 +21,10 @@ from common.slack_notifications import bad_boy, good_boy
     schedule=CronTriggerTimetable('0 7 * * *', timezone='America/Chicago'),
     catchup=False,
     default_args={
-       "retries": 2,
-        "retry_delay": duration(seconds=2),
-        "retry_exponential_backoff": True,
-        "max_retry_delay": duration(minutes=5),
+        'retries': 2,
+        'retry_delay': duration(seconds=2),
+        'retry_exponential_backoff': True,
+        'max_retry_delay': duration(minutes=5),
     },
     tags=['internal', 'data-integration'],
     params={
