@@ -1,6 +1,11 @@
 import datetime
 
+from typing import Any, Dict, List
+from pendulum import duration
+
 from airflow.sdk import dag, task, chain, Variable
+from airflow.exceptions import AirflowException
+from airflow.providers.slack.notifications.slack import SlackNotifier
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from cosmos import DbtDag, DbtTaskGroup, ProjectConfig, ProfileConfig, ExecutionConfig
 
@@ -14,7 +19,7 @@ from cosmos import DbtDag, DbtTaskGroup, ProjectConfig, ProfileConfig, Execution
     ## schedule = '0 20 * * 4' ## (DST) 3 PM US/Central on Thursday
     start_date=datetime.datetime(2026, 1, 15),
     catchup=False,
-    dag_run_timeout=datetime.timedelta(minutes=10),
+    # dag_run_timeout=datetime.timedelta(minutes=10),
     default_args={
       "retries": 2,
       "retry_delay": duration(seconds=2),
@@ -38,14 +43,23 @@ def weekly_ds_run():
 
   '''
 
+  project_config = ProjectConfig(
+    dbt_project_path='/dbt',
+    models_relative_path='/ds_weekly_run/models',
+    project_name='spice_rack',
+    install_dbt_deps=True
+  )
+
+  profile_config = ProfileConfig(
+    profile_name='spice_rack',
+    target_name='dev',
+    profiles_yml_filepath='dbt/ds_weekly_run/profiles'
+    )
+
   dbt_run = DbtDag(
-    project_config='dbt_project.yml',
-    profile_config='profiles.yml',
-    target_name='test',
-    operators_args={
-      'install_deps': True, 
-      ## 'full_refresh': ## if incremental 
-    }
+    dag_id='weekly_ds_run',
+    project_config=project_config,
+    profile_config=profile_config
   )
 
 
