@@ -1,0 +1,29 @@
+spice_rack:
+  target: test
+  outputs:
+    prod:
+      type: snowflake
+      account: "{{ env_var('SF_ACCOUNT') }}" 
+      user: "{{ env_var('SF_USER') }}"
+      private_key_path: "{{ env_var('SF_KEY_PATH') }}"
+      role: "{{ env_var('SF_ROLE') }}"
+      database: "{{ env_var('SF_DATABASE') }}"
+      warehouse: "{{ env_var('SF_WAREHOUSE') }}"
+
+      schema: prod
+      threads: 16
+      client_session_keep_alive: False
+      query_tag: spice_rack_prod
+    test:
+      type: snowflake
+      account: "{{ env_var('SF_ACCOUNT') }}" 
+      user: "{{ env_var('SF_USER') }}"
+      private_key_path: "{{ env_var('SF_KEY_PATH') }}"
+      role: "{{ env_var('SF_ROLE') }}"
+      database: "{{ env_var('SF_DATABASE') }}"
+      warehouse: "{{ env_var('SF_WAREHOUSE') }}"
+      
+      schema: "test_{{ env_var('BRANCH_SCHEMA_NAME') }}"
+      threads: 8
+      client_session_keep_alive: False
+      query_tag: spice_rack_test
