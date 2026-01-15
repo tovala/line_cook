@@ -45,8 +45,8 @@ def weekly_ds_run():
   '''
 
   project_config = ProjectConfig(
-    dbt_project_path='images/airflow/3.0.6/dags/dbt/ds_weekly_run',
-    models_relative_path='/ds_weekly_run/models',
+    dbt_project_path='/dags/dbt',
+    models_relative_path='/dags/dbt',
     project_name='spice_rack',
     install_dbt_deps=True
   )
