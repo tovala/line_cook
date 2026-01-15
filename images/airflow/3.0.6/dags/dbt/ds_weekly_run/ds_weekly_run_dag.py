@@ -1,4 +1,5 @@
 import datetime
+import os 
 
 from typing import Any, Dict, List
 from pendulum import duration
@@ -44,7 +45,7 @@ def weekly_ds_run():
   '''
 
   project_config = ProjectConfig(
-    dbt_project_path='/dbt',
+    dbt_project_path='images/airflow/3.0.6/dags/dbt/ds_weekly_run',
     models_relative_path='/ds_weekly_run/models',
     project_name='spice_rack',
     install_dbt_deps=True
@@ -53,7 +54,7 @@ def weekly_ds_run():
   profile_config = ProfileConfig(
     profile_name='spice_rack',
     target_name='dev',
-    profiles_yml_filepath='dbt/ds_weekly_run/profiles'
+    profiles_yml_filepath='images/airflow/3.0.6/dags/dbt/ds_weekly_run'
     )
 
   dbt_run = DbtDag(
