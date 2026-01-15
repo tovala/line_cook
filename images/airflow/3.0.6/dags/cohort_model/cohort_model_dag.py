@@ -1,10 +1,12 @@
 import datetime
-
-from airflow.sdk import dag, task
-from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
-from airflow.timetables.trigger import MultipleCronTriggerTimetable
-from common.slack_notifications import bad_boy, good_boy
 from typing import Any, List, Dict
+
+from airflow.sdk import dag, task, chain
+from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+
+from common.slack_notifications import bad_boy, good_boy
+from common.macros.sql_templating import render_sql_from_file
+
 
 @dag(
     # on_failure_callback=bad_boy,
@@ -14,12 +16,15 @@ from typing import Any, List, Dict
     catchup=False,
     tags=['internal'],
     params={
-        'channel_name': '#team-data-notifications'
+        'channel_name': ''
+    },
+    user_defined_macros={
+        "render_sql_from_file": render_sql_from_file,
     }
 )
 def cohort_model():
     '''Cohort Model
-    Description: Runs preparatory steps for Simple Autofill:
+    Description: 
 
     Schedule: TBD
 
@@ -30,42 +35,18 @@ def cohort_model():
     '''
 
     MODELS = ['historical_meal_orders']
-
-    def generate_create_statement(table_name, table_schema='brine'):
-        return f"""
-            CREATE OR REPLACE TABLE {table_schema}.{table_name} ();
-        """
-
-    @task()
-    def processModels(tables: List[str]) -> List[Dict[str, str]]:
-        expanded_args = []
-
-        for table in tables: 
-            create_sql=generate_create_statement(table)
-            # expanded_args.append({'table_name': f'{table}', 'create_sql' : create_sql})
-            expanded_args.append[create_sql]
-
-        return expanded_args 
-
-    process_models = processModels(MODELS)
-
-    create_tables = SQLExecuteQueryOperator.partial(
-        task_id='create_cohort_model_tables',
+    test_schema = SQLExecuteQueryOperator(
+        task_id='create_test_schema',
         conn_id='snowflake',
-    ).expand(sql=process_models)
-
-    # table_columns = '''
-    #     term_id INTEGER
-    #     , cohort INTEGER 
-    #     , order_count INTEGER 
-    #     , meal_count INTEGER
-    # '''
-
+        sql='CREATE SCHEMA IF NOT EXISTS TEST_TAYLOR_BRINE;'
+    )
     create_models = SQLExecuteQueryOperator(
         task_id='create_cohort_models', 
         conn_id='snowflake', 
         sql='templates/create_table.sql',
-        parameters={'table_name': 'historical_meal_orders'},
+        params={'table_name': 'historical_meal_orders', 'table_columns_file': 'queries/historical_meal_orders.sql'},
     )
+
+    chain(test_schema, create_models)
 
 cohort_model()
