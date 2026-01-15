@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: meal_splits_outputs
+    description: >
+      Predicted meal splits for meal SKUs for future terms/menus
+    data_tests:
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - meal_sku_id
+              - run_timestamp

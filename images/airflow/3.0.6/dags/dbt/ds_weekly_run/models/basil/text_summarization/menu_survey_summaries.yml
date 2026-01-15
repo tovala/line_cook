@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: menu_survey_summaries
+    description: >
+      "LLM-generated menu review survey summaries"
+    columns:
+      - name: term_id
+        data_tests:
+          - primary_key
+      - name: menu_survey_summary_negative
+        data_tests:
+          - not_null
+      - name: menu_survey_summary_positive
+        data_tests:
+          - not_null
