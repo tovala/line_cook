@@ -1,0 +1,11 @@
+version: 2
+
+models:
+  - name: micro_logs_combined
+    columns:
+      - name: micro_log_id
+        data_tests:
+          - primary_key
+      - name: time_stamp
+        data_tests:
+          - not_null

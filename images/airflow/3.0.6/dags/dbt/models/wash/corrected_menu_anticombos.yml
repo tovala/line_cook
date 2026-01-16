@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: corrected_menu_anticombos
+    description: "Maps incorrect menu anticombination to correct values for downstream use."

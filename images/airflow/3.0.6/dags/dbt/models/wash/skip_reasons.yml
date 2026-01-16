@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: skip_reasons
+    description: "Table of Skip Reasons (reported by customers)"
+    data_tests:
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - customer_id
+              - term_id
+    columns: 
+      - name: customer_id
+        data_tests:
+          - not_null
+      - name: term_id
+        data_tests:
+          # Check term_id isn't NULL other than the known period of incorrect data
+          - expression_is_true:
+              arguments:
+                expression: IS NOT NULL
+                # Running on subset of data for efficiency
+                condition: "NOT survey_time::DATE BETWEEN '2022-11-02' AND '2022-12-26'"

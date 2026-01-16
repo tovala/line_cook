@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: autofillable_meals
+    description: "Contains all meals for past and live terms that could be autofilled according to current rules."

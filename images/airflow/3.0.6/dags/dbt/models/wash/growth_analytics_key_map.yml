@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: growth_analytics_key_map
+    description: "Maps deprecated growth analytics keys to their current counterpart."
+    columns:
+      - name: deprecated_key
+        data_tests:
+          - primary_key
+      - name: key
+        data_tests:
+          - not_null

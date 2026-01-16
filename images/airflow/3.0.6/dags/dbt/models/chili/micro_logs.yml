@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: micro_logs
+    columns:
+      - name: filename
+        data_tests:
+          - not_null
+      - name: updated
+        data_tests:
+          - not_null
+      - name: raw_data
+        data_tests:
+          - not_null
+      - name: original_file_date
+        data_tests:
+          - not_null

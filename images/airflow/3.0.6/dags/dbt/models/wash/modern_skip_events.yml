@@ -1,0 +1,32 @@
+version: 2
+
+models:
+  - name: modern_skip_events
+    description: "Table of Skip Events On/After Term 167."
+    data_tests:
+      # Ensures that only one status is joined to a given skip click
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - status_id
+              - skip_click_id
+      # Ensures that a customer can only have one actual skip per term
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - customer_id
+              - term_id
+            where_clause: "unskip_time IS NULL"
+      - expression_is_true:
+          arguments:
+            expression: "original_skip_time < original_unskip_time"
+    columns: 
+      - name: overlap_category
+        data_tests:
+          - not_null
+      - name: skip_time
+        data_tests:
+          - not_null
+      - name: skip_end_time
+        data_tests:
+          - not_null

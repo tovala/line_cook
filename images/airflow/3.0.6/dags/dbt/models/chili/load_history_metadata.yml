@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: load_history_metadata
+    data_tests:
+      # Loading the same oven log file multiple times will result in dupes
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - file_name
+            where_clause: "table_name = 'OVEN_LOGS' AND schema_name = 'KINESIS'"
+    columns:
+      - name: load_id
+        data_tests:
+          - primary_key
+      - name: error_count
+        data_tests:
+          - expression_is_true:
+              arguments:
+                expression: "= 0"
+                condition: "last_load_time >= DATEADD('day', -14, CURRENT_TIMESTAMP) AND schema_name <> 'BRINE'"

@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: upcoming_meal_favorites
+    description: "This is an intermediate table getting info about meal favorites, pulled using the same logic as the Sigma dataset of the same name."
+    data_tests:
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - customer_id
+              - term_id
+    columns:
+      - name: customer_id
+        data_tests:
+          - not_null
+      - name: term_id
+        data_tests:
+          - not_null

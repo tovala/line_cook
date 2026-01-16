@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: customer_protein_selection_counts
+    description: "Counts the number of times a customer ordered pork (excluding bacon bits) or tofu."

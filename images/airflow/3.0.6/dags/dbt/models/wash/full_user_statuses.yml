@@ -1,0 +1,40 @@
+version: 2
+
+models:
+  - name: full_user_statuses
+    description: "User activity status (paused, active, canceled) for every row in subscriptionactivity table."
+    data_tests:
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - customer_id
+              - status_start_time
+    columns: 
+      - name: status_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key
+      - name: customer_id
+        data_tests:
+          - not_null
+      - name: user_status
+        description: "Active, paused, or canceled."
+        data_tests:
+          - not_null 
+          - accepted_values:
+              arguments:
+                values: ['active', 'canceled', 'paused']
+      # Active customers must have a default order size set
+      - name: default_order_size
+        data_tests:
+          - expression_is_true:
+              arguments:
+                expression: 'IS NOT NULL'
+                condition: user_status = 'active'
+      - name: subscription_type
+        data_tests:
+          # It will create errors with SW if their subscription_type is NULL for their most recent active status, update the data-peeps channel if this happens
+          - expression_is_true:
+              arguments:
+                expression: 'IS NOT NULL'
+                condition: user_status = 'active' AND status_end_time IS NULL

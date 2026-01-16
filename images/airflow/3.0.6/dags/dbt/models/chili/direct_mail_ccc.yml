@@ -1,0 +1,11 @@
+version: 2
+
+models:
+  - name: direct_mail_ccc
+    columns:
+      - name: raw_data
+        data_tests:
+          - not_null
+      - name: updated
+        data_tests:
+          - not_null

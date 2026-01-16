@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: cs_meal_cash_refunds
+    description: "Aggregates amount of meal cash given for customer service refunds for use in refund_facts."

@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: customer_oven_usage_totals
+    description: "Total counts and earliest/latest timestamps for customers by cook_event_type"

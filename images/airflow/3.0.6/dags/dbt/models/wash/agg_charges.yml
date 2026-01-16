@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: agg_charges
+    description: "Aggregation of all payment line item charges by payment id"

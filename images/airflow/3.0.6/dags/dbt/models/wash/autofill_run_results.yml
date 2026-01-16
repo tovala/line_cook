@@ -1,0 +1,11 @@
+version: 2
+
+models:
+  - name: autofill_run_results
+    columns:
+      - name: run_id
+        data_tests:
+          - primary_key
+      - name: subterm_id
+        data_tests:
+          - not_null

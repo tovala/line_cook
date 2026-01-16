@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: internal_accounts
+    description: "Table of user accounts created by Tovala team for testing purposes. Should be excluded as appropriate."

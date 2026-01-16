@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: agg_refunds
+    description: "Aggregation of all payment line item refunds by payment id"

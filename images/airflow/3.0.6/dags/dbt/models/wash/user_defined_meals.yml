@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: user_defined_meals
+    description: "Parses out cook cycles that have been created and saved by Tovala customers."
+    data_tests:
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - customer_id
+              - alternate_barcode
+            where_clause: "alternate_barcode IS NOT NULL"
+    columns:
+      - name: customer_id
+        data_tests:
+          - not_null

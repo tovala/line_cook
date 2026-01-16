@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: delinquent_customers
+    description: "Customers whose most recent non-skipped order was delinquent."
+    columns:
+      - name: customer_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key

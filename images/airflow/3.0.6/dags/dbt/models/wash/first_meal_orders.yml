@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: first_meal_orders
+    description: "Table that associates each customer with their first meal order"
+    columns:
+      - name: meal_order_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key
+      - name: customer_id
+        description: "Customer whose first meal order this is"
+        data_tests:
+          - primary_key

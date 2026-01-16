@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: active_customer_memberships
+    description: "List of which memberships are active for each customer."
+    columns:
+      - name: customer_id
+        data_tests:
+          - primary_key
+

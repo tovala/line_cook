@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: autofill_results
+    columns:
+      - name: raw_data
+        data_tests:
+          - not_null
+      - name: filename
+        data_tests:
+          - not_null
+      - name: run_time
+        data_tests:
+          - not_null
+      - name: term_id
+        data_tests:
+          - not_null
+      - name: cycle
+        data_tests:
+          - not_null
+      - name: facility_network
+        data_tests:
+          - not_null
+      - name: meals_per_round
+        data_tests:
+          - not_null

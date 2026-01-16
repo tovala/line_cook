@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: agg_post_charges
+    description: "Aggregation of all payment line item post charges by payment id"

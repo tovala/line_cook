@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: gc_and_md_summary
+    description: "Gift card and marketing discount activity with updated balances."
+    columns:
+      - name: transaction_id
+        data_tests:
+          - primary_key
+      - name: balance_remaining_amount
+        data_tests:
+          # The current balance should be positive or zero
+          - expression_is_true:
+              arguments:
+                expression: '>= 0'
+                condition: is_most_recent_transaction

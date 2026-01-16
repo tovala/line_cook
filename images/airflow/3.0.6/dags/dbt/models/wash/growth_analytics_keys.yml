@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: growth_analytics_keys
+    description: "Current and deprecated Fullstory keys being used by the growth team."
+    columns:
+      - name: key_id
+        data_tests:
+          - primary_key
+      - name: key
+        data_tests:
+          - primary_key

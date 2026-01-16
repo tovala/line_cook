@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: real_order_cutoff_times
+    description: "Order cutoff per term, derived from greater of max(order_time) for fulfilled orders and term's actualy order by time (6 PM Central on Wednesday)"
+    columns:
+      - name: term_id
+        data_tests:
+          - primary_key
+      - name: real_order_cutoff_time
+        data_tests:
+          - not_null

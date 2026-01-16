@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: ordinal_skip_statuses
+    description: "Skips per customer per term ordered by skip_time."
+    columns: 
+      - name: customer_id
+        data_tests:
+          - not_null
+      - name: term_id
+        data_tests:
+          - not_null

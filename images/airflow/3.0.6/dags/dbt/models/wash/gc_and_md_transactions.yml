@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: gc_and_md_transactions
+    description: "Gift card and marketing discount usage"
+    data_tests:
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - discount_id
+              - transaction_time
+    columns:
+      - name: transaction_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key
+      - name: discount_id
+        description: "Associated gift card"
+        data_tests:
+          - not_null
+      - name: transaction_type 
+        data_tests:
+          - not_null

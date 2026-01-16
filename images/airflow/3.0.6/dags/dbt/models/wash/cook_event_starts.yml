@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: cook_event_starts
+    description: "Unpacks information about cook events using the cook started event."
+    data_tests:
+      # This checks that the incremental ingestion is working properly
+      - equal_rowcount:
+          arguments:
+            compare_model: ref('cook_events')
+    columns:
+      - name: cook_event_id
+        data_tests:
+          - primary_key
+      # - name: cook_routine_duration
+      #   data_tests:
+      #     # This should not be NULL for recent oven models provided we are sent a proper cook routine (only presets have cook routines)
+      #     - expression_is_true:
+      #         arguments:
+      #           expression: "IS NOT NULL"
+      #           condition: "cook_cycle_id IS NOT NULL AND preset_or_steadystate = 'preset' AND cook_routine <> '[]'"

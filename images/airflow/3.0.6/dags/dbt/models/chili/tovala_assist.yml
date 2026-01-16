@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: tovala_assist
+    columns:
+      - name: raw_data
+        data_tests:
+          - not_null
+      - name: filename
+        data_tests:
+          - not_null
+      - name: updated
+        data_tests:
+          - not_null

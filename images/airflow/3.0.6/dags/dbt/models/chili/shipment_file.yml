@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: shipment_file
+    columns:
+      - name: raw_data
+        data_tests:
+          - not_null
+      - name: filename
+        data_tests:
+          - not_null
+      - name: updated
+        data_tests:
+          - not_null
+      - name: term_id
+        data_tests:
+          - not_null
+      - name: upload_time
+        data_tests:
+          - not_null

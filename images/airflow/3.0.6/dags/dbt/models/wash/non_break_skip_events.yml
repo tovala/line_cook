@@ -1,0 +1,29 @@
+version: 2
+
+models:
+  - name: non_break_skip_events
+    description: "Table of Skip Events, factoring in periods of mid-skip inactivity"
+    data_tests:
+      # There should only ever be one record per customer where the end is NULL
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - customer_id
+              - term_id
+            where_clause: "unskip_time IS NULL"
+      - no_overlapping_rows:
+          arguments:
+            start_field: skip_time
+            end_field: unskip_time 
+            column_join_list:
+              - customer_id
+              - term_id
+    columns:
+      - name: skip_id
+        description: "Primary Key (hashed natural key)"
+        data_tests:
+          - primary_key 
+      - name: term_id 
+        description: "Term that skip events occurred in."
+        data_tests:
+          - not_null

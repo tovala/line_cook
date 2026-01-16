@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: experian_responses
+    description: "Table that associates each customer with Experian data (both batch & API responses)"
+    columns:
+      - name: customer_id
+        description: "Customer whose data this is"
+        data_tests:
+          - primary_key

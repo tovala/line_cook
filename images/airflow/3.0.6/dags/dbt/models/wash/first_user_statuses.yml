@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: first_user_statuses
+    description: "Table that associates each customer with their first account configs"
+    columns:
+      - name: status_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key
+      - name: customer_id
+        description: "Customer whose first status this is"
+        data_tests:
+          - primary_key

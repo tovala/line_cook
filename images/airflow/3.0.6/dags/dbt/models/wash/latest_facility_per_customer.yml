@@ -1,0 +1,13 @@
+version: 2
+
+models:
+  - name: latest_facility_per_customer
+    description: "Finds the most recent facility network associated with a customer for the upcoming term."
+    columns:
+      - name: customer_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key
+      - name: current_facility_network
+        data_tests: 
+          - not_null

@@ -1,21 +1,15 @@
 import datetime
 import os 
 
-from typing import Any, Dict, List
 from pendulum import duration
-
 from airflow.sdk import dag, task, chain, Variable
-from airflow.exceptions import AirflowException
-from airflow.providers.slack.notifications.slack import SlackNotifier
-from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+from common.slack_notifications import bad_boy, good_boy
 from cosmos import DbtDag, DbtTaskGroup, ProjectConfig, ProfileConfig, ExecutionConfig
+from cosmos.profiles import SnowflakeEncryptedPrivateKeyPemProfileMapping
 
 @dag(
-    on_failure_callback=SlackNotifier(
-      slack_conn_id='team-data-notifications',
-      text='Warning: Weekly Data Science Pipeline Failure. DBT Run/Test commands failed to run for the Data Science Pipeline.',
-      channel='team-data-notifications'
-    ),
+    on_failure_callback=bad_boy,
+    on_success_callback=good_boy,
     schedule = '0 21 * * 4', ## (non DST) 3 PM US/Central on Thursday
     ## schedule = '0 20 * * 4' ## (DST) 3 PM US/Central on Thursday
     start_date=datetime.datetime(2026, 1, 15),
@@ -29,10 +23,10 @@ from cosmos import DbtDag, DbtTaskGroup, ProjectConfig, ProfileConfig, Execution
     },
     tags=['data_science'],
     params={
-        'target': 'prod'
+        'SF_ACCOUNT': 'jta05846'
     }
 )
-def weekly_ds_run():
+def weeklyDsRun():
   '''Weekly Data Science Pipeline Run
   Description: Initiate the dbt run and test commands for the Data Science (DS) pipeline 
 
@@ -44,49 +38,39 @@ def weekly_ds_run():
 
   '''
 
+  AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
+
   project_config = ProjectConfig(
-    dbt_project_path='/dags/dbt',
-    models_relative_path='/dags/dbt',
+    dbt_project_path=f'{AIRFLOW_HOME}/dags/dbt',
+    models_relative_path=f'{AIRFLOW_HOME}/dags/dbt',
     project_name='spice_rack',
     install_dbt_deps=True
   )
 
   profile_config = ProfileConfig(
     profile_name='spice_rack',
-    target_name='dev',
-    profiles_yml_filepath='images/airflow/3.0.6/dags/dbt/ds_weekly_run'
-    )
+    target_name='test',
+    profile_mapping=SnowflakeEncryptedPrivateKeyPemProfileMapping(
+        conn_id='snowflake',
+        profile_args={
+          'account': 'jta05846',
+          'user': 'JENKINS',
+          'role': 'ETL', 
+          'warehouse': 'ETL_WAREHOUSE',
+          'database': 'MASALA'
+        },
+    ),
+  )
 
-  dbt_run = DbtDag(
-    dag_id='weekly_ds_run',
+  execution_config = ExecutionConfig(
+    dbt_executable_path=f'{AIRFLOW_HOME}/dbt_venv/bin/dbt'
+  )
+
+  dbt_run = DbtTaskGroup(
+    group_id='dbt_run',
     project_config=project_config,
-    profile_config=profile_config
+    profile_config=profile_config,
+    execution_config=execution_config
   )
 
-
-''' previous airflow_dbt_python operators 
-
-  dbt_run = DbtRunOperator(
-    task_id='weekly_ds_build', 
-    selector_name='weekly_ds_run',
-    project_dir=Variable.get('spice_rack_dbt_bucket'),
-    profiles_dir=f'{Variable.get('spice_rack_dbt_bucket')}/.dbt/',
-    profile='spice_rack',
-    target=context.get('params')['target']
-  )
-
-  dbt_test = DbtTestOperator(
-    task_id='weekly_ds_build', 
-    selector_name='weekly_ds_run',
-    project_dir=Variable.get('spice_rack_dbt_bucket'),
-    profiles_dir=f'{Variable.get('spice_rack_dbt_bucket')}/.dbt/',
-    profile='spice_rack',
-    target=context.get('params')['target']
-  )
-  '''
-
-  # Run all dbt DS models, then test all dbt DS models 
-  # chain(dbt_run, dbt_test) 
-
-# DAG Call 
-weekly_ds_run() 
+weeklyDsRun()

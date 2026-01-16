@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: autofillable_customers
+    description: "Contains all meals for past and live terms that could be autofilled - i.e. are active and unskipped at the time of the order."
+    data_tests:
+      # One record per term
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - term_id
+              - customer_id

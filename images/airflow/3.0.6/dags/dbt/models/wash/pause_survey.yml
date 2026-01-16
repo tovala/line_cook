@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: pause_survey
+    description: "Responses to Typeform survey given when a customer chooses to pause their account."

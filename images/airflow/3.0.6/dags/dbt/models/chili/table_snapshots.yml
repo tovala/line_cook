@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: table_snapshots
+    columns:
+      - name: raw_data
+        data_tests:
+          - not_null
+      - name: table_name
+        data_tests:
+          - not_null
+      - name: upload_time
+        data_tests:
+          - not_null

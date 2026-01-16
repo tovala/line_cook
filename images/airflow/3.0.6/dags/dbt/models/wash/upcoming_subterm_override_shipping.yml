@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: upcoming_subterm_override_shipping
+    description: "Override subterm information by zipcode"
+    columns: 
+      - name: zip_cd
+        data_tests:
+          - not_null
+      - name: term_id
+        data_tests:
+          - not_null
+      - name: cycle
+        data_tests:
+          - not_null 
+          - accepted_values:
+              arguments:
+                values: [1, 2]
+      - name: facility_network
+        data_tests:
+          - not_null 
+          - accepted_values:
+              arguments:
+                values: ['chicago', 'slc']

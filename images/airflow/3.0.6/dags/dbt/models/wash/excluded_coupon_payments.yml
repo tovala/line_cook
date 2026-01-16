@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: excluded_coupon_payments
+    description: "Used to located payments that should be excluded from the Rev File based on coupon code."
+    columns:
+      - name: payment_id
+        data_tests:
+          - primary_key
+      - name: customer_id 
+        data_tests:
+          - not_null

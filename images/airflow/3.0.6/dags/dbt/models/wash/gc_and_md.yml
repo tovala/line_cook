@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: gc_and_md
+    description: "All gift cards purchased by non-excluded customers as well as marketing discounts"
+    columns:
+      - name: discount_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key

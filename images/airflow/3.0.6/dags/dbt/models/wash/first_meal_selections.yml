@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: first_meal_selections
+    description: "Table of first ever meal selection (including deleted ones) per term per user"

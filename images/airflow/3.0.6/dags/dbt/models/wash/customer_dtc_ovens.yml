@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: customer_dtc_ovens
+    description: "Information regarding a D2C customer's first oven purchase (complete or refunded)."

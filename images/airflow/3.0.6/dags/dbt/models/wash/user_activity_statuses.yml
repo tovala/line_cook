@@ -1,0 +1,13 @@
+version: 2
+
+models:
+  - name: user_activity_statuses
+    description: "User activity statuses s.t. the first inactive row is removed and rows with no change in status are combined."
+    columns:
+      - name: status_id
+        description: 'Primary key.'
+        data_tests:
+          - primary_key
+      - name: status_start_time
+        data_tests:
+          - not_null
