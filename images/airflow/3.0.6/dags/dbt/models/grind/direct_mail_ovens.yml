@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: direct_mail_ovens
+    description: "Table containing oven order data for customers that received direct mailers or were part of the holdout"
+    columns:
+      - name: oven_order_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key
+      - name: variant_code
+        data_tests:
+          - not_null 
+      - name: mailer_variant
+        data_tests:
+          - not_null 
+      

@@ -1,0 +1,8 @@
+version: 2
+
+models:
+  - name: week_four_check_in_responses
+    description: "Table of responses to Week Four Check-In typeform survey."
+    columns:
+      - name: customer_id
+        description: "Unique identifier for customer"

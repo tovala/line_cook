@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: current_macros
+    desription: Most recent record for macros in dbt along with dependencies.  
+    data_tests:
+      - recency:
+          arguments:
+            field: updated
+            datepart: day
+            interval: 1 
+    columns:
+      - name: macro_id
+        data_tests:
+          - primary_key

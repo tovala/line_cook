@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: dry_oven_logs_huge_allocation
+    columns:
+      - name: oven_event_id
+        data_tests:
+          - primary_key
+      - name: source
+        data_tests:
+          - not_null 
+          - accepted_values:
+              arguments:
+                values: ['mini', 'airvala', 'gen2']
+      - name: allocated
+        data_tests:
+          - not_null
+      - name: currentState
+        data_tests:
+          - not_null
+      - name: deviceGroupName
+        data_tests:
+          - not_null
+      - name: freeMemory
+        data_tests:
+          - not_null
+      - name: raw_data
+        data_tests:
+          - no_new_keys:
+              arguments:
+                exclude_fields: ['timestamp']

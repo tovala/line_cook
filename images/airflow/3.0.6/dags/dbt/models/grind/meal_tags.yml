@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: meal_tags
+    description: "This table maps all raw meal tags to menu meals, and categorized into internal_use_tags(for autofull), box_extra meals, cx_tags(dispaly to customers), and others. It keeps all tags in raw format to keep track all changes or testing."
+    columns:
+      - name: menu_meal_id
+        data_tests:
+          - not_null
+      - name: meal_sku_id
+        data_tests:
+          - not_null
+      - name: meal_tag
+        data_tests:
+          - not_null
+      - name: tag_category
+        data_tests:
+          - not_null

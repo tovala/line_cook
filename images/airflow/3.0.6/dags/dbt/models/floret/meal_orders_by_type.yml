@@ -1,0 +1,4 @@
+version: 2
+
+models:
+  - name: meal_orders_by_type

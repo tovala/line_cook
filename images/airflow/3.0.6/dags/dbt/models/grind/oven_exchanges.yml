@@ -1,0 +1,10 @@
+
+version: 2
+
+models:
+  - name: oven_exchanges
+    description: "All shipped oven exchanges."
+    columns:
+      - name: product_shipment_id
+        data_tests:
+          - primary_key

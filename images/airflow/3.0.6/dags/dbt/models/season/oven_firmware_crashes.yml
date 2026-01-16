@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: oven_firmware_crashes
+    description: "Includes all oven crashes due to a firmware bug - Gen2 only."

@@ -1,0 +1,11 @@
+version: 2
+
+models:
+  - name: dp_meals_shipped_by_term
+    description: "This query pulls both complete and failed meal selections at the meal-id level. It will specifically preserve production codes even if they have NULL selection values."
+    columns:
+      - name: term_id
+        data_tests:
+          - not_null
+      - name: production_cd
+          - not_null

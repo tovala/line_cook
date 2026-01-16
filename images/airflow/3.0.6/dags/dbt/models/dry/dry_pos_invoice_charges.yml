@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: dry_pos_invoice_charges 
+    description: "This table maps each charge for an invoice to its corresponding invoice details. 
+                  Here, you can find the charge amount, tax, and discount totals. 
+                  You can also see the product that the payment is associated with (e.g. gift card, oven, etc)"
+    columns:
+      - name: id
+        data_tests:
+          - primary_key
+      - name: updated 
+        data_tests:
+          - not_null

@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: coupled_add_ons
+    description: 'Contains a mapping of coupled add-ons to what meals they were offered alongside and for what price.'

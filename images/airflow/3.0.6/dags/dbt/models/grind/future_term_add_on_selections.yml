@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: future_term_add_on_selections
+    description: "Contains add-on selections for upcoming terms." 
+    columns: 
+      - name: add_on_selection_id
+        data_tests:
+          - primary_key
+      - name: customer_id
+        data_tests:
+          - not_null

@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: reviews
+    description: "Table of Meal Reviews"
+    columns:
+      - name: review_id
+        description: "Primary Key (hashed natural key)"
+        data_tests:
+          - primary_key
+      - name: review_time
+        description: "Time (in UTC) at which review was submitted"
+        data_tests:
+          - not_null
+      - name: side_rating
+        data_tests:
+          - not_null
+      - name: subroutine
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['A', 'B', 'C']
+      - name: rating_medium
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Web', 'Android', 'iOS', 'api']

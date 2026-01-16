@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: meal_cash
+    description: "A bank of post-tax discounts for customers"
+    columns:
+      - name: transaction_id
+        data_tests:
+          - primary_key
+      - name: action_category
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['credit', 'credit_refund', 'cs_mealcash', 'debit', 'order_refund', 'order_refund_partial', 'refund', 'shipping_refund']
+      - name: type_category
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['coupon_code_credit', 'customer_service', 'meal_order', 'product_promotion', 'refund', 'tovala_referrer_credit'] 
+      - name: customer_id
+        data_tests:
+          - not_null   

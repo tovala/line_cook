@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: retail_customer_survey
+    description: "Parses iOS survey that asks customers where they purchased their oven."
+    columns:
+      - name: customer_id
+        data_tests:
+          - primary_key
+      - name: retail_channel
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['amazon', 'costco', 'qvc']

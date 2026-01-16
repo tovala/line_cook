@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: dry_typeform_answers
+    columns:
+      - name: answer_id
+        test:
+          - primary_key
+      - name: data_type
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['boolean', 'choice', 'choices',
+                  'email', 'number', 'phone_number', 'text',
+                  'url', 'file_url', 'date', 'multi_format']
+      - name: landing_id
+        data_tests:
+          - not_null
+      - name: question_id
+        data_tests:
+          - not_null
+      - name: answer_type
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['date', 'dropdown', 'email', 'file_upload', 
+                  'legal', 'long_text', 'multiple_choice', 'nps', 'number',
+                  'opinion_scale', 'phone_number', 'picture_choice', 'ranking', 
+                  'rating', 'short_text', 'website', 'yes_no', 'multi_format']

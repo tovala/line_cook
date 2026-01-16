@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: marketing_discounts
+    columns:
+      - name: transaction_type
+        data_tests:
+          - not_null
+      

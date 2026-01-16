@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: dry_user_subscription_break_history
+    description: "CAPI table that tracks the creation and deletion of breaks."
+    data_tests:
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - break_id
+              - action
+    columns:
+      - name: id
+        data_tests:
+          - primary_key
+      - name: created
+        data_tests:
+          - not_null
+      - name: action
+        data_tests:
+          - not_null 
+          - accepted_values:
+              arguments:
+                values: ['created', 'deleted']

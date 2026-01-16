@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: customers
+    description: "Table of customers who registered"
+    columns:
+      - name: customer_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key
+      - name: registration_time
+        description: "Time (in UTC) at which customer registered"
+        data_tests:
+          - not_null

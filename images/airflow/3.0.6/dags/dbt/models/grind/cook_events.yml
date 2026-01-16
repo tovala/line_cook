@@ -1,0 +1,34 @@
+version: 2
+
+models:
+  - name: cook_events
+    data_tests:
+      # Barcodes that start with 133A254 are Tovala barcodes and this is the accepted structure
+      # If this changes, we will need to update cook_event_subtypes 
+      - expression_is_true:
+         arguments:
+            # Note: \\ renders as \ 
+            expression: "RLIKE(barcode, '133A254\\\\|(.*)|(\\\\w{7,8})?(\\\\|(A|B|C|D|UNDEFINED|U))?')"
+            condition: "barcode LIKE '133A254%' AND cook_start_time > '2020-02-21'"
+    columns:
+      - name: cook_event_id
+        data_tests:
+          - primary_key
+      - name: oven_generation
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['airvala', 'gen_2', 'gen_1']
+      # - name: cook_end_type
+      #   data_tests:
+      #     - not_null
+      #     - accepted_values:
+      #         arguments:
+      #           values: ['cook_completed', 'cook_canceled', 'unknown_termination']
+      # - name: unique_cook_cycle_id
+      #   data_tests:
+      #     - unique
+      - name: updated
+        data_tests:
+          - not_null

@@ -1,0 +1,6 @@
+version: 2
+
+models:
+  - name: cohort_historic_meal_orders
+    description: "This query pulls meal orders by box size, term, cohort and cycle to be used downstream to update the cohort model."
+    

@@ -1,0 +1,27 @@
+version: 2
+
+models:
+  - name: dry_oven_logs_bootup_complete
+    columns:
+      - name: oven_event_id
+        data_tests:
+          - primary_key
+      - name: source
+        data_tests:
+          - not_null 
+          - accepted_values:
+              arguments:
+                values: ['mini', 'airvala', 'gen2']
+      - name: firmwareVerion
+        data_tests:
+          - not_null
+      - name: raw_data
+        data_tests:
+          - no_new_keys:
+              arguments:
+                exclude_fields: ['timestamp','receivetimems', 'devicegroupname', 'eventtype', 'environment',
+                                 'serialnumber', 'eventtimems', 'cookcycleid', 'devicegroupid', 'eventkey', 'ttl',
+                                 'eventsspiusagebytes', 'ovenmanagerinternalmemorybytes', 'consoleinternalmemorybytes', 
+                                 'consolespiusagebytes', 'dooropen', 'eventsinternalmemorybytes', 'startspimemorybytes', 
+                                 'ovenmanagerspiusagebytes', 'networkmanagerinternalmemorybytes', 'networkmanagerspiusagebytes',
+                                 'remaininginternalmemorybytes', 'configversion', 'remainingspimemorybytes', 'startinternalmemorybytes', 'firmwareversion']

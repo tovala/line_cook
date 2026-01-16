@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: customer_incentives_summary
+    description: "Table of total and current incentive balances"
+    columns:
+      - name: customer_id
+        description: "This is the only unique key in the table."
+        data_tests:
+          - primary_key

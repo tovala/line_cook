@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: oven_bootups
+    description: "Includes all oven bootup events - Gen2 only."
+    data_tests:
+      # Ensure we have exactly one record for is_first_bootup
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - oven_hardware_id
+            where_clause: is_first_bootup
+      # Ensure we have exactly one record for is_most_recent_bootup
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - oven_hardware_id
+            where_clause: is_most_recent_bootup
+    columns: 
+      - name: boot_reason
+        data_tests:
+          # Boot reason shouldn't be NULL with the exception of early bad data
+          - expression_is_true:
+              arguments:
+                expression: "IS NOT NULL"
+                condition: "bootup_time > '2019-04-19'"

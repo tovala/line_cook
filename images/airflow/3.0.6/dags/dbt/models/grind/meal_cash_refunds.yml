@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: meal_cash_refunds
+    description: "Calculates refunded meal cash by payment_id."

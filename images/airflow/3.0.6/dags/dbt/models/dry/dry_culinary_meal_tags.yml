@@ -1,0 +1,8 @@
+version: 2
+
+models:
+  - name: dry_culinary_meal_tags
+    columns:
+      - name: internal_meal_name
+        data_tests:
+          - primary_key

@@ -1,0 +1,115 @@
+version: 2
+
+models:
+  - name: customerio_customers
+    description: "This table holds information at a customer granularity that will be sent to CustomerIO."
+    columns:
+      - name: customer_id
+        data_tests:
+          - primary_key
+
+      - name: sf_is_deactivated
+        description: "Boolean flag for if the customer is deactivated"
+      
+      - name: sf_is_free_dessert_customer
+        description: "Boolean flag for if the customer is currently a free dessert customer"
+      - name: sf_cancellation_time_free_dessert_for_life
+        description: "The time the customer cancelled their free dessert subscription. Null for active fdfl and never fdfl customers"
+
+      - name: sf_total_fulfilled_orders_count_commitment
+        description: "Total number of fulfilled orders among all stripe fingerprints associated with a customer. Used for commitment enforcement."
+      - name: sf_commitment_orders_remaining
+        description: "Number of orders remaining for the customer to fulfill their commitment. Used for commitment enforcement."
+      - name: sf_commitment_status
+        description: "The status of the customer's commitment. Used for commitment enforcement."
+
+      - name: sf_latest_status
+        description: "The customer's latest status"
+      - name: sf_is_internal_account
+        description: "Boolean flag for if the customer is an internal account, from customer_facts"
+      - name: sf_latest_pause_time
+        description: "The time currently paused customers were paused. NULL for customers who are not paused"
+      - name: sf_latest_cancel_time
+        description: "The time currently cancelled customers were cancelled. NULL for customers who are not cancelled"
+
+      - name: sf_estimated_delivery_date
+        description: "Calculated expected delivery date given transit time + cycle. This is for the latest term the customer has a meal shipment for."
+
+      - name: sf_next_term_to_close
+        description: "The next term to close"
+      - name: sf_next_2_terms_to_close
+        description: "The the term after the next term to close"
+      - name: sf_next_3_terms_to_close
+        description: "The next terms to clos + 2"
+
+      - name: sf_next_term_to_close_status
+        description: "The customer's status during the next term to close"
+      - name: sf_next_term_to_close_fully_selected
+        description: "Has a user picked all of their meals for the next term to close"
+      - name: sf_next_2_terms_to_close_status
+        description: "The customer's status during the term after thenext term to close"
+      - name: sf_next_3_terms_to_close_status
+        description: "The customer's status during the next terms to close + 2"
+        
+      - name: sf_nttc_meal_favorites_1_title
+        description: "The title of the customer's most recent positively rated meal on the upcoming menu, from upcoming_meal_favorites"
+      - name: sf_nttc_meal_favorites_1_subtitle
+        description: "The subtitle of the customer's most recent positively rated meal on the upcoming menu, from upcoming_meal_favorites"
+      - name: sf_nttc_meal_favorites_1_review_time
+        description: "The review time of the associated review for the customer's most recent positively rated meal on the upcoming menu, from upcoming_meal_favorites"
+      - name: sf_nttc_meal_favorites_2_title
+        description: "The title of the customer's first positively rated meal on the upcoming menu (oldest positive review), from upcoming_meal_favorites"
+      - name: sf_nttc_meal_favorites_2_subtitle
+        description: "The subtitle of the customer's first positively rated meal on the upcoming menu (oldest positive review), from upcoming_meal_favorites"
+      - name: sf_nttc_meal_favorites_2_review_time
+        description: "The review time of the associated review for the customer's first positively rated meal on the upcoming menu, from upcoming_meal_favorites"
+        
+
+      - name: sf_total_fulfilled_orders_count
+        description: "Total number of fulfilled orders a customer has placed with Tovala"
+      - name: sf_consecutive_fulfilled_count
+        description: "The number of consecutive fulfilled orders for the customer"
+    
+      - name: sf_reactivation_eligible_flag
+        description: "Boolean flag for if the customer is eligible for reactivation, based on reactivation_eligible_customers"
+
+      - name: sf_off_inactive_flag
+        description: "Boolean flag for if the customer is off inactive, based on off_inactive_customers"
+          
+      - name: sf_has_reviewed_flag
+        description: "Boolean flag for if the customer has reviewed a meal "
+      - name: sf_avg_rating_stars_all_time
+        description: "The customer's average rating stars over all reviews"
+      - name: sf_avg_rating_stars_last_5
+        description: "The customer's average rating stars over the last 5 orders"
+
+      - name: sf_referral_count
+        description: "The number of other customers the customer has referred"
+      
+      - name: sf_nps_recommendation_score
+        description: "The customer's most recent response to the NPS question How likely are you to recommend Tovala to a friend or colleague?"
+
+
+      - name: sf_last_updated
+        description: "The last time sf_ data was updated in Snowflake"
+
+      - name: sf_ce_active_status
+        description: "a boolean flag for if the customer is currently active"
+      - name: sf_ce_t_0_number_meals_selected
+        description: "The number of meals selected for the customer's next term"
+      - name: sf_ce_t_0_meals_selected_status
+        description: " (full, partial, none) for whether the customer's next term is fully selected."
+      - name: sf_ce_t_0_skip_status
+        description: "A boolean flag for if the customer's next term is skipped"
+      - name: sf_ce_t_1_number_meals_selected
+        description: "The number of meals selected for the customer's next term + 1"
+      - name: sf_ce_t_1_meals_selected_status
+        description: " (full, partial, none) for whether the customer's next term + 1 is fully selected."
+      - name: sf_ce_t_1_skip_status
+        description: "A boolean flag for if the customer's next term + 1 is skipped"
+      - name: sf_ce_t_2_number_meals_selected
+        description: "The number of meals selected for the customer's next term + 2"
+      - name: sf_ce_t_2_meals_selected_status
+        description: " (full, partial, none) for whether the customer's next term + 2 is fully selected."
+      - name: sf_ce_t_2_skip_status
+        description: "A boolean flag for if the customer's next term + 2 is skipped"

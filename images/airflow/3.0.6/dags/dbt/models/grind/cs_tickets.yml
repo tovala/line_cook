@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: cs_tickets
+    description: Customer Support Tickets & Metrics
+    data_tests:
+      # Ensures the parsed affected_term_id is correctly formatted
+      - expression_is_true:
+          arguments:
+            # Note: \\ renders as \ 
+            expression: "RLIKE(affected_term_id::STRING, '\\\\d{2,3}')"
+            condition: "affected_term_id IS NOT NULL"
+    columns:
+      - name: ticket_id
+        data_tests:
+          - primary_key

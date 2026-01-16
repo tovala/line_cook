@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: dry_gift_cards_activity
+    columns:
+      - name: id
+        data_tests:
+          - primary_key
+      - name: updated
+        data_tests:
+          - not_null
+      - name: type 
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['giftnow', 'pay_for_product_giftflow', 'pay_for_product', 'marketing', 'refund', 'prepay', 'transfer']

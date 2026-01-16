@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: ad_performance
+    columns:
+      - name: id
+        data_tests:
+          - primary_key
+      - name: channel_name
+        data_tests:
+          - not_null
+      - name: spend
+        data_tests:
+          - not_null
+      - name: oven_sales
+        data_tests:
+          - not_null

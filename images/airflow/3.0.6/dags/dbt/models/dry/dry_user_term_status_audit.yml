@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: dry_user_term_status_audit
+    columns:
+      - name: updated
+        data_tests:
+          - not_null
+      - name: stamp
+        data_tests:
+          - not_null
+      - name: operation
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['DELETE', 'INSERT', 'UPDATE']

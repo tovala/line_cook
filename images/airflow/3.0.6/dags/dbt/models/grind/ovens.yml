@@ -1,0 +1,11 @@
+version: 2
+
+models:
+  - name: ovens
+    columns:
+      - name: oven_hardware_id
+        data_tests:
+          - primary_key
+      - name: oven_generation
+        data_tests:
+          - not_null

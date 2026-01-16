@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: dry_oven_logs_cookingended
+    columns:
+      - name: oven_event_id
+        data_tests:
+          - primary_key
+      - name: source
+        data_tests:
+          - not_null 
+          - accepted_values:
+              arguments:
+                values: ['oven', 'gen2', 'airvala']
+      - name: raw_data
+        data_tests:
+          - no_new_keys:
+              arguments:
+                exclude_fields: ['timestamp', 'receivetimems', 'devicegroupname', 'eventtype', 'environment', 'serialnumber', 'eventtimems', 'cookcycleid', 'devicegroupid', 'eventkey', 'ttl']

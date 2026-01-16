@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: membership_group_customers
+    description: "List of membership groups associated with customers."
+    columns:
+      - name: customer_id
+        data_tests:
+          - not_null
+      - name: membership_group
+        data_tests:
+          - not_null
+      - name: is_active
+        data_tests:
+          - not_null
+

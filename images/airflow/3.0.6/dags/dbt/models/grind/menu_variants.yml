@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: menu_variants
+    columns:
+      - name: menu_variant_id
+        data_tests:
+          - primary_key
+      - name: subterm_id
+        data_tests:
+          - not_null
+      - name: term_id
+        data_tests:
+          - not_null

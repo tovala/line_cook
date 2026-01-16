@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: menu_rating_details
+    description: "Including some details for looker segment"
+    columns:
+      - name: menu_rating_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key

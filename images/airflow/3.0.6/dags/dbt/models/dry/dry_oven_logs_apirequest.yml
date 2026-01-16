@@ -1,0 +1,32 @@
+version: 2
+
+models:
+  - name: dry_oven_logs_apirequest
+    columns:
+      - name: oven_event_id
+        data_tests:
+          - primary_key
+      - name: source
+        data_tests:
+          - not_null 
+          - accepted_values:
+              arguments:
+                values: ['mini', 'airvala', 'gen2']
+      - name: body
+        data_tests:
+          - not_null
+      - name: deviceGroupName
+        data_tests:
+          - not_null
+      - name: headers
+        data_tests:
+          - not_null
+      - name: path
+        data_tests:
+          - not_null
+      - name: method
+        data_tests:
+          - not_null 
+          - accepted_values:
+              arguments:
+                values: ['GET', 'POST', 'OPTIONS']                                       

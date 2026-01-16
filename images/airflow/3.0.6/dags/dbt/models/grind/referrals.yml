@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: referrals
+    description: "Table of customers who referred other customers"
+    columns:
+      - name: referred_oven_order_id
+        description: "Oven ID of the referred oven"
+        data_tests:
+          - primary_key
+      - name: referrer_customer_id
+        description: "Customer ID of the Referrer"
+        data_tests:
+          - not_null
+ 

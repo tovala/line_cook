@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: models
+    desription: Metadata and configurations for all models built by dbt.
+    columns:
+      - name: id
+        data_tests:
+          - primary_key
+      - name: model_id
+        data_tests: 
+          - not_null
+          - expression_is_true:
+              arguments:
+                expression: "LIKE 'model.spice_rack.%'"
+      - name: database_table_name
+        data_tests:
+          - not_null

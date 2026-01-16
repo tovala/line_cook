@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: preset_cook_events
+    columns:      
+      - name: cook_event_id
+        data_tests:
+          - primary_key
+      - name: barcode
+        data_tests:
+          - not_null
+      - name: preset_category
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['cleaning', 'heat', 'toast']

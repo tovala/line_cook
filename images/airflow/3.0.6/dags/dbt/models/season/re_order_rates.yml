@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: re_order_rates
+    description: "This reorder rate compares it to the last time it was offered. It can give us a sense of how much customers liked the meal, and also how this rate differs if we offer different things on the menu or space out the time between offering meals."
+    columns:
+      - name: menu_meal_id 
+        data_tests:
+          - primary_key
+      - name: re_order_count
+        data_tests:
+          - expression_is_true:
+              arguments:
+                expression: '>= 0'
+      - name: re_order_all_count
+        data_tests:
+          - expression_is_true:
+              arguments:
+                expression: '>= 0'
+      - name: re_order_rate
+        data_tests:
+          - expression_is_true:
+              arguments:
+                expression: '>= 0'

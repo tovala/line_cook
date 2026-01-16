@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: meal_images
+    description: "This table labels the the version of the main dish images."
+    columns:
+      - name: is_latest_image
+        description: "indicator for latest image update."
+        data_tests:
+          - not_null

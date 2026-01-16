@@ -1,0 +1,13 @@
+version: 2
+
+models:
+  - name: nps_details
+    description: "Table of customers statuses at time of survey"
+    columns:
+      - name: landing_id
+        test:
+          - primary_key
+      - name: customer_id
+        description: "Unique identifier for customer"
+        data_tests:
+          - not_null 

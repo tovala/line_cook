@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: add_on_selections
+    description: "Contains add-on selections for processed terms."
+    columns: 
+      - name: add_on_selection_id
+        data_tests:
+          - primary_key

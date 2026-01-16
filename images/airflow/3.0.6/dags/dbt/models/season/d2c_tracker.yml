@@ -1,0 +1,8 @@
+version: 2
+
+models:
+  - name: d2c_tracker 
+    columns:
+      - name: report_date
+        data_tests:
+          - primary_key

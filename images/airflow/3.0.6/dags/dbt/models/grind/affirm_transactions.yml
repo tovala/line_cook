@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: affirm_transactions
+    columns:
+      - name: charge_event_id
+        data_tests:
+          - primary_key
+      - name: transaction_amount
+        data_tests:
+          - not_null
+      - name: fee_amount
+        data_tests:
+          - not_null
+      - name: order_item_id
+        data_tests:
+          - not_null

@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: dp_meal_selections
+    description: "This query pulls meal selections from all active and not skipped customers for live terms."

@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: meal_selections
+    description: "Table of Meal Selections per Customer per Term"
+    columns:
+      - name: meal_selection_id
+        description: "Primary Key (hash of naturaly meal selection unique columns)"
+        data_tests:
+          - primary_key 
+      - name: production_cd
+        description: "Ops production code for a meal"
+        data_tests:
+          - not_null

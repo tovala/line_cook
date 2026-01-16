@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: historical_production_counts
+    description: "Contains all manually entered production counts used for autofill in historical terms (post term 275)."
+    data_tests:
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - subterm_id
+              - meal_sku_id
+    columns:
+      - name: subterm_id
+        data_tests:
+          - not_null
+      - name: meal_sku_id
+        data_tests:
+          - not_null
+      - name: production_cd
+        data_tests:
+          - not_null
+      - name: production_count
+        data_tests:
+          - not_null

@@ -1,0 +1,29 @@
+version: 2
+
+models:
+  - name: dry_shipment_file
+    columns:
+      - name: term_id
+        data_tests:
+          - not_null
+      - name: cycle_id
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1,2]
+      - name: facility_network
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['chicago', 'slc']
+      - name: subscription_type
+        data_tests:
+          - not_null
+      - name: orderfulfillmentid
+        data_tests:
+          - not_null
+      - name: shipdate
+        data_tests:
+          - not_null

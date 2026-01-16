@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: etl_model_builds
+    description: Information surrounding all tables run by dbt in production
+    columns:
+      - name: model_build_id
+        data_tests:
+          - primary_key
+      - name: model_id
+        data_tests:
+          - not_null
+      - name: model_status
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['error', 'skipped', 'success']
+      - name: total_time_seconds
+        data_tests:
+          - not_null

@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: manifest
+    desription: Splitting the manifest.json file into important parts. 
+    columns:
+      - name: manifest_id
+        data_tests:
+          - primary_key
+      - name: updated
+        data_tests:
+          - not_null
+      - name: child_map
+        data_tests:
+          - array_not_null_or_empty
+      - name: macros
+        data_tests:
+          - array_not_null_or_empty          
+      - name: nodes
+        data_tests:
+          - array_not_null_or_empty
+      - name: sources
+        data_tests:
+          - array_not_null_or_empty

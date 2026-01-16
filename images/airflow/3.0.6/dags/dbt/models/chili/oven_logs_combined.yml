@@ -1,0 +1,27 @@
+version: 2
+
+models:
+  - name: oven_logs_combined
+    data_tests:
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - oven_event_id
+            # Last 7 days to reduce runtime
+            where_clause: "updated > DATEADD('day', -7, {{ current_timestamp_utc() }})"
+    columns:
+      - name: oven_event_id
+        data_tests:
+          - not_null
+      - name: deviceid
+        data_tests:
+          - not_null
+      - name: time_stamp
+        data_tests:
+          - not_null
+      - name: source
+        data_tests:
+          - not_null:
+              arguments:
+                config:
+                  where: "key IN ('bootup-complete', 'cookingStarted', 'errorCode', 'global_exception', 'huge_allocation', 'temperature')"

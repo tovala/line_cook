@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: dry_oven_logs_temperature
+    columns:
+      - name: oven_event_id
+        data_tests:
+          - primary_key:
+              arguments:
+                condition: "updated >= DATEADD(day, -14, {{ current_timestamp_utc() }})"
+      - name: source
+        data_tests:
+          - not_null 
+          - accepted_values:
+              arguments:
+                values: ['mini', 'oven', 'airvala', 'gen2']
+      - name: raw_data
+        data_tests:
+          - no_new_keys:
+              arguments:
+                exclude_fields: ['timestamp', 'temperature', 'receivetimems', 'devicegroupname', 'eventtype', 'environment', 'serialnumber', 'eventtimems', 'cookcycleid', 'devicegroupid', 'eventkey', 'ttl']

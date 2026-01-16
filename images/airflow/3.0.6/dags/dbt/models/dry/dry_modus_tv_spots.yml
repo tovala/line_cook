@@ -1,0 +1,11 @@
+version: 2
+
+models:
+  - name: dry_modus_tv_spots
+    columns:
+      - name: id
+        data_tests:
+          - primary_key
+          - not_null
+      - name: report_date
+          - not_null 

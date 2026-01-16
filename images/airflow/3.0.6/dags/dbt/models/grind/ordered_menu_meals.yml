@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: ordered_menu_meals
+    columns:
+      - name: term_id
+        data_tests:
+          - not_null
+      - name: subterm_id
+        data_tests:
+          - not_null
+      - name: meal_sku_id
+        data_tests:
+          - not_null
+      - name: menu_display_order
+        data_tests:
+          - not_null

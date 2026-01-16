@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: prospect_facts
+    description: "Table including session information prior to becoming a customer: oven purchase, registration, or meal order"
+    columns:
+      - name: lead_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key

@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: meal_components
+    description: "List of all components of a meals and their portion tags from Misevala."
+    columns:
+      - name: meal_component_facility_id
+        data_tests:
+          - not_null
+      - name: component_name
+        data_tests:
+          - not_null
+      - name: internal_meal_name
+        data_tests:
+          - not_null

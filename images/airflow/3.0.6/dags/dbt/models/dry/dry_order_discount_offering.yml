@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: dry_order_discount_offering
+    columns:
+      - name: id
+        data_tests:
+          - primary_key
+      - name: created
+        data_tests:
+          - not_null
+      - name: updated
+        data_tests:
+          - not_null

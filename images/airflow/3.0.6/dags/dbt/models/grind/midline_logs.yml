@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: midline_logs
+    columns:
+      - name: updated
+        data_tests:
+          - not_null
+      - name: test_run_time
+        data_tests:
+          - not_null
+      - name: unix_timestamp
+        data_tests:
+          - not_null
+      - name: testcondition
+        data_tests:
+          - not_null 
+          - accepted_values:
+              arguments:
+                values: ['WITHIN', 'TRIGGER', 'PASS_ON_GOOD']
+      - name: step_results
+        data_tests:
+          - not_null 
+          - accepted_values:
+              arguments:
+                values: ['PASSED', 'FAILED']
+      - name: oven_results
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['PASSED', 'FAILED','CANCELLED']

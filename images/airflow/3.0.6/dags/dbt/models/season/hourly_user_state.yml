@@ -1,0 +1,48 @@
+version: 2
+
+models:
+  - name: hourly_user_state
+    data_tests:
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - hourly_user_state_id
+            where_clause: "calendar_time_utc > DATEADD('day', -7, {{ current_timestamp_utc() }})"
+      # All active, unskipped customers should have non-null order size/cycle
+      - expression_is_true:
+          arguments:
+            expression: "order_size IS NOT NULL AND cycle IS NOT NULL"
+            condition: "is_active AND NOT is_skipped"
+    columns:
+      - name: hourly_user_state_id
+        data_tests:
+          - not_null
+      - name: customer_id
+        data_tests:
+          - not_null
+      - name: term_id
+        data_tests:
+          - not_null
+      - name: calendar_time_utc
+        data_tests:
+          - not_null
+      - name: is_active
+        data_tests:
+          - not_null 
+      - name: is_paused
+        data_tests:
+          - not_null 
+      - name: is_canceled
+        data_tests:
+          - not_null 
+      - name: is_skipped
+        data_tests:
+          - not_null 
+      - name: cycle
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2]
+      - name: zip_cd
+        data_tests:
+          - not_null

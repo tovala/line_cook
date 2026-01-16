@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: snowflake_users
+    description: "Snapshot of all non-deleted Snowflake users and their settings"
+    columns:
+      - name: default_secondary_roles
+        data_tests:
+        # In order to ensure correct role-based access, we must check that a user has default_secondary_role set to an empty list
+        # If this fails, you will need to rerun the procedure documented in change_scripts/2025_02/2025_02_04-disabling-secondary-roles.sql as ACCOUNTADMIN
+          - expression_is_true:
+              arguments:
+                expression: "= '[]'"
+                condition: "name <> 'SNOWFLAKE'"

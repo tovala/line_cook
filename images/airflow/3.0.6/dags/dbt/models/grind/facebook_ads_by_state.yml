@@ -1,0 +1,8 @@
+version: 2
+
+models:
+  - name: facebook_ads_by_state
+    columns:
+      - name: id
+        data_tests:
+          - primary_key

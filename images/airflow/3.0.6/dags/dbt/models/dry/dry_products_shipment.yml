@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: dry_products_shipment
+    columns:
+      - name: id
+        data_tests:
+          - primary_key
+      - name: updated
+        data_tests:
+          - not_null
+      - name: fulfillment_queue_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['canceled', 'fulfillment-created', 'invalid-state', 'on_hold', 'ready-to-fulfill', 'submitted-to-queue']
+          - expression_is_true: 
+              arguments:
+                expression: "IS NOT NULL"
+                condition: "created >= '2021-11-25'"

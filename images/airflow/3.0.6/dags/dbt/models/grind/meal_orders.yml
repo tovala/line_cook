@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: meal_orders
+    description: "Weekly meal orders"
+    data_tests:
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - customer_id
+              - term_id
+    columns:
+      - name: meal_order_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key 
+      - name: customer_id 
+        description: "userid"
+        data_tests:
+          - not_null
+      - name: term_id 
+        description: "Term the order was placed"
+        data_tests:
+          - not_null
+      - name: order_time
+        description: "Time (in UTC) at which order was placed"
+        data_tests:
+          - not_null
+      - name: status
+        data_tests:
+          - not_null 
+          - accepted_values:
+              arguments:
+                values: ['canceled', 'complete', 'payment_delinquent', 'payment_error', 'refunded', 'skipped']
+      - name: cycle
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1,2]
+      - name: subterm_id
+        data_tests:
+          - not_null

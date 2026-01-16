@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: menu_ratings
+    columns:
+      - name: menu_rating_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key

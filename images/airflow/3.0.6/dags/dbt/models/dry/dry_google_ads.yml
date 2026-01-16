@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: dry_google_ads
+    columns:
+      - name: id
+        data_tests:
+          - primary_key
+    data_tests:
+      # We would expect one row of dimensions for every Channel/Partner/Category combination 
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - campaign_id
+              - report_date
+              - report_hour  
+              - ad_network 

@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: fraudsters 
+    description: "Table for flagging when customers may be committing fraud."
+    columns:
+      - name: customer_id
+        data_tests:
+          - not_null
+    data_tests:
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - customer_id
+              - payment_id

@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: dry_experiment_tracker_experiments_seen
+    columns:
+      - name: id
+        data_tests:
+          - primary_key
+      - name: created
+        data_tests:
+          - not_null
+      - name: sent_at
+        data_tests:
+          - not_null

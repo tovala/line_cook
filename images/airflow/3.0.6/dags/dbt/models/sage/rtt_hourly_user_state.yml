@@ -1,0 +1,6 @@
+version: 2
+
+models:
+  - name: rtt_hourly_user_state
+    description: "This query pulls various metrics at the term-hour level in order to run the Near Term Forecast model."
+    

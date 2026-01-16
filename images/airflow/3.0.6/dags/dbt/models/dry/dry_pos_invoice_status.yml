@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: dry_pos_invoice_status
+    description: "This table pulls in the status of each invoice (paid, refunded, submitted, created)."
+    columns:
+      - name: invoice_id
+        data_tests:
+          - primary_key
+      - name: created 
+        data_tests:
+          - not_null

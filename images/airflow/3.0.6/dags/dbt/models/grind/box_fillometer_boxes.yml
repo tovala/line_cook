@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: box_fillometer_boxes
+    description: "Individual box information for Box Fillometer logs"
+    columns:
+      - name: order_id
+        data_tests:
+          - not_null
+      - name: box_id
+        data_tests:
+          - primary_key

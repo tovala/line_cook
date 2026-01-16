@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: assist_recipe_reviews
+    columns:
+      - name: review_id
+        data_tests:
+          - primary_key
+      - name: tovala_assist_recipe_id
+        data_tests:
+          - not_null
+      - name: customer_id
+        data_tests:
+          - not_null

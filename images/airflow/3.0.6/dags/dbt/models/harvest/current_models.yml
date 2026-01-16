@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: current_models
+    desription: All currently built models by dbt - including detailed information on dependencies.  
+    data_tests:
+      - recency:
+          arguments:
+            field: updated
+            datepart: day
+            interval: 1
+    columns:
+      - name: model_id
+        data_tests:
+          - primary_key
+          - expression_is_true:
+              arguments:
+                expression: "LIKE 'model.spice_rack.%'"
+      - name: yml_file
+        data_tests:
+          - not_null
+      - name: model_file
+        data_tests:
+          - not_null
+      - name: materialized_type
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['from_external_stage', 'incremental', 'table']
+      - name: total_upstream_tables
+        data_tests:
+          # If this fails, it indicates that tables are hardcoded in model files rather than using the appropriate reference
+          # Excludes loads from S3 and dummy tables (that have no columns)
+          - expression_is_false:
+              arguments:
+                expression: "= 0" 
+                condition: "materialized_type <> 'from_external_stage' AND model_columns <> {} AND model_name <> 'snowflake_users'"
+      - name: unique_key
+        data_tests:
+          # All tables need to have a unique key in order to use the default delete+insert incrementality
+          - expression_is_true:
+              arguments:
+                expression: "IS NOT NULL" 
+                condition: "materialized_type IS NOT NULL AND incremental_strategy <> 'merge'"

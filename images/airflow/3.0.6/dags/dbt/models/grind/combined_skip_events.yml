@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: combined_skip_events
+    description: "Combined break and non break skips into one table that removes overlapping records."
+    data_tests:
+      # There should only ever be one record per customer & term where the end is NULL
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - customer_id
+              - term_id
+            where_clause: "unskip_time IS NULL"
+      - no_overlapping_rows:
+          arguments:
+            start_field: skip_time
+            end_field: unskip_time 
+            column_join_list:
+              - customer_id
+              - term_id
+    columns:
+      - name: skip_id
+        data_tests:
+          - primary_key
+      - name: skip_end_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['skipped', 'unskipped', 'account_inactive']
+          - expression_is_true:
+              arguments:
+                expression: "= 'skipped'"
+                condition: "unskip_time IS NULL"
+      - name: skip_time
+        data_tests:
+          - not_null

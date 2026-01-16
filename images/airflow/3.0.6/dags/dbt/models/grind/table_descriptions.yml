@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: table_descriptions
+    description: "Contains all tables currently available in Sigma along with their schema and a short description."

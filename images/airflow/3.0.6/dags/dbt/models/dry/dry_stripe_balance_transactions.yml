@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: dry_stripe_balance_transactions
+    columns:
+      - name: id
+        description: "Primary key."
+        data_tests:
+          - primary_key
+      - name: stripe_type
+        description: "Categorization of transaction."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['refund', 'stripe_fee', 'payout', 'charge', 'adjustment', 'network_cost', 'payout_failure', 'refund_failure']
+      - name: stripe_status
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['available', 'pending']
+      - name: created
+        data_tests:
+          - not_null

@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: facebook_ads_by_dma
+    data_tests:
+      - except_equality:
+          arguments:
+            compare_model: source('brine', 'dma_name_mapping')
+            model_columns: [dma_name_fb]
+            model_condition: "dma_name_fb <> 'Unknown'"
+            compare_model_columns: [dma_name_facebook]
+            is_distinct: True
+    columns:
+      - name: id
+        data_tests:
+          - primary_key

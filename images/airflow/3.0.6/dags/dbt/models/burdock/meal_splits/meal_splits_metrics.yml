@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: meal_splits_metrics
+    description: >
+      Metrics from meal splits model runs
+    columns:
+      - name: run_timestamp
+        data_tests:
+          - primary_key

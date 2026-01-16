@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: current_tests
+    desription: Most recent record for tests run by dbt along with success metrics.  
+    data_tests:
+      - recency:
+          arguments:
+            field: updated
+            datepart: day
+            interval: 1
+    columns:
+      - name: test_id
+        data_tests:
+          - primary_key
+          - expression_is_true:
+              arguments:
+                expression: "LIKE 'test.spice_rack.%'"
+      - name: test_type
+        data_tests:
+          - not_null 

@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: counts_by_term
+    description: >
+      Order and meal counts by cohort by term
+    data_tests:
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - term_id
+              - cohort

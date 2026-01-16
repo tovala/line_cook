@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: website_visitors
+    description: "Table that tracks a visitors first session on the website"
+    columns:
+      - name: fullstory_user_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key

@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: dry_user_subscription_breaks
+    description: "CAPI table that tracks currently active breaks."
+    columns:
+      - name: id
+        data_tests:
+          - primary_key
+      - name: updated
+        data_tests:
+          - not_null

@@ -1,0 +1,8 @@
+version: 2
+
+models:
+  - name: dry_supermetrics_google_ads
+    columns:
+      - name: id
+        data_tests:
+          - primary_key

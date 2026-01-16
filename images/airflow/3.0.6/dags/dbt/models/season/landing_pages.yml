@@ -1,0 +1,8 @@
+version: 2
+
+models:
+  - name: landing_pages
+    columns:
+      - name: session_id
+        data_tests:
+          - primary_key 

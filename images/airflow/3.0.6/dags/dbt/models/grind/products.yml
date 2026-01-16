@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: products
+    description: "All Oven / Meal products"
+    columns:
+      - name: product_id
+        description: "Backend ID for product"
+        data_tests:
+          - primary_key
+      - name: product_category
+        description: "High-level categories to sort products into"
+        data_tests:
+          - not_null 
+          - accepted_values:
+              arguments:
+                values: ['third_party_activation', 'internal_use_case', 'meals_only', 'd2c_oven', 'sales_attribution']
+      - name: oven_generation
+        data_tests:
+          - expression_is_true:
+              arguments:
+                expression: "IS NOT NULL"
+                condition: "product_category = 'd2c_oven'"

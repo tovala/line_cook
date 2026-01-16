@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: menu_meal_fulfillment_rates
+    description: "4 levels(subterm, cycle, facility, term) of meal_fulfilled_pct of a meal(fulfilled, includes autoselected)"
+    columns:
+      - name: menu_meal_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key

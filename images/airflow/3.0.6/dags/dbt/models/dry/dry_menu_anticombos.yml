@@ -1,0 +1,11 @@
+version: 2
+
+models:
+  - name: dry_menu_anticombos
+    columns:
+      - name: id
+        data_tests:
+          - primary_key
+      - name: updated
+        data_tests:
+          - not_null

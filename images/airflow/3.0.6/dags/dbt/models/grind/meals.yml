@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: meals
+    description: "List of meal names and ids from Misevala."
+    columns:
+      - name: meal_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key
+      - name: internal_meal_name
+        data_tests: 
+          - not_null
+      - name: is_active_meal
+        description: "Meal last offered is with in 55 terms from the latest completed term"

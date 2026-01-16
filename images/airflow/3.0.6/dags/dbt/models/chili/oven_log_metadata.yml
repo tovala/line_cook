@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: oven_log_metadata
+    data_tests:
+      # There are no days with 0 ingested records in the last week
+      - except_equality:
+          arguments:
+            compare_model: "{{ source('brine', 'dim_calendar') }}"
+            is_distinct: True
+            model_columns: [ingested_date]
+            model_condition: "num_records > 0 AND ingested_date BETWEEN DATEADD('days', -7, {{ current_timestamp_utc() }}::DATE) AND DATEADD('days', -1, {{ current_timestamp_utc() }}::DATE)"
+            compare_model_columns: [calendar_date]
+            compare_model_condition: "calendar_date BETWEEN DATEADD('days', -7, {{ current_timestamp_utc() }}::DATE) AND DATEADD('days', -1, {{ current_timestamp_utc() }}::DATE)"
+      # There are no days where no files were loaded in the last week
+      - except_equality:
+          arguments:
+            compare_model: "{{ source('brine', 'dim_calendar') }}"
+            is_distinct: True
+            model_columns: [original_file_date]
+            model_condition: "num_records > 0 AND original_file_date BETWEEN DATEADD('days', -7, {{ current_timestamp_utc() }}::DATE) AND DATEADD('days', -1, {{ current_timestamp_utc() }}::DATE)"
+            compare_model_columns: [calendar_date]
+            compare_model_condition: "calendar_date BETWEEN DATEADD('days', -7, {{ current_timestamp_utc() }}::DATE) AND DATEADD('days', -1, {{ current_timestamp_utc() }}::DATE)"
+      # There are no days without oven events in the last week
+      - except_equality:
+          arguments:
+            compare_model: "{{ source('brine', 'dim_calendar') }}"
+            is_distinct: True
+            model_columns: [event_date]
+            model_condition: "num_records > 0 AND event_date BETWEEN DATEADD('days', -7, {{ current_timestamp_utc() }}::DATE) AND DATEADD('days', -1, {{ current_timestamp_utc() }}::DATE)"
+            compare_model_columns: [calendar_date]
+            compare_model_condition: "calendar_date BETWEEN DATEADD('days', -7, {{ current_timestamp_utc() }}::DATE) AND DATEADD('days', -1, {{ current_timestamp_utc() }}::DATE)"
+    columns:
+      - name: date_key
+        data_tests:
+          - primary_key
+      - name: original_file_date
+        data_tests:
+          - not_null
+      - name: ingested_date
+        data_tests:
+          - not_null
+      - name: event_date
+        data_tests:
+          - not_null

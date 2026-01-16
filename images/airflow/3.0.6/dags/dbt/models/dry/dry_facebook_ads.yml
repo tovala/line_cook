@@ -1,0 +1,11 @@
+version: 2
+
+models:
+  - name: dry_facebook_ads
+    columns:
+      - name: _airbyte_raw_id
+        data_tests:
+          - primary_key
+      - name: id
+        data_tests:
+          - primary_key

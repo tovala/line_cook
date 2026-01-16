@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: channel_spend
+    columns:
+      - name: spend_date
+        data_tests:
+          - not_null 
+    data_tests:
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - channel_name 
+              - partner 
+              - spend_date 
+              - is_estimated

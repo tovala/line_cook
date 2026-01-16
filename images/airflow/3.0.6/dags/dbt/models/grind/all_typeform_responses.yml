@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: all_typeform_responses
+    description: "Typeform responses at a response level, with form, customer, and question information"
+    columns:
+      - name: response_id
+        data_tests:
+          - not_null
+      - name: form_id
+        data_tests:
+          - not_null

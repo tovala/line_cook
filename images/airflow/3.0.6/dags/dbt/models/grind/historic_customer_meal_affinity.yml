@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: historic_customer_meal_affinity
+    description: "Contains snapshots of customer-meal affinity every time ETL is run with the Thursday (pre-AF run) specifically flagged as such."

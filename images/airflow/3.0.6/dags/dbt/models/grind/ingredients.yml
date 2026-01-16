@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: ingredients
+    description: "Ingredient level information from Misevala."
+    columns:
+      - name: ingredient_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key
+      - name: ingredient_name
+        data_tests: 
+          - not_null
+      - name: ingredient_category
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['dairy', 'fish', 'frozen_items', 'grains_and_pasta', 'meat', 'oil_and_vinegar',
+                       'precut_vegetables', 'prepared_items', 'produce', 'spice_mix_blends', 'standard_spices', 'water']

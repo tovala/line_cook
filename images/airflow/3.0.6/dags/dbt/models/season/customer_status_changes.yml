@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: customer_status_changes
+    description: "Contains an audit of all status changes for every customer"
+    columns:
+      - name: customer_status_change_id
+        data_tests:
+          - primary_key
+      - name: customer_id
+        data_tests:
+          - not_null
+      - name: customer_status
+        data_tests: 
+          - not_null
+      - name: status_start_time
+        data_tests:
+          - not_null

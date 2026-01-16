@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: refund_events
+    columns:
+      - name: refund_event_id
+        data_tests:
+          - primary_key
+      - name: customer_id
+        data_tests:
+          - not_null
+      - name: meal_order_id
+        data_tests:
+          - not_null 

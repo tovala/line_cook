@@ -1,0 +1,8 @@
+version: 2
+
+models:
+  - name: future_term_summary 
+    columns:
+      - name: future_term_id
+        data_tests:
+          - primary_key 

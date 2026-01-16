@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: google_search_console_results
+    description: "Table containing information around google search results from google search console"
+    data_tests:
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - id
+            # There are sometimes duplicates in the last day. This ensures uniqueness after that time. 
+            where_clause: "report_date < DATEADD('day', -2, {{ current_timestamp_utc() }})"

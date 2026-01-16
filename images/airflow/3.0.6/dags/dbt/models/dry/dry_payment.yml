@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: dry_payment
+    columns:
+      - name: id
+        data_tests:
+          - primary_key
+      - name: updated
+        data_tests:
+          - not_null
+      - name: status
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['authorize_declined', 'authorized', 'declined', 'failed', 'paid', 
+                       'refunded', 'refunded_fraud', 'refunded_mealcash', 'refunded_partial',
+                       'voided']

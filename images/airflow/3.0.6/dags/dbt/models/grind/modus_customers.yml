@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: modus_customers 
+    columns:
+      - name: customer_id
+        data_tests:
+          - primary_key
+          - not_null
+      - name: impression_time
+        data_tests:
+          - not_null 

@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: refund_facts
+    description: "Credit and refund facts based on actions in Glaze"
+    columns:
+      - name: payment_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key
+      - name: customer_id
+        description: "The customer's unique ID"
+        data_tests:
+          - not_null
+      - name: affected_meal_count
+        description: "The number of meals affected by the refund request"
+        data_tests:
+          - not_null
+      - name: amount
+        description: "The amount of the refund"
+        data_tests:
+          - not_null
+      - name: refund_type
+        description: "Type of refund (direct cash back to customer or Tovala credit)"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['refunded', 'credit_meal_cash']

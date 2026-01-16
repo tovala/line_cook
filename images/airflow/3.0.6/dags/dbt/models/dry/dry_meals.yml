@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: dry_meals
+    columns:
+      - name: id
+        data_tests:
+          - primary_key
+      - name: updated
+        data_tests:
+          - not_null
+      - name: baseprice_cents
+        data_tests: 
+          - not_null 
+      - name: surcharge_cents
+        data_tests:
+          - not_null

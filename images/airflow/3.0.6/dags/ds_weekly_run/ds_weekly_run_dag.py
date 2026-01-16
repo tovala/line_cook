@@ -4,7 +4,7 @@ import os
 from pendulum import duration
 from airflow.sdk import dag, task, chain, Variable
 from common.slack_notifications import bad_boy, good_boy
-from cosmos import DbtDag, DbtTaskGroup, ProjectConfig, ProfileConfig, ExecutionConfig
+from cosmos import DbtDag, DbtTaskGroup, ProjectConfig, ProfileConfig, ExecutionConfig, RenderConfig
 from cosmos.profiles import SnowflakeEncryptedPrivateKeyPemProfileMapping
 
 @dag(
@@ -66,11 +66,16 @@ def weeklyDsRun():
     dbt_executable_path=f'{AIRFLOW_HOME}/dbt_venv/bin/dbt'
   )
 
+  render_config = RenderConfig(
+    select=['path:models/anise/', 'path:models/basil/']
+  )
+
   dbt_run = DbtTaskGroup(
     group_id='dbt_run',
     project_config=project_config,
     profile_config=profile_config,
-    execution_config=execution_config
+    execution_config=execution_config,
+    render_config=render_config 
   )
 
 weeklyDsRun()

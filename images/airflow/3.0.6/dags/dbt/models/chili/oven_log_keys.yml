@@ -1,0 +1,8 @@
+version: 2
+
+models:
+  - name: oven_log_keys
+    columns:
+      - name: oven_log_key
+        data_tests:
+          - not_null 

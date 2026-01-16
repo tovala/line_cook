@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: first_box_survey_responses
+    description: "Table of responses to Box 1 survey"
+    columns:
+      - name: customer_id
+        description: "Unique identifier for customer"
+        data_tests:
+          - not_null 

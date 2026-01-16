@@ -1,0 +1,10 @@
+
+version: 2
+
+models:
+  - name: add_ons
+    description: "Contains one record per add-on version that has been offered on a Tovala menu - coupled add-ons are distinct from decoupled." 
+    columns: 
+      - name: add_on_id
+        data_tests:
+          - primary_key

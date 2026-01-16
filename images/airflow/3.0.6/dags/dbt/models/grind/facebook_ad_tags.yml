@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: facebook_ad_tags
+    description: "Table that tags Facebook ad ids with descriptions of the ads"
+    columns:
+      - name: ad_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key

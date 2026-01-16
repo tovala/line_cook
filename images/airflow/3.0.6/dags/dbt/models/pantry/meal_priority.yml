@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: meal_priority
+    description: "Contains a relative autofilling priority for any autofillable meals - this overrides the sort order in a normal autofill week."
+    columns:
+      - name: meal_sku_id
+        data_tests:
+          - primary_key

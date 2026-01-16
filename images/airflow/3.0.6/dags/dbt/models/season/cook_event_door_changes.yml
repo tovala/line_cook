@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: cook_event_door_changes
+    columns:
+      - name: door_change_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key

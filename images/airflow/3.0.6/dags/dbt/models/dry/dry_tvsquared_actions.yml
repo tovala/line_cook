@@ -1,0 +1,11 @@
+version: 2
+
+models:
+  - name: dry_tvsquared_actions
+    columns:
+      - name: visitdatetime
+        data_tests:
+          - not_null
+      - name: id
+        data_tests:
+          - primary_key

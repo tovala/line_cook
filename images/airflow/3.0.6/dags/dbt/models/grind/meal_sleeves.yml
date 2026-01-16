@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: meal_sleeves
+    description: "Meal sleeve type information from Misevala."
+    columns:
+      - name: id
+        description: "Primary Key"
+        data_tests:
+          - primary_key
+      - name: cycle
+        data_tests:
+          - not_null
+      - name: production_cd
+        data_tests: 
+          - not_null
+      - name: term_id
+        data_tests:
+          - not_null

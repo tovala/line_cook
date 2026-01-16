@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: order_retention_curves
+    description: >
+      Customer order retention (likelihood) curves
+    columns:
+      - name: adjusted_order_week
+        data_tests:
+          - primary_key

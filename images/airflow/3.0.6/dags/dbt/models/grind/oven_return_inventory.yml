@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: oven_return_inventory
+    description: "Full replica of oven return inventory tracking in Airtable."
+    columns:
+      - name: oven_returns_airtable_id
+        data_tests:
+          - primary_key

@@ -1,0 +1,41 @@
+version: 2
+
+models:
+  - name: affirm_orders
+    # Ensure that all affirm orders exist in our database
+    data_tests:
+      - except_equality:
+          arguments:
+            compare_model: ref('oven_orders')
+            model_columns: [internal_affirm_charge_id]
+            model_condition: "affirm_status IN ('captured', 'partially_refunded', 'refunded') AND order_time::DATE > '2020-04-01'"
+            compare_model_columns: [affirm_charge_id]
+            compare_model_condition: "affirm_charge_id IS NOT NULL AND order_time::DATE > '2020-04-01'"
+    columns:
+      - name: charge_id
+        data_tests:
+          - primary_key
+      - name: internal_affirm_charge_id
+        data_tests:
+          - primary_key
+      - name: customer_id
+        data_tests:
+          - not_null
+      - name: affirm_status
+        data_tests:
+          - not_null 
+          - accepted_values:
+              arguments:
+                values: ['auth_expired', 'authorized', 'captured', 'partially_refunded', 'refunded', 'voided']
+      - name: shipping_amount
+        data_tests:
+          - not_null 
+          - accepted_values:
+              arguments:
+                values: [0]
+      - name: total_charge_amount
+        data_tests:
+          - not_null
+      - name: total_refund_amount
+        data_tests:
+          - not_null

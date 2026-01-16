@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: tovala_preset_barcodes
+    columns:
+      - name: barcode
+        data_tests:
+          - not_null
+      - name: title
+        data_tests:
+          - not_null
+      - name: preset_category
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['a_la_carte', 'quick_start', 'utility']
+      - name: user_category
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['proteins', 'vegetables']

@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: coupons
+    description: 'Coupon codes and amounts.'
+    columns:
+      - name: coupon_cd
+        data_tests:
+          - primary_key

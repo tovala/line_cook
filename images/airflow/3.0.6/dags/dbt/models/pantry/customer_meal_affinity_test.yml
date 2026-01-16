@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: customer_meal_affinity_test
+    description: "Contains a customer's affinity from 0-100 for any autofillable meal where the have or could place an order."
+    data_tests:
+      # One record per customer and meal_sku_id
+      - unique_columns:
+          arguments:
+            unique_column_list:
+              - customer_id
+              - meal_sku_id
+    columns:
+      - name: meal_affinity
+        data_tests:
+          - not_null

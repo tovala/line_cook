@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: sales_periods
+    description: "Table containing information for sales periods along with oven price"
+    columns:
+      - name: start_date
+        description: "Primary Key"
+        data_tests:
+          - primary_key

@@ -1,0 +1,6 @@
+version: 2
+
+models:
+  - name: nutrition_info
+    description: "Contains nutrition information by meal_sku_id"
+      

@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: cook_time_window_distribution
+    description: "Cook count by time window for each meal_sku_id or add_on_id"
+    columns:
+      - name: meal_or_addon_id
+        data_tests:
+          - primary_key

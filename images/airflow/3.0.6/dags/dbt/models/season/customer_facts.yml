@@ -1,0 +1,32 @@
+version: 2
+
+models:
+  - name: customer_facts
+    description: "Customer-level information."
+    columns:
+      - name: customer_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key
+      - name: latest_status
+        data_tests:
+          - not_null
+      - name: cohort
+        data_tests:
+          # All customers should have cohorts unless all orders are excluded from cohort calculations
+          - expression_is_true:
+              arguments:
+                expression: "IS NOT NULL"
+                condition: "first_meal_order_id IS NOT NULL AND NOT has_excluded_orders_only"
+      - name: latest_default_facility_network
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['chicago', 'slc']
+      - name: first_interaction_time
+        data_tests:
+          # Every non-internal customer who does not have only excluded orders should have a first interaction time
+          - expression_is_true:
+              arguments:
+                expression: "< '9999-12-31'"
+                condition: "NOT is_internal_account AND NOT has_excluded_orders_only"

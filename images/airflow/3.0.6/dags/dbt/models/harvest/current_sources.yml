@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: current_sources
+    desription: Most recent record for sources in dbt along with dependencies.  
+    data_tests:
+      - recency:
+          arguments:
+            field: updated
+            datepart: day
+            interval: 1
+    columns:
+      - name: source_id
+        data_tests:
+          - primary_key

@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: charges
+    description: "Payment line items split into charges only."
+    columns:
+      - name: charge_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key

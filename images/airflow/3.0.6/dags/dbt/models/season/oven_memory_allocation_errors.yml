@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: oven_memory_allocation_errors
+    description: "Occur when ovens allocate a larger than normal memory amount - Gen2 only."

@@ -1,0 +1,27 @@
+version: 2
+
+models:
+  - name: etl_run_results
+    desription: A table of metadata about ETL runs and tests (anything that uploads using the upload_dbt_artifacts macro).
+    columns:
+      - name: run_results_id
+        data_tests:
+          - primary_key
+      - name: pipeline_name
+        data_tests:
+          - not_null 
+      - name: results
+        description: Contains the run or test results for a given invocation - can never be empty or NULL
+        data_tests:
+          - array_not_null_or_empty
+      - name: dbt_command_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['run', 'test', 'run-operation']
+      - name: dbt_target
+        data_tests:
+          - not_null
+      - name: updated
+        data_tests: 
+          - not_null

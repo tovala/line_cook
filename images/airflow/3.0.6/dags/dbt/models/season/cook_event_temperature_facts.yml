@@ -1,0 +1,8 @@
+version: 2
+
+models:
+  - name: cook_event_temperature_facts
+    columns:
+      - name: unique_cook_cycle_id
+        data_tests:
+          - primary_key

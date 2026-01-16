@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: session_events
+    description: "A table with relevant fullstory session events data. This table only includes event keys that have been clearly defined and tracked. It is not an exhaustive list of ALL fullstory keys."
+    columns:
+      - name: row_id
+        description: "Primary Key"
+        data_tests:
+          - primary_key
+      - name: session_id
+        data_tests: 
+          - not_null
+      - name: event_sequence
+        data_tests: 
+          - not_null
+      

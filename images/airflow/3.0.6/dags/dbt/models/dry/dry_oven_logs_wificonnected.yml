@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: dry_oven_logs_wificonnected
+    columns:
+      - name: oven_event_id
+        data_tests:
+          - primary_key:
+              arguments:
+                condition: "updated >= DATEADD(day, -14, {{ current_timestamp_utc() }})"
+      - name: source
+        data_tests:
+          - not_null 
+          - accepted_values:
+              arguments:
+                values: ['airvala', 'gen2']
+      - name: deviceGroupName
+        data_tests:
+          - not_null

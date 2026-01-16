@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: dry_tvsquared_spots
+    columns:
+      - name: spot_datetime
+        data_tests:
+          - not_null
+      - name: spotid
+        data_tests:
+          - primary_key
+    
