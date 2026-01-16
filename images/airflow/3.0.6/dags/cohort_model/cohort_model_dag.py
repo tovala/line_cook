@@ -17,7 +17,8 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
     catchup=False,
     tags=['internal'],
     params={
-        'channel_name': ''
+        'channel_name': '',
+        'schema_name': 'TEST_TAYLOR_BRINE'
     },
     template_searchpath = f'{AIRFLOW_HOME}/dags/common/templates'
 )
@@ -36,7 +37,7 @@ def cohortModel():
     MODELS = ['historical_meal_orders']
 
     @task()
-    def generateParams(model_names: List[str]) -> List[Dict[str, Dict[str, str]]]:
+    def generateParams(model_names: List[str], **kwargs) -> List[Dict[str, Dict[str, str]]]:
         '''
         Set up parameters to pass to create cohort models sql template for each model in the supplied list.
         Args:
@@ -46,8 +47,10 @@ def cohortModel():
         '''
         expanded_kwargs = []
 
+        dag_params = kwargs['params']
+
         for model in model_names:
-            params = {'table_name': model, 'table_columns_file': f'queries/{model}.sql'}
+            params = {'schema_name': dag_params['schema_name'], 'table_name': model, 'table_columns_file': f'queries/{model}.sql'}
 
             expanded_kwargs.append({'params': params})
 
@@ -57,7 +60,7 @@ def cohortModel():
     test_schema = SQLExecuteQueryOperator(
         task_id='create_test_schema',
         conn_id='snowflake',
-        sql='CREATE SCHEMA IF NOT EXISTS TEST_TAYLOR_BRINE;'
+        sql='CREATE SCHEMA IF NOT EXISTS {{ params.schema_name }};'
     )
 
     generate_params = generateParams(MODELS)
