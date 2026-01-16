@@ -30,7 +30,7 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
     },
     template_searchpath=f'{AIRFLOW_HOME}/dags/common/templates'
 )
-def cio_sf_integration():
+def customerIOSnowflakeIntegration():
   '''Customer IO - Snowflake Integration 
   Description: We move Customer IO data from S3 buckets to a Snowflake external stage. 
     Now, we want to copy data from the external stage (customerio_data_v2.s3_files) into 
@@ -82,4 +82,4 @@ def cio_sf_integration():
   chain([cio_stage, process_tables], copy_tables)
 
 # DAG call
-cio_sf_integration()
+customerIOSnowflakeIntegration()
