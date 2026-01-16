@@ -1,18 +1,16 @@
-import datetime
 
-from typing import Any, Dict, List
+import os
+from typing import Dict, List
 from pendulum import duration
 
-from airflow.sdk import dag, task, chain, Variable, Connection, XComArg
-from airflow.exceptions import AirflowException
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.providers.slack.notifications.slack import SlackNotifier
+from airflow.sdk import dag, task, chain
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.timetables.trigger import CronTriggerTimetable
 from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
 
 from common.slack_notifications import bad_boy, good_boy
 
+AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
 
 @dag(
     on_failure_callback=bad_boy,
@@ -29,7 +27,8 @@ from common.slack_notifications import bad_boy, good_boy
     tags=['internal', 'data-integration'],
     params={
         'channel_name': '#team-data-notifications'
-    }
+    },
+    template_searchpath=f'{AIRFLOW_HOME}/dags/common/templates'
 )
 def cio_sf_integration():
   '''Customer IO - Snowflake Integration 
@@ -47,7 +46,7 @@ def cio_sf_integration():
   cio_stage = SQLExecuteQueryOperator(
       task_id='createCioStage', 
       conn_id='snowflake', 
-      sql='queries/create_stage.sql',
+      sql='create_stage.sql',
       params={
         'parent_database': 'MASALA',
         'schema_name': 'CHILI_V2',
