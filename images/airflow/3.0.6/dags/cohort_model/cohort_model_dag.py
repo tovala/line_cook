@@ -18,6 +18,7 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
     tags=['internal'],
     params={
         'channel_name': '',
+        'parent_database': 'MASALA',
         'schema_name': 'TEST_TAYLOR_BRINE'
     },
     template_searchpath = f'{AIRFLOW_HOME}/dags/common/templates'
@@ -50,7 +51,7 @@ def cohortModel():
         dag_params = kwargs['params']
 
         for model in model_names:
-            params = {'schema_name': dag_params['schema_name'], 'table_name': model, 'table_columns_file': f'queries/{model}.sql'}
+            params = {**dag_params, 'table_name': model, 'table_columns_file': f'queries/{model}.sql'}
 
             expanded_kwargs.append({'params': params})
 
