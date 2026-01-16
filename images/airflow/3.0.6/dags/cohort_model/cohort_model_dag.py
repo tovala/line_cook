@@ -1,12 +1,13 @@
 import datetime
+import os
 from typing import Any, List, Dict
 
 from airflow.sdk import dag, task, chain
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 from common.slack_notifications import bad_boy, good_boy
-from common.macros.sql_templating import render_sql_from_file
 
+AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
 
 @dag(
     # on_failure_callback=bad_boy,
@@ -18,6 +19,7 @@ from common.macros.sql_templating import render_sql_from_file
     params={
         'channel_name': ''
     },
+    template_searchpath = f'{AIRFLOW_HOME}/dags/common/templates'
 )
 def cohortModel():
     '''Cohort Model
@@ -63,7 +65,7 @@ def cohortModel():
     create_models = SQLExecuteQueryOperator.partial(
         task_id='create_cohort_models', 
         conn_id='snowflake', 
-        sql='templates/create_table.sql',
+        sql='create_table.sql',
     ).expand_kwargs(generate_params)
 
     chain([test_schema, generate_params], create_models)
