@@ -7,6 +7,8 @@ from common.slack_notifications import bad_boy, good_boy
 from cosmos import DbtDag, DbtTaskGroup, ProjectConfig, ProfileConfig, ExecutionConfig, RenderConfig
 from cosmos.profiles import SnowflakeEncryptedPrivateKeyPemProfileMapping
 
+AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
+
 @dag(
     on_failure_callback=bad_boy,
     on_success_callback=good_boy,
@@ -35,11 +37,9 @@ def weeklyDsRun():
 
   '''
 
-  AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
-
   project_config = ProjectConfig(
-    dbt_project_path=f'{AIRFLOW_HOME}/dags/dbt',
-    models_relative_path=f'{AIRFLOW_HOME}/dags/dbt',
+    dbt_project_path=f'{AIRFLOW_HOME}/spice_rack',
+    models_relative_path='models', # test removing entirely 
     project_name='spice_rack',
     install_dbt_deps=True
   )
