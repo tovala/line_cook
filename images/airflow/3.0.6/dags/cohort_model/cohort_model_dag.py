@@ -4,6 +4,7 @@ from typing import Any, List, Dict
 
 from airflow.sdk import dag, task, chain
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
 
 from common.slack_notifications import bad_boy, good_boy
 
@@ -56,6 +57,15 @@ def cohortModel():
             expanded_kwargs.append({'params': params})
 
         return expanded_kwargs
+    
+    @task()
+    def getParamsForExternalStage(tables: List[str]) -> List[Dict[str, str]]:
+        expanded_args = []
+
+        for table in tables: 
+            expanded_args.append({'table': f'CHILI_V2.{table}', 'pattern': f'.*{table}.*.parquet'})
+
+        return expanded_args 
 
     #### Task Instances
     cohort_model_input_stage = SQLExecuteQueryOperator(
@@ -65,10 +75,10 @@ def cohortModel():
       params={
         'parent_database': 'MASALA',
         'schema_name': 'CHILI_V2',
-        'stage_name': 'cio_stage',
-        'url': 's3://tovala-data-customerio/',
-        'storage_integration': 'CIO_STORAGE_INTEGRATION',
-        'file_type': 'parquet',
+        'stage_name': 'cohort_model_input_stage',
+        'url': 's3://tovala-data-cohort-model/input/',
+        'storage_integration': 'COHORT_MODEL_STORAGE_INTEGRATION',
+        'file_type': 'csv',
       },
     )
     
@@ -86,6 +96,15 @@ def cohortModel():
         sql='create_table.sql',
     ).expand_kwargs(generate_params)
 
-    chain([test_schema, generate_params], create_models)
+    external_stage_params = getParamsForExternalStage(MODELS)
+
+    copy_from_csv = CopyFromExternalStageToSnowflakeOperator.partial(
+    task_id='copyTable', 
+    snowflake_conn_id='snowflake',
+    stage='MASALA.CHILI_V2.cohort_model_input_stage',
+    file_format="(TYPE = 'csv')",
+    ).expand_kwargs(external_stage_params)
+
+    chain([test_schema, generate_params, cohort_model_input_stage], create_models)
 
 cohortModel()
