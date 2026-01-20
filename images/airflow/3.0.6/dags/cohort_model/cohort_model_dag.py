@@ -36,7 +36,7 @@ def cohortModel():
     '''
 
     MODELS = ['historical_meal_orders']
-
+    #### Custom Task Definitions
     @task()
     def generateParams(model_names: List[str], **kwargs) -> List[Dict[str, Dict[str, str]]]:
         '''
@@ -57,6 +57,20 @@ def cohortModel():
 
         return expanded_kwargs
 
+    #### Task Instances
+    cohort_model_input_stage = SQLExecuteQueryOperator(
+      task_id='createCohortModelInputStage', 
+      conn_id='snowflake', 
+      sql='create_stage.sql',
+      params={
+        'parent_database': 'MASALA',
+        'schema_name': 'CHILI_V2',
+        'stage_name': 'cio_stage',
+        'url': 's3://tovala-data-customerio/',
+        'storage_integration': 'CIO_STORAGE_INTEGRATION',
+        'file_type': 'parquet',
+      },
+    )
     
     test_schema = SQLExecuteQueryOperator(
         task_id='create_test_schema',

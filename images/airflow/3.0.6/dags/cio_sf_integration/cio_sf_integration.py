@@ -43,23 +43,10 @@ def customerIOSnowflakeIntegration():
   Variables:
 
   '''
-  cio_stage = SQLExecuteQueryOperator(
-      task_id='createCioStage', 
-      conn_id='snowflake', 
-      sql='create_stage.sql',
-      params={
-        'parent_database': 'MASALA',
-        'schema_name': 'CHILI_V2',
-        'stage_name': 'cio_stage',
-        'url': 's3://tovala-data-customerio/',
-        'storage_integration': 'CIO_STORAGE_INTEGRATION',
-        'file_type': 'parquet',
-      },
-  )
-
   # Subset of Customer IO table schemas that we want to load into Snowflake 
   TABLE_NAMES = ['broadcasts', 'campaigns', 'campaign_actions', 'deliveries', 'metrics', 'outputs', 'people', 'subjects']
-
+  
+  #### Custom Task Definitions
   @task()
   def processTableNames(tables: List[str]) -> List[Dict[str, str]]:
     expanded_args = []
@@ -69,6 +56,21 @@ def customerIOSnowflakeIntegration():
 
     return expanded_args 
 
+  #### Task Instances
+  cio_stage = SQLExecuteQueryOperator(
+    task_id='createCioStage', 
+    conn_id='snowflake', 
+    sql='create_stage.sql',
+    params={
+      'parent_database': 'MASALA',
+      'schema_name': 'CHILI_V2',
+      'stage_name': 'cio_stage',
+      'url': 's3://tovala-data-customerio/',
+      'storage_integration': 'CIO_STORAGE_INTEGRATION',
+      'file_type': 'parquet',
+    },
+  )
+  
   process_tables = processTableNames(TABLE_NAMES)
 
   copy_tables = CopyFromExternalStageToSnowflakeOperator.partial(
