@@ -21,10 +21,7 @@ from cosmos.profiles import SnowflakeEncryptedPrivateKeyPemProfileMapping
       "retry_exponential_backoff": True,
       "max_retry_delay": duration(minutes=5),
     },
-    tags=['data_science'],
-    params={
-        'SF_ACCOUNT': 'jta05846'
-    }
+    tags=['data_science']
 )
 def weeklyDsRun():
   '''Weekly Data Science Pipeline Run
@@ -66,7 +63,7 @@ def weeklyDsRun():
     dbt_executable_path=f'{AIRFLOW_HOME}/dbt_venv/bin/dbt'
   )
 
-  render_config = RenderConfig(
+  ds_weekly_config = RenderConfig(
     select=['path:models/anise/', 'path:models/basil/']
   )
 
@@ -75,7 +72,7 @@ def weeklyDsRun():
     project_config=project_config,
     profile_config=profile_config,
     execution_config=execution_config,
-    render_config=render_config 
+    render_config=ds_weekly_config 
   )
 
 weeklyDsRun()
