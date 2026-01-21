@@ -1,0 +1,120 @@
+version: 2
+
+seeds:
+  
+  - name: cohort_model_attach_rates
+    description: "Contains order attach rates in long format"
+    config:
+      meta:
+        model_date: "7_21_25"
+        source_spreadsheet: "Cohort Model_7_21_25 - retail removed and extended 1 year"
+        source_tab: "Attach + Meals per Order (Input)"
+        source_columns: "V1:9 thru AB1:9"
+      column_types:
+        channel: string
+        ordinal_week: int
+        attach_rate: float
+    
+  - name: cohort_model_meals_per_order_assumptions
+    description: "Contains meals per order assumptions in long format"
+    config:
+      meta:
+        model_date: "7_21_25"
+        source_spreadsheet: "Cohort Model_7_21_25 - retail removed and extended 1 year"
+        source_tab: "Attach + Meals per Order (Input)"
+        source_columns: "AE1:2 thru AK1:2" 
+      column_types:
+        channel: string
+        value: float
+
+  - name: cohort_model_cohort_mix_projections
+    description: "Projected cohort compositions"
+    config:
+      meta:
+        model_date: "7_21_25"
+        source_spreadsheet: "Cohort Model_7_21_25 - retail removed and extended 1 year"
+        source_tab: "Cohort Characteristic (Input)"
+        source_columns: "A:: thru J::"
+      column_types:
+        cohort: int
+        cohort_first_order_in_homes: string
+        first_month: int
+        commitment: float
+        non_commitment: float
+        price_bucket_0_60: float
+        price_bucket_61_97: float
+        price_bucket_90_inf: float
+        known_price_commitment: float
+        unknown_price_commitment: float
+
+  - name: cohort_model_constants
+    description: "Hardcoded constants used by the cohort model"
+    config:
+      meta:
+        model_date: "7_21_25"
+        source_spreadsheet: "Cohort Model_7_21_25 - retail removed and extended 1 year"
+        source_tab: "Calc - Projected Orders"
+        source_columns: "B3 thru C3"
+      column_types:
+        name: string
+        value: float
+
+  - name: cohort_model_daily_oven_d2c_sales_splits
+    description: "Matt's daily D2C oven sales projection splits (holiday, non-holiday, & sale only), refactored as 1s and 0s to represent whether a particular day falls under holiday, non-holiday, or sale"
+    config:
+      meta:
+        model_date: "7_21_25"
+        source_spreadsheet: "Cohort Model_7_21_25 - retail removed and extended 1 year"
+        source_tab: "Attach + Meals per Order (Input)"
+        source_columns: "D:: thru H::" 
+      column_types:
+        date: string
+        term_id: int
+        d2c_non_holiday: int
+        sale: int
+        d2c_holiday: int
+
+  - name: cohort_model_daily_oven_sales_projections
+    description: "Matt's daily oven sales projections (Matt's are secondary to Growth's projections)"
+    config:
+      meta:
+        model_date: "7_21_25"
+        source_spreadsheet: "Cohort Model_7_21_25 - retail removed and extended 1 year"
+        source_tab: "Monthly oven orders (Input)"
+        source_columns: "F85:: thru I85::"
+      column_types:
+        date: string
+        d2c: int
+        amazon: int
+        costco: int
+        other: int
+
+  - name: cohort_model_holiday_term_skip_adjustments
+    description: "Holiday term skip adjustments"
+    config:
+      meta:
+        model_date: "7_21_25"
+        source_spreadsheet: "Cohort Model_7_21_25 - retail removed and extended 1 year"
+        source_tab: "Calc - Projected Orders"
+        source_columns: "I6 through NQ6"
+      column_types:
+        term_id: int
+        holiday_skip_adjustment: float
+
+  - name: cohort_model_meal_retention_curves
+    description: "Meal retention curves"
+    config:
+      meta:
+        model_date: "7_21_25"
+        source_spreadsheet: "Cohort Model_7_21_25 - retail removed and extended 1 year"
+        source_tab: "Data - Meal Retention Curves"
+        source_columns: "::, ::" 
+
+  - name: cohort_model_order_retention_curves
+    description: "Order retention curves"
+    config:
+      meta:
+        model_date: "7_21_25"
+        source_spreadsheet: "Cohort Model_7_21_25 - retail removed and extended 1 year"
+        source_tab: "Data - Order Retention Curves"
+        source_columns: "::, ::" 

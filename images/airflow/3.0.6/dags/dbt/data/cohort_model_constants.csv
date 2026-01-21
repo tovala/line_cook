@@ -1,0 +1,3 @@
+name,value
+lookback_adjustment_window,5.0000
+longtail_weekly_retention_multiplier,0.9945

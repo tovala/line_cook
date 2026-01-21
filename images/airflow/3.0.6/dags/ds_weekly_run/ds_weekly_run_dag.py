@@ -5,7 +5,7 @@ from pendulum import duration
 from airflow.sdk import dag, task, chain, Variable
 from common.slack_notifications import bad_boy, good_boy
 from cosmos import DbtDag, DbtTaskGroup, ProjectConfig, ProfileConfig, ExecutionConfig, RenderConfig
-from cosmos.profiles import SnowflakeEncryptedPrivateKeyPemProfileMapping
+from cosmos.profiles import SnowflakePrivateKeyPemProfileMapping, SnowflakeEncryptedPrivateKeyPemProfileMapping, get_automatic_profile_mapping
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
 
@@ -36,6 +36,7 @@ def weeklyDsRun():
   Variables:
 
   '''
+  # profile_mapping = get_automatic_profile_mapping(conn_id='snowflake')
 
   project_config = ProjectConfig(
     dbt_project_path=f'{AIRFLOW_HOME}/spice_rack',
@@ -47,16 +48,17 @@ def weeklyDsRun():
   profile_config = ProfileConfig(
     profile_name='spice_rack',
     target_name='test',
-    profile_mapping=SnowflakeEncryptedPrivateKeyPemProfileMapping(
+    profile_mapping = # get_automatic_profile_mapping(conn_id='snowflake')
+       SnowflakePrivateKeyPemProfileMapping(
         conn_id='snowflake',
         profile_args={
-          'account': 'jta05846',
-          'user': 'JENKINS',
-          'role': 'ETL', 
-          'warehouse': 'ETL_WAREHOUSE',
-          'database': 'MASALA'
-        },
-    ),
+          'schema': 'test_elly',
+        }
+        # profile_mapping=profile_mapping[0]
+        # cosmos requiring password, but we don't use that 
+        # ask taylor for help 
+    # profiles_yml_filepath=f'{AIRFLOW_HOME}/spice_rack',
+        ), 
   )
 
   execution_config = ExecutionConfig(
@@ -76,3 +78,4 @@ def weeklyDsRun():
   )
 
 weeklyDsRun()
+
