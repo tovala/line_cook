@@ -1,12 +1,9 @@
-import datetime
 import os
-from typing import Any, List, Dict
 
-from airflow.sdk import dag, task, chain, task_group
+from airflow.sdk import dag, chain, task_group
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
 
-from common.slack_notifications import bad_boy, good_boy
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
 
@@ -41,29 +38,39 @@ def cohortModel():
     #### Custom Task Definitions
     @task_group(group_id='create_temp_table')
     def createTempTable(model: str) -> None:
-        create_model = SQLExecuteQueryOperator.partial(
+        create_empty_model = SQLExecuteQueryOperator(
             task_id='create_cohort_models', 
             conn_id='snowflake', 
             sql='create_table.sql',
             params={
                 'table_name': model,
-                'table_columns_file': f'queries/{model}.sql'
+                'table_columns_file': f'queries/{model}/table_columns.sql'
             }
         )
 
-        copy_from_csv = CopyFromExternalStageToSnowflakeOperator.partial(
-        task_id='copyTable', 
-        snowflake_conn_id='snowflake',
-        stage='MASALA.CHILI_V2.cohort_model_input_stage',
-        file_format="(TYPE = 'csv')",
-        params={
-            'table': f'CHILI_V2.{model}',
-            'pattern': f'.*{model}.*.parquet'
-        }
+        load_model_default = SQLExecuteQueryOperator(
+            task_id='load_model_default', 
+            conn_id='snowflake', 
+            sql='create_table.sql',
+            params={
+                'table_name': model,
+                'table_columns_file': f'queries/{model}/default_input.sql'
+            }
         )
-
+        
         # TODO: Add S3 override here - maybe add an override param? like a list of models w override - set comparison to standard list to avoid doing both?
-        chain(create_model, copy_from_csv)
+        # copy_from_csv = CopyFromExternalStageToSnowflakeOperator.partial(
+        #   task_id='copyTable', 
+        #   snowflake_conn_id='snowflake',
+        #   stage='MASALA.CHILI_V2.cohort_model_input_stage',
+        #   file_format="(TYPE = 'csv')",
+        #   params={
+        #       'table': f'CHILI_V2.{model}',
+        #       'pattern': f'.*{model}.*.parquet'
+        #   }
+        # )
+
+        chain(create_empty_model, load_model_default)
 
     #### Task Instances
     cohort_model_input_stage = SQLExecuteQueryOperator(

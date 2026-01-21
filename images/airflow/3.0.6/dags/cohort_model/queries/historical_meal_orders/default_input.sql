@@ -1,4 +1,3 @@
-
 /*
 Historical meal and order counts.
 These are used to backfill past values with historical actuals.
@@ -9,8 +8,8 @@ SELECT
     , cts.cohort
     , COUNT(cts.meal_order_id) AS order_count
     , SUM(cts.order_size) AS meal_count
-FROM {{ ref('customer_term_summary') }} AS cts 
-LEFT JOIN {{ ref('meal_orders') }} AS mo
+FROM {{ params.parent_database }}.SEASON.CUSTOMER_TERM_SUMMARY AS cts
+LEFT JOIN {{ params.parent_database }}.GRIND.MEAL_ORDERS AS mo
     ON cts.meal_order_id = mo.meal_order_id
     AND mo.is_trial_order <> TRUE
 WHERE cts.is_fulfilled
