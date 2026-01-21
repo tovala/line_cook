@@ -2,7 +2,7 @@ import datetime
 import os
 from typing import Any, List, Dict
 
-from airflow.sdk import dag, task, chain
+from airflow.sdk import dag, task, chain, task_group
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
 
@@ -37,35 +37,33 @@ def cohortModel():
     '''
 
     MODELS = ['historical_meal_orders']
-    #### Custom Task Definitions
-    @task()
-    def generateParams(model_names: List[str], **kwargs) -> List[Dict[str, Dict[str, str]]]:
-        '''
-        Set up parameters to pass to create cohort models sql template for each model in the supplied list.
-        Args:
-            model_names (str): list of models to be created
-        Output:
-            expanded_kwargs (str): list of dicts that are formatted kwargs to pass to SQLExecuteQueryOperator 
-        '''
-        expanded_kwargs = []
-
-        dag_params = kwargs['params']
-
-        for model in model_names:
-            params = {**dag_params, 'table_name': model, 'table_columns_file': f'queries/{model}.sql'}
-
-            expanded_kwargs.append({'params': params})
-
-        return expanded_kwargs
     
-    @task()
-    def getParamsForExternalStage(tables: List[str]) -> List[Dict[str, str]]:
-        expanded_args = []
+    #### Custom Task Definitions
+    @task_group(group_id='create_temp_table')
+    def createTempTable(model: str) -> None:
+        create_model = SQLExecuteQueryOperator.partial(
+            task_id='create_cohort_models', 
+            conn_id='snowflake', 
+            sql='create_table.sql',
+            params={
+                'table_name': model,
+                'table_columns_file': f'queries/{model}.sql'
+            }
+        )
 
-        for table in tables: 
-            expanded_args.append({'table': f'CHILI_V2.{table}', 'pattern': f'.*{table}.*.parquet'})
+        copy_from_csv = CopyFromExternalStageToSnowflakeOperator.partial(
+        task_id='copyTable', 
+        snowflake_conn_id='snowflake',
+        stage='MASALA.CHILI_V2.cohort_model_input_stage',
+        file_format="(TYPE = 'csv')",
+        params={
+            'table': f'CHILI_V2.{model}',
+            'pattern': f'.*{model}.*.parquet'
+        }
+        )
 
-        return expanded_args 
+        # TODO: Add S3 override here - maybe add an override param? like a list of models w override - set comparison to standard list to avoid doing both?
+        chain(create_model, copy_from_csv)
 
     #### Task Instances
     cohort_model_input_stage = SQLExecuteQueryOperator(
@@ -88,23 +86,10 @@ def cohortModel():
         sql='CREATE SCHEMA IF NOT EXISTS {{ params.schema_name }};'
     )
 
-    generate_params = generateParams(MODELS)
+    create_temp_tables = createTempTable.expand(MODELS)
 
-    create_models = SQLExecuteQueryOperator.partial(
-        task_id='create_cohort_models', 
-        conn_id='snowflake', 
-        sql='create_table.sql',
-    ).expand_kwargs(generate_params)
+    
 
-    external_stage_params = getParamsForExternalStage(MODELS)
-
-    copy_from_csv = CopyFromExternalStageToSnowflakeOperator.partial(
-    task_id='copyTable', 
-    snowflake_conn_id='snowflake',
-    stage='MASALA.CHILI_V2.cohort_model_input_stage',
-    file_format="(TYPE = 'csv')",
-    ).expand_kwargs(external_stage_params)
-
-    chain([test_schema, generate_params, cohort_model_input_stage], create_models)
+    chain([test_schema, cohort_model_input_stage], create_temp_tables)
 
 cohortModel()
