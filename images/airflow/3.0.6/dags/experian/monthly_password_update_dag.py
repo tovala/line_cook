@@ -11,30 +11,20 @@ from airflow.sdk import dag, task, Variable
 from airflow.exceptions import AirflowException
 from common.slack_notifications import bad_boy, good_boy
 
-# GET_TOKEN_URL = 'https://us-api.experian.com/oauth2/v1/token'
 NEW_PASSWORD_URL = 'https://ss3.experian.com/securecontrol/reset/passwordreset?command=requestnewpassword&application=netconnect&version=1'
-# UPDATE_PASSWORD_URL = "https://ss3.experian.com/securecontrol/reset/passwordreset?newpassword=%s&command=resetpassword&application=netconnect&version=1"
-# BATCH_URL = "https://us-api.experian.com/marketing-services/targeting/v1/ue-microbatch"
-
-# EXPERIAN_USERNAME_PATH = '/spice_rack/snowflake/experian_username'
-# EXPERIAN_PASSWORD_PATH = '/spice_rack/snowflake/experian_pw'
-# EXPERIAN_CLIENT_ID_PATH = '/spice_rack/snowflake/experian_client_id'
-# EXPERIAN_CLIENT_SECRET_PATH = '/spice_rack/snowflake/experian_client_secret'
-# EXPERIAN_PARTY_ID_PATH = '/spice_rack/snowflake/experian_party_id'
-# EXPERIAN_BATCH_LAYOUT = 'fname|lname|addr1|addr2|city|state|zip|email|phone|lead_id'
-# EXPERIAN_FILEBASE = 'experian/'
+UPDATE_PASSWORD_URL = 'https://ss3.experian.com/securecontrol/reset/passwordreset?newpassword=%s&command=resetpassword&application=netconnect&version=1'
 
 @dag(
-    #on_failure_callback=bad_boy,
-    #on_success_callback=good_boy,
-    # schedule=duration(days=28),
+    on_failure_callback=bad_boy,
+    on_success_callback=good_boy,
+    schedule=duration(days=28),
     catchup=False,
-    # default_args={
-    #     'retries': 2,
-    #     'retry_delay': duration(seconds=2),
-    #     'retry_exponential_backoff': True,
-    #     'max_retry_delay': duration(minutes=5),
-    # },
+    default_args={
+        'retries': 2,
+        'retry_delay': duration(seconds=2),
+        'retry_exponential_backoff': True,
+        'max_retry_delay': duration(minutes=5),
+    },
     tags=['internal', 'cleanup'],
     params={
         'channel_name': '#team-data-notifications'
@@ -55,8 +45,7 @@ def monthlyExperianPasswordUpdate():
   @task()
   def fetchNewPassword():
       """Fetches and parses suggested pw from Experian API
-      :param new_pw_url: URL to generate new password from Experian
-      :return: new password suggestion (if successfully generated), None otherwise
+      :return: new password suggestion
       """      
       try:
         password_html = requests.post(
@@ -70,7 +59,7 @@ def monthlyExperianPasswordUpdate():
         )
 
         # Experian returns this as plain text for some unholy reason
-        new_password = re.findall("^<Response><newPassword>(.*)</newPassword></Response>$", password_html.text)
+        new_password = re.findall('^<Response><newPassword>(.*)</newPassword></Response>$', password_html.text)
         assert len(new_password) == 1
       except:
         raise AirflowException('No password returned.')
@@ -78,30 +67,44 @@ def monthlyExperianPasswordUpdate():
       return new_password[0]
 
   @task()
-  def update_saved_password(set_pw_url, new_password):
+  def updateSavedPassword(new_password):
       """Sets saved password in Experian
-      :param set_pw_url: URL to update password in Experian
       :param new_password: new password
       :return: a dictionary containing the new password and the time it was reset (if successful), None o/w
       """
-      parsed_url =  set_pw_url % new_password
-      headers = {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive'
-      }
-      un = cap.get_parameter_store(EXPERIAN_USERNAME_PATH)
-      pw = get_experian_pw()
-      authorization = HTTPBasicAuth(un, pw)
-      password_update_response = cap.send_request("POST", parsed_url, data={}, headers=headers, auth=authorization)
-      if not password_update_response:
-          # Update has failed
-          return None 
-      reset_time = datetime.now()
-      new_password_dict = {"reset_time":reset_time, "password":new_password}
-      return new_password_dict
+      parsed_url =  UPDATE_PASSWORD_URL % new_password
+      print(parsed_url)
+
+      try:
+        password_update_response = requests.post(
+          url= parsed_url,
+          headers={
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+          },
+          auth=HTTPBasicAuth(Variable.get('experian_username'), Variable.get('experian_password')),
+        )
+
+        # Response is encoded in html
+        response_code = re.findall('<responseCode>(.*)</responseCode>', password_update_response.text)[0]
+        response_message = re.findall('<responseMessage>(.*)</responseMessage>', password_update_response.text)[0]
+        
+        assert response_code == '200'
+      except:
+        raise AirflowException(f'Password unable to be reset: {response_message}, {response_code}')
+
+      return response_code, response_message
+
+  @task()
+  def setAirflowPassword(new_password):
+    Variable.set('experian_password', new_password)
 
   # 1. Retrieve the new password
-  new_password = fetchNewPassword()
+  suggested_password = fetchNewPassword()
+
+  # 2. Set new password in Experian and #3. Update in Airflow
+  updateSavedPassword(suggested_password) >> setAirflowPassword(suggested_password)
+
   
 monthlyExperianPasswordUpdate()
