@@ -1,11 +1,9 @@
 import datetime
 import os 
 
-from pendulum import duration
-from airflow.sdk import dag, task, chain, Variable
 from common.slack_notifications import bad_boy, good_boy
-from cosmos import DbtDag, DbtTaskGroup, ProjectConfig, ProfileConfig, ExecutionConfig, RenderConfig, ExecutionMode, InvocationMode
-from cosmos.profiles import SnowflakePrivateKeyPemProfileMapping, SnowflakeEncryptedPrivateKeyPemProfileMapping, get_automatic_profile_mapping
+from cosmos import DbtDag, ProjectConfig, ProfileConfig, ExecutionConfig, RenderConfig
+from cosmos.profiles import SnowflakePrivateKeyPemProfileMapping
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
 
@@ -30,8 +28,8 @@ profile_config = ProfileConfig(
 )
 
 execution_config = ExecutionConfig(
-  # execution_mode=ExecutionMode.VIRTUALENV,
-  # virtualenv_dir=Path('/dbt_venv/bin/dbt')
+  execution_mode=ExecutionMode.VIRTUALENV,
+  #virtualenv_dir=Path('/dbt_venv/bin/dbt')
   dbt_executable_path=f'{AIRFLOW_HOME}/dbt_venv/bin/dbt'
 )
 
