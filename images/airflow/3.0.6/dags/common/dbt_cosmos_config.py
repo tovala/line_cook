@@ -11,6 +11,10 @@ dbt_project_config = ProjectConfig(
   install_dbt_deps=True
 )
 
+# We want to have two profile configs: prod and test 
+# In prod, Airflows connections will get set up in MWAA 
+# We want to replicate the connection Jenkins currently has set up to run dbt pipelines 
+
 dbt_profile_config = ProfileConfig(
   profile_name='spice_rack',
   target_name='test',
