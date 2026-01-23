@@ -22,7 +22,13 @@ dbt_profile_config = ProfileConfig(
     SnowflakePrivateKeyPemProfileMapping(
         conn_id='snowflake',
         profile_args={
+            # need a dynamic variable here for test branches 
             'schema': 'test_elly',
+            # in profiles.yml,,,,,
+            # test schema is 
+            # test_{{ env_var('BRANCH_SCHEMA_NAME') }}
+            # prod schema is 
+            # prod 
         },
     ), 
 )
