@@ -2,7 +2,7 @@ import datetime
 import os 
 
 from common.slack_notifications import bad_boy, good_boy
-from cosmos import DbtDag, ProjectConfig, ProfileConfig, ExecutionConfig, RenderConfig
+from cosmos import DbtDag, ProjectConfig, ProfileConfig, ExecutionConfig, RenderConfig, ExecutionMode, LoadMode
 from cosmos.profiles import SnowflakePrivateKeyPemProfileMapping
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
@@ -34,7 +34,8 @@ execution_config = ExecutionConfig(
 )
 
 ds_weekly_config = RenderConfig(
-  select=['path:models/anise/', 'path:models/basil/'],
+  selector='weekly_ds_run',
+  load_method=LoadMode.DBT_LS,
   enable_mock_profile=False
 )
 
@@ -58,8 +59,6 @@ dbt_run = DbtDag(
   ## schedule = '0 20 * * 4' ## (DST) 3 PM US/Central on Thursday
   start_date=datetime.datetime(2026, 1, 15),
   catchup=False,
-  max_active_tasks=1,
-  dagrun_timeout=datetime.timedelta(minutes=10),
   default_args={
     #"retries": 2,
     #"retry_delay": duration(seconds=2),
