@@ -1,37 +1,12 @@
 import datetime
 import os 
 
+from pendulum import duration
+
 from common.slack_notifications import bad_boy, good_boy
-from cosmos import DbtDag, ProjectConfig, ProfileConfig, ExecutionConfig, RenderConfig, ExecutionMode, LoadMode
-from cosmos.profiles import SnowflakePrivateKeyPemProfileMapping
+from common.dbt_cosmos_config import dbt_project_config, dbt_profile_config, dbt_execution_config
+from cosmos import DbtDag, RenderConfig, LoadMode 
 
-AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
-
-project_config = ProjectConfig(
-  dbt_project_path=f'{AIRFLOW_HOME}/spice_rack',
-  models_relative_path='models', # test removing entirely 
-  project_name='spice_rack',
-  install_dbt_deps=True
-)
-
-profile_config = ProfileConfig(
-  profile_name='spice_rack',
-  target_name='test',
-  profile_mapping = # get_automatic_profile_mapping(conn_id='snowflake')
-      SnowflakePrivateKeyPemProfileMapping(
-      conn_id='snowflake',
-      profile_args={
-        'schema': 'test_elly',
-      },
-      #profiles_yml_filepath=f'{AIRFLOW_HOME}/spice_rack',
-    ), 
-)
-
-execution_config = ExecutionConfig(
-  execution_mode=ExecutionMode.VIRTUALENV,
-  #virtualenv_dir=Path('/dbt_venv/bin/dbt')
-  dbt_executable_path=f'{AIRFLOW_HOME}/dbt_venv/bin/dbt'
-)
 
 ds_weekly_config = RenderConfig(
   selector='weekly_ds_run',
@@ -41,9 +16,9 @@ ds_weekly_config = RenderConfig(
 
 dbt_run = DbtDag(
   dag_id='weeklyDsRun',
-  project_config=project_config,
-  profile_config=profile_config,
-  execution_config=execution_config,
+  project_config=dbt_project_config,
+  profile_config=dbt_profile_config,
+  execution_config=dbt_execution_config,
   render_config=ds_weekly_config ,
   operator_args={
         "py_system_site_packages": False,
@@ -60,10 +35,10 @@ dbt_run = DbtDag(
   start_date=datetime.datetime(2026, 1, 15),
   catchup=False,
   default_args={
-    #"retries": 2,
-    #"retry_delay": duration(seconds=2),
-    #"retry_exponential_backoff": True,
-    #"max_retry_delay": duration(minutes=5),
+    "retries": 2,
+    "retry_delay": duration(seconds=2),
+    "retry_exponential_backoff": True,
+    "max_retry_delay": duration(minutes=5),
   },
     tags=['data_science']
 )
