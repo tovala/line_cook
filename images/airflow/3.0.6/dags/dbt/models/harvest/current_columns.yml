@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: current_columns
-    desription: All columns belonging to currently built dbt models, enriched with type information from information schema.  
-    columns:
-      - name: column_id
-        data_tests:
-          - primary_key

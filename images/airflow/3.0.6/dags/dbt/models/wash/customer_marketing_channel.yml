@@ -1,5 +1,0 @@
-version: 2
-
-models:
-  - name: customer_marketing_channel
-    description: "Customer-level marketing channel, post 6/2021"

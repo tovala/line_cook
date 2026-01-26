@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: reactivation_eligible_customers
-    description: "Customers who are eligible for reactivation by term,pulled using the same logic as the Sigma dataset of the same name"
-    columns:
-      - name: customer_id
-        data_tests:
-          - primary_key

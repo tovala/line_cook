@@ -1,5 +1,0 @@
-version: 2
-
-models:
-  - name: grandfathered_shipping
-    description: "Identifies the customers who have free shipping as part of their plan."

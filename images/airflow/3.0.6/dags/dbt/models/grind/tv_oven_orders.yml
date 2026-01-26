@@ -1,5 +1,0 @@
-version: 2
-
-models:
-  - name: tv_oven_orders
-    description: "Table of oven orders linked to TV spots, from TVSquared data in dry"

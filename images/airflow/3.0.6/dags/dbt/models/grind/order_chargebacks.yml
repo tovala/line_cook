@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: order_chargebacks
-    description: "Chargebacks tied to Orders (Meal Orders, Oven Orders, and Gift Cards)"
-    columns:
-      - name: chargeback_id
-        data_tests:
-          - primary_key

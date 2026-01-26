@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: experiments_variants
-    description: "The experiment variants type and it's order in experiment tracker data."
-    columns:
-      - name: variant_id
-        data_tests:
-          - primary_key

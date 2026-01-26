@@ -1,5 +1,0 @@
-version: 2
-
-models:
-  - name: add_ons_lookup
-    description: "Contains ID and title for meals that might be add-ons. Will also contain id and title for meals that are incorrectly formatted or otherwise missing information."

@@ -1,8 +1,0 @@
-version: 2
-
-models:
-  - name: dry_typeform_questions
-    columns:
-      - name: id
-        data_tests:
-          - primary_key

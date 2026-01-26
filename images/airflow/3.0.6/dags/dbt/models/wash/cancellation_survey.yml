@@ -1,5 +1,0 @@
-version: 2
-
-models:
-  - name: cancellation_survey
-    description: "Responses to Typeform survey given when a customer chooses to cancel their account."

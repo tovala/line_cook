@@ -1,5 +1,0 @@
-version: 2
-
-models:
-  - name: first_web_visits
-    description: "Information about every visitor(if one became a customer, use customer_id, else use ip_address)'s first page visit, excluding customers who registered before fullstory data was available"

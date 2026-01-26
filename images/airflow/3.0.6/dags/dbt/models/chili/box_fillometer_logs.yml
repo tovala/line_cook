@@ -1,8 +1,0 @@
-version: 2
-
-models:
-  - name: box_fillometer_logs
-    columns:
-      - name: raw_data
-        data_tests:
-          - not_null

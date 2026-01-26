@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: dry_cookable_meal_reviews
-    columns:
-      - name: cookable_review_id
-      - name: created
-        data_tests:
-          - not_null

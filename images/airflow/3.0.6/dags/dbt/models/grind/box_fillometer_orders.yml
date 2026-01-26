@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: box_fillometer_orders
-    description: "Order information for Box Fillometer logs"
-    columns:
-      - name: order_id
-        data_tests:
-          - primary_key

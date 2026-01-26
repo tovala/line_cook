@@ -1,5 +1,0 @@
-version: 2
-
-models:
-  - name: cs_ticket_tags
-    description: Table associating Zendesk Tags to Zendesk Tickets (many to one)

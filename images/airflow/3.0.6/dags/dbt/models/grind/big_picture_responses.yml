@@ -1,8 +1,0 @@
-version: 2
-
-models:
-  - name: big_picture_responses
-    columns: 
-      - name: landing_id
-        data_tests:
-          - primary_key

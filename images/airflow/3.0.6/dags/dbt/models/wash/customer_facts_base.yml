@@ -1,5 +1,0 @@
-version: 2
-
-models:
-  - name: customer_facts_base
-    description: "Includes customer ids of all customers who have had at least one fulfilled meal order, purchased an oven via DTC, or synced a retail oven."

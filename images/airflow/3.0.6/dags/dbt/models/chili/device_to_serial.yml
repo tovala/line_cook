@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: device_to_serial
-    #removed a test for multiple valid serial numbers, replaced it with a sigma dashboard
-    columns:
-      - name: oven_hardware_id
-        data_tests:
-          - primary_key

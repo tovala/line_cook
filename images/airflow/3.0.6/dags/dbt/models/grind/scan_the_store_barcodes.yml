@@ -1,8 +1,0 @@
-version: 2
-
-models:
-  - name: scan_the_store_barcodes
-    columns:
-      - name: sts_product_id
-        data_tests:
-          - primary_key 

@@ -1,5 +1,0 @@
-version: 2
-
-models:
-  - name: real_time_guidance_customers
-    description: "Customers impacted by real time guidance events in Glaze."

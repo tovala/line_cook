@@ -1,8 +1,0 @@
-version: 2
-
-models:
-  - name: meal_production_counts
-    columns: 
-      - name: meal_sku_id
-        data_tests:
-          - not_null

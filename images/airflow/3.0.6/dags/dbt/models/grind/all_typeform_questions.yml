@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: all_typeform_questions
-    description: "Typeform questions, including a breakdown for contact information questions"
-    columns:
-      - name: question_id
-        data_tests:
-          - not_null

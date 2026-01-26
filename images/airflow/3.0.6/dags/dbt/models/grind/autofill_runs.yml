@@ -1,8 +1,0 @@
-version: 2
-
-models:
-  - name: autofill_runs
-    columns:
-      - name: run_id
-        data_tests:
-          - primary_key

@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: cs_agents
-    description: Customer Support Agents
-    columns:
-      - name: zendesk_user_id
-        data_tests:
-          - primary_key

@@ -1,5 +1,0 @@
-version: 2
-
-models:
-  - name: cs_parsed_custom_fields
-    description: "Parses the stella score and affected term IDs out of the Zendesk custom fields."

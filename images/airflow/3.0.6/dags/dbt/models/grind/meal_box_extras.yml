@@ -1,8 +1,0 @@
-version: 2
-
-models:
-  - name: meal_box_extras
-    columns:
-      - name: meal_box_extra_map_id
-        data_tests:
-          - primary_key 

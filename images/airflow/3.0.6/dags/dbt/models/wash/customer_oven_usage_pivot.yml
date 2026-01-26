@@ -1,5 +1,0 @@
-version: 2
-
-models:
-  - name: customer_oven_usage_pivot
-    description: "Customer-level pivoted cook count data"

@@ -1,5 +1,0 @@
-version: 2
-
-models:
-  - name: cook_event_temperatures
-    description: "Cook event temperatures for gen2 ovens with calculated barrel temp."

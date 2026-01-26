@@ -1,8 +1,0 @@
-version: 2
-
-models:
-  - name: dry_reactivation_credits
-    columns:
-      - name: id
-        data_tests:
-          - primary_key 

@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: all_typeform_forms
-    description: "Typeform forms in grind, with form information"
-    columns:
-      - name: id
-        data_tests:
-          - primary_key

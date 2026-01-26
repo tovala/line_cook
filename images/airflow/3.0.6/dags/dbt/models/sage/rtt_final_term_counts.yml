@@ -1,6 +1,0 @@
-version: 2
-
-models:
-  - name: rtt_final_term_counts
-    description: "This query pulls various metrics at term end in order to run the Near Term Forecast Model"
-    

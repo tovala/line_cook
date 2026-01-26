@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: experiments_variants_assignments
-    description: "The experiment variants assignments that the user actual seeing in experiment tracker data."
-    columns:
-      - name: experiment_variant_assignment_id
-        data_tests:
-          - primary_key

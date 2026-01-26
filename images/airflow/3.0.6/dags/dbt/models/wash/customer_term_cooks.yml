@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: customer_term_cooks
-    description: "Number of cook events by type, customer, and operational term."
-    columns:
-      - name: customer_term_cook_id
-        data_tests:
-          - primary_key

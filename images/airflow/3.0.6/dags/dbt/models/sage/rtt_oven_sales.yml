@@ -1,5 +1,0 @@
-version: 2
-
-models:
-  - name: rtt_oven_sales
-    description: "This query pulls oven sales by facility network at the day level."

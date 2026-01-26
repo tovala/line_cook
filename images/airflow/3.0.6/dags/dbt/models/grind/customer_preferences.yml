@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: customer_preferences
-    description: "Table of Customer Preferences Based on Big Picture Survey Responses"
-    columns:
-      - name: customer_id
-        data_tests:
-          - primary_key 

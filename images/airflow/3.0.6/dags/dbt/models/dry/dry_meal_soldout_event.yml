@@ -1,8 +1,0 @@
-version: 2
-
-models:
-  - name: dry_meal_soldout_event
-    columns:
-      - name: id
-        data_tests:
-          - primary_key

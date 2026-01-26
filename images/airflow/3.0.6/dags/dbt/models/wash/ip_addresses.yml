@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: ip_addresses
-    description: "Finds the most recent ip_address associated with a given oven_hardware_id."
-    columns:
-      - name: oven_hardware_id
-        data_tests:
-          - primary_key

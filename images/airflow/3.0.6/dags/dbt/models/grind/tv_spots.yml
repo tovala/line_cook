@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: tv_spots
-    description: "Table of TV spots, from TVSquared data in dry"
-    columns:
-      - name: spot_id
-        data_tests:
-          - primary_key

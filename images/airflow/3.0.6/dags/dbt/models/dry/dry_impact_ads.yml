@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: dry_impact_ads
-    columns:
-      - name: report_date
-        data_tests:
-          - primary_key
-          - not_null

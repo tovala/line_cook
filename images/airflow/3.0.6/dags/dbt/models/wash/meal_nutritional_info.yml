@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: meal_nutritional_info
-    description: "Parses out nutritional information and allergies from nested meal data."
-    columns:
-      - name: meal_sku_id
-        data_tests: 
-          - not_null 

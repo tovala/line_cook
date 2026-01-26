@@ -1,5 +1,0 @@
-version: 2
-
-models:
-  - name: meal_order_facts
-    description: "Aggregates information about meal order selections."

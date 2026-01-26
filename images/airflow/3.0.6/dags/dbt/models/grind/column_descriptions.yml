@@ -1,5 +1,0 @@
-version: 2
-
-models:
-  - name: column_descriptions
-    description: "Contains all columns currently available in Sigma along with their table, schema and a short description."

@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: stripe_charges
-    description: "Payment details for Stripe charges - for use in assessing oven fraud."
-    columns:
-      - name: stripe_charge_id
-        data_tests:
-          - primary_key
