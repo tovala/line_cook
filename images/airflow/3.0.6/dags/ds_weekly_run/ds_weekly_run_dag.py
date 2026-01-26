@@ -2,10 +2,10 @@ import datetime
 
 from pendulum import duration
 from cosmos import DbtTaskGroup, RenderConfig, LoadMode 
-from airflow.sdk import dag
+from airflow.sdk import dag, get_current_context
 
 from common.slack_notifications import bad_boy, good_boy
-from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_EXECUTION_CONFIG, PROD_DBT_PROFILE_CONFIG
+from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_EXECUTION_CONFIG, getProfileConfig
 
 DS_WEEKLY_RENDER_CONFIG = RenderConfig(
   selector='weekly_ds_run',
@@ -25,13 +25,18 @@ DS_WEEKLY_RENDER_CONFIG = RenderConfig(
     "retry_exponential_backoff": True,
     "max_retry_delay": duration(minutes=5),
   },
-    tags=['data_science']
+  tags=['data_science'],
+  params={
+    'dbt_target': 'test',
+  }
 )
 def weeklyDsRun():
+  context = get_current_context()
+  
   dbt_run = DbtTaskGroup(
     group_id='weekly_ds_run',
     project_config=DBT_PROJECT_CONFIG,
-    profile_config=PROD_DBT_PROFILE_CONFIG,
+    profile_config=getProfileConfig(target=context.get('params')['dbt_target']),
     execution_config=DBT_EXECUTION_CONFIG,
     render_config=DS_WEEKLY_RENDER_CONFIG ,
     operator_args={

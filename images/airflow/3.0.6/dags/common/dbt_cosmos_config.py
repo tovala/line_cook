@@ -22,26 +22,39 @@ DBT_EXECUTION_CONFIG = ExecutionConfig(
   dbt_executable_path=f'{AIRFLOW_HOME}/dbt_venv/bin/dbt'
 )
 
-PROD_DBT_PROFILE_CONFIG = ProfileConfig(
-  profile_name='spice_rack',
-  target_name='prod',
-  profile_mapping = 
-    SnowflakePrivateKeyPemProfileMapping(
-        conn_id='snowflake',
-        profile_args={
-            'schema': 'prod',
-        },
-    ),
-)
+def getProfileConfig(target: str) -> ProfileConfig:
+  '''
+  Returns the appropriate DBT Profile Config for the given target. If target is Prod, use prod ProfileConfig,
+  otherwise default ProfileConfig will be test.
+  
+  Args:
+    target (str): the dbt target to use 
+  
+  Output:
+    (ProfileConfig): Profile Config object for the given target
+  '''
 
-TEST_DBT_PROFILE_CONFIG = ProfileConfig(
-  profile_name='spice_rack',
-  target_name='test',
-  profile_mapping = 
-    SnowflakePrivateKeyPemProfileMapping(
-        conn_id='snowflake',
-        profile_args={
-            'schema': 'test_taylor',
-        },
-    ), 
-)
+  if target.upper() in ['PROD', 'PRODUCTION']:
+    return ProfileConfig(
+      profile_name='spice_rack',
+      target_name='prod',
+      profile_mapping = 
+        SnowflakePrivateKeyPemProfileMapping(
+            conn_id='snowflake',
+            profile_args={
+                'schema': 'prod',
+            },
+        ),
+    )
+  else:
+    return ProfileConfig(
+      profile_name='spice_rack',
+      target_name='test',
+      profile_mapping = 
+        SnowflakePrivateKeyPemProfileMapping(
+            conn_id='snowflake',
+            profile_args={
+                'schema': f"test_{Variable.get('branch_schema_name', default='default_user')}",
+            },
+        ), 
+    )
