@@ -76,12 +76,11 @@ x-airflow-common: &airflow-common
     - ./plugins:/usr/local/airflow/plugins
     - ./requirements:/usr/local/airflow/requirements
     - ./startup:/usr/local/airflow/startup
-    - ~/spice_rack/models:/usr/local/airflow/spice_rack/models
-    - ~/spice_rack/macros:/usr/local/airflow/spice_rack/macros
-    - ~/spice_rack/tests:/usr/local/airflow/spice_rack/tests
-    - ~/spice_rack/dbt_project.yml:/usr/local/airflow/spice_rack/dbt_project.yml
-    - ~/spice_rack/selectors.yml:/usr/local/airflow/spice_rack/selectors.yml
-    - ~/spice_rack/.dbt:/usr/local/airflow/spice_rack/.dbt
+    - ~/spice_rack/models:/usr/local/airflow/dags/spice_rack/models
+    - ~/spice_rack/macros:/usr/local/airflow/dags/spice_rack/macros
+    - ~/spice_rack/tests:/usr/local/airflow/dags/spice_rack/tests
+    - ~/spice_rack/dbt_project.yml:/usr/local/airflow/dags/spice_rack/dbt_project.yml
+    - ~/spice_rack/selectors.yml:/usr/local/airflow/dags/spice_rack/selectors.yml
 
   depends_on: &airflow-common-depends-on
     postgres:
