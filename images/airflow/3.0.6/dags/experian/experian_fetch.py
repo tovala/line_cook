@@ -65,6 +65,15 @@ def fetchExperianData():
             print('Oh shit!')
 
         return token_response.json()['refresh_token']
+    
+    @task()
+    def batch_customers():
+        sf_hook = SnowflakeHook(snowflake_conn_id='snowflake')
+        sf_connection = sf_hook.get_conn()
+
+        cursor = sf_connection.cursor()
+        #TODO: Use this to create a list of requests in batch format 
+
 
     @task()
     #TODO: handle full refresh flag - set as parameter? 
@@ -108,19 +117,28 @@ def fetchExperianData():
 
     # 2. Get list of customers -- how to batch this in an Airflow-y way? 
     # TODO: Handle XCom Parsing - each record looks like: {'__data__': ['Samantha|Stuart|4845 SE Vintage Pl||Milwaukie|OR|97267|samanthastuart_dc@yahoo.com|5033208542|1936108'], '__version__': 1, '__classname__': 'builtins.tuple'}
-    customers = SQLExecuteQueryOperator(
+    # TODO: Use a macro to generate the SQL for full_refresh (see cohort model code)
+    create_temporary_table = SQLExecuteQueryOperator(
+        task_id="create_temporary_table", 
+        conn_id="snowflake", 
+        sql="queries/create_temp_customers_table.sql",
+    )
+
+    customers_to_process = SQLExecuteQueryOperator(
         task_id="customers_to_process", 
         conn_id="snowflake", 
         sql="queries/experian_customers.sql",
     )
 
-    # 3. Get erichs 
-    # TODO: Handle XCom Parsing 
-    erichs = SQLExecuteQueryOperator(
-        task_id="get_erichs", 
-        conn_id="snowflake", 
-        sql="queries/experian_erichs.sql",
-    )
+    create_temporary_table >> customers_to_process
+
+    # # 3. Get erichs 
+    # # TODO: Handle XCom Parsing 
+    # erichs = SQLExecuteQueryOperator(
+    #     task_id="get_erichs", 
+    #     conn_id="snowflake", 
+    #     sql="queries/experian_erichs.sql",
+    # )
 
     # 4. For each batch:
         # Get Data
