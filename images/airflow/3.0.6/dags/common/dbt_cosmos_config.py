@@ -8,7 +8,7 @@ SF_AWS_KEY = Variable.get('dbt_sf_aws_key')
 SF_AWS_SECRET = Variable.get('dbt_sf_aws_secret')
 
 DBT_PROJECT_CONFIG = ProjectConfig(
-  dbt_project_path=f'{AIRFLOW_HOME}/spice_rack',
+  dbt_project_path=f'{AIRFLOW_HOME}/dags/spice_rack',
   project_name='spice_rack',
   install_dbt_deps=True,
   env_vars={
