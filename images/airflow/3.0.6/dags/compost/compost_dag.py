@@ -2,6 +2,7 @@ import datetime
 
 from pendulum import duration
 from cosmos import DbtTaskGroup, RenderConfig, LoadMode, TestBehavior, DbtRunOperationLocalOperator
+from cosmos.operators.local import DbtSourceLocalOperator
 from airflow.sdk import dag, chain, Variable
 from airflow.timetables.trigger import CronTriggerTimetable
 
@@ -60,25 +61,17 @@ def compost():
         macro_name='cleanup_old_models',
     )
 
-#   build_weekly_ds_models = DbtTaskGroup(
-#     group_id='weekly_ds_run',
-#     project_config=DBT_PROJECT_CONFIG,
-#     profile_config=PROD_DBT_PROFILE_CONFIG,
-#     execution_config=DBT_WATCHER_EXECUTION_CONFIG,
-#     render_config=RenderConfig(
-#       selector='weekly_ds_run',
-#       load_method=LoadMode.DBT_LS,
-#       enable_mock_profile=False,
-#       test_behavior=TestBehavior.AFTER_ALL
-#     ),
-#     operator_args={
-#       'py_system_site_packages': False,
-#       'py_requirements': ['dbt-snowflake'],
-#       'install_deps': True,
-#       'emit_datasets': False,
-#       'execution_timeout': datetime.timedelta(minutes=10),
-#     },
-#   )
-    pass 
+    # 3. Test Source Freshness
+    #TODO: Output to channel if possible
+    source_freshness = DbtSourceLocalOperator(
+        task_id='source_freshness',
+        profile_config=PROD_DBT_PROFILE_CONFIG,
+        env={
+            'SF_AWS_KEY': Variable.get('dbt_sf_aws_key'),
+            'SF_AWS_SECRET': Variable.get('dbt_sf_aws_secret')
+        },
+        project_dir=DBT_PROJECT_DIR,
+        dbt_executable_path=DBT_EXECUTABLE_PATH,
+    )
 
 compost()
