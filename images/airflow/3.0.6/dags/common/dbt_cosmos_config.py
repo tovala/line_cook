@@ -17,8 +17,13 @@ DBT_PROJECT_CONFIG = ProjectConfig(
   }
 )
 
-DBT_EXECUTION_CONFIG = ExecutionConfig(
+DBT_WATCHER_EXECUTION_CONFIG = ExecutionConfig(
   execution_mode=ExecutionMode.WATCHER,
+  dbt_executable_path=f'{AIRFLOW_HOME}/dbt_venv/bin/dbt'
+)
+
+DBT_VENV_EXECUTION_CONFIG = ExecutionConfig(
+  execution_mode=ExecutionMode.VIRTUALENV,
   dbt_executable_path=f'{AIRFLOW_HOME}/dbt_venv/bin/dbt'
 )
 
@@ -29,7 +34,7 @@ PROD_DBT_PROFILE_CONFIG = ProfileConfig(
   profile_mapping = SnowflakePrivateKeyPemProfileMapping(
     conn_id='snowflake_dbt_prod',
     profile_args = {
-      "threads": 8
+      "threads": 16
     }
   )
 )
@@ -41,7 +46,7 @@ TEST_DBT_PROFILE_CONFIG = ProfileConfig(
   profile_mapping = SnowflakePrivateKeyPemProfileMapping(
     conn_id='snowflake_dbt_test',
     profile_args = {
-      "threads": 16
+      "threads": 8
     }
   )
 )
