@@ -44,7 +44,21 @@ def compost():
         project_dir=DBT_PROJECT_DIR,
         dbt_executable_path=DBT_EXECUTABLE_PATH,
         macro_name='clean_up_all_test',
-     )
+    )
+
+    # 2. Tear Down Old Models
+    # dbt run-operation cleanup_old_models --profiles-dir $PWD/.dbt --target prod
+    tear_down_old_models = DbtRunOperationLocalOperator(
+        task_id='tear_down_old_models',
+        profile_config=PROD_DBT_PROFILE_CONFIG, 
+        env={
+            'SF_AWS_KEY': Variable.get('dbt_sf_aws_key'),
+            'SF_AWS_SECRET': Variable.get('dbt_sf_aws_secret')
+        },
+        project_dir=DBT_PROJECT_DIR,
+        dbt_executable_path=DBT_EXECUTABLE_PATH,
+        macro_name='cleanup_old_models',
+    )
 
 #   build_weekly_ds_models = DbtTaskGroup(
 #     group_id='weekly_ds_run',
