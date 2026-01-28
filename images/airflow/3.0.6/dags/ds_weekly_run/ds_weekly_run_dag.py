@@ -3,6 +3,7 @@ import datetime
 from pendulum import duration
 from cosmos import DbtTaskGroup, RenderConfig, LoadMode, TestBehavior, DbtRunOperationLocalOperator
 from airflow.sdk import dag, chain, Variable
+from airflow.timetables.trigger import CronTriggerTimetable
 
 from common.slack_notifications import bad_boy, good_boy
 from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_WATCHER_EXECUTION_CONFIG, PROD_DBT_PROFILE_CONFIG, DBT_PROJECT_DIR, DBT_EXECUTABLE_PATH
@@ -10,7 +11,7 @@ from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_WATCHER_EXECUTION_C
 @dag(
   on_failure_callback=bad_boy,
   on_success_callback=good_boy,
-  schedule = '0 21 * * 4', ## (non DST) 3 PM US/Central on Thursday
+  schedule=CronTriggerTimetable("0 15 * * 4", timezone="America/Chicago"),
   start_date=datetime.datetime(2026, 1, 15),
   catchup=False,
   default_args={
