@@ -5,7 +5,7 @@ from cosmos import DbtTaskGroup, RenderConfig, LoadMode, TestBehavior, DbtRunOpe
 from airflow.sdk import dag, chain
 
 from common.slack_notifications import bad_boy, good_boy
-from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_WATCHER_EXECUTION_CONFIG, PROD_DBT_PROFILE_CONFIG, DBT_PROJECT_DIR
+from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_WATCHER_EXECUTION_CONFIG, PROD_DBT_PROFILE_CONFIG, DBT_PROJECT_DIR, DBT_EXECUTABLE_PATH
 
 @dag(
   on_failure_callback=bad_boy,
@@ -53,7 +53,8 @@ def weeklyDsRun():
     task_id='on_run_end',
     profile_config=PROD_DBT_PROFILE_CONFIG,
     project_dir=DBT_PROJECT_DIR,
-    macro_name='',
+    dbt_executable_path=DBT_EXECUTABLE_PATH,
+    macro_name='run_permission_grants',
     args={}
   )
 

@@ -9,9 +9,10 @@ SF_AWS_SECRET = Variable.get('dbt_sf_aws_secret')
 
 # To use with one-off operators
 DBT_PROJECT_DIR = f'{AIRFLOW_HOME}/dags/spice_rack'
+DBT_EXECUTABLE_PATH = f'{AIRFLOW_HOME}/dbt_venv/bin/dbt'
 
 DBT_PROJECT_CONFIG = ProjectConfig(
-  dbt_project_path=f'{AIRFLOW_HOME}/dags/spice_rack',
+  dbt_project_path=DBT_PROJECT_DIR,
   project_name='spice_rack',
   install_dbt_deps=True,
   env_vars={
@@ -30,7 +31,7 @@ DBT_WATCHER_EXECUTION_CONFIG = ExecutionConfig(
 # Uses `dbt run` in Virtual Env
 DBT_VENV_EXECUTION_CONFIG = ExecutionConfig(
   execution_mode=ExecutionMode.VIRTUALENV,
-  dbt_executable_path=f'{AIRFLOW_HOME}/dbt_venv/bin/dbt'
+  dbt_executable_path=DBT_EXECUTABLE_PATH
 )
 
 # Use this version when opening a PR for Prod deployment
