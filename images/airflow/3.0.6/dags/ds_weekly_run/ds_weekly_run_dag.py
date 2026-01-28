@@ -49,20 +49,5 @@ def weeklyDsRun():
     },
   )
 
-  on_run_end_macro = DbtRunOperationLocalOperator(
-    task_id='on_run_end',
-    profile_config=PROD_DBT_PROFILE_CONFIG,
-    env={
-      'SF_AWS_KEY': Variable.get('dbt_sf_aws_key'),
-      'SF_AWS_SECRET': Variable.get('dbt_sf_aws_secret')
-    },
-    project_dir=DBT_PROJECT_DIR,
-    dbt_executable_path=DBT_EXECUTABLE_PATH,
-    macro_name='run_permission_grants',
-    args={}
-  )
-
-  chain(build_weekly_ds_models, on_run_end_macro)
-
 weeklyDsRun()
 
