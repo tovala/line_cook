@@ -1,11 +1,11 @@
 import datetime
 
 from pendulum import duration
-from cosmos import DbtTaskGroup, RenderConfig, LoadMode, TestBehavior, DbtRunOperationVirtualenvOperator
-from airflow.sdk import dag
+from cosmos import DbtTaskGroup, RenderConfig, LoadMode, TestBehavior, DbtRunOperationLocalOperator
+from airflow.sdk import dag, chain
 
 from common.slack_notifications import bad_boy, good_boy
-from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_WATCHER_EXECUTION_CONFIG, PROD_DBT_PROFILE_CONFIG
+from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_WATCHER_EXECUTION_CONFIG, PROD_DBT_PROFILE_CONFIG, DBT_PROJECT_DIR
 
 @dag(
   on_failure_callback=bad_boy,
@@ -49,14 +49,15 @@ def weeklyDsRun():
     },
   )
 
-  on_run_end_macro = DbtRunOperationVirtualenvOperator(
+  on_run_end_macro = DbtRunOperationLocalOperator(
+    task_id='on_run_end',
     profile_config=PROD_DBT_PROFILE_CONFIG,
-    py_requirements=['dbt-snowflake'],
+    project_dir=DBT_PROJECT_DIR,
     macro_name='',
     args={}
   )
 
-  build_weekly_ds_models > on_run_end_macro
+  chain(build_weekly_ds_models, on_run_end_macro)
 
 weeklyDsRun()
 
