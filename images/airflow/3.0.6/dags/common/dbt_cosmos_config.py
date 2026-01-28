@@ -17,11 +17,14 @@ DBT_PROJECT_CONFIG = ProjectConfig(
   }
 )
 
+# Much faster - experimental Cosmos feature - uses `dbt build` so will run all 
+# models, tests, seeds, snapshots for the given selector
 DBT_WATCHER_EXECUTION_CONFIG = ExecutionConfig(
   execution_mode=ExecutionMode.WATCHER,
   dbt_executable_path=f'{AIRFLOW_HOME}/dbt_venv/bin/dbt'
 )
 
+# Uses `dbt run` in Virtual Env
 DBT_VENV_EXECUTION_CONFIG = ExecutionConfig(
   execution_mode=ExecutionMode.VIRTUALENV,
   dbt_executable_path=f'{AIRFLOW_HOME}/dbt_venv/bin/dbt'
