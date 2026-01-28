@@ -18,7 +18,7 @@ DBT_PROJECT_CONFIG = ProjectConfig(
 )
 
 DBT_EXECUTION_CONFIG = ExecutionConfig(
-  execution_mode=ExecutionMode.VIRTUALENV,
+  execution_mode=ExecutionMode.WATCHER,
   dbt_executable_path=f'{AIRFLOW_HOME}/dbt_venv/bin/dbt'
 )
 
@@ -26,12 +26,22 @@ DBT_EXECUTION_CONFIG = ExecutionConfig(
 PROD_DBT_PROFILE_CONFIG = ProfileConfig(
   profile_name='spice_rack',
   target_name='prod',
-  profile_mapping = SnowflakePrivateKeyPemProfileMapping(conn_id='snowflake_dbt_prod')
+  profile_mapping = SnowflakePrivateKeyPemProfileMapping(
+    conn_id='snowflake_dbt_prod',
+    profile_args = {
+      "threads": 8
+    }
+  )
 )
 
 # Use this version for local testing
 TEST_DBT_PROFILE_CONFIG = ProfileConfig(
   profile_name='spice_rack',
   target_name='test',
-  profile_mapping = SnowflakePrivateKeyPemProfileMapping(conn_id='snowflake_dbt_test')
+  profile_mapping = SnowflakePrivateKeyPemProfileMapping(
+    conn_id='snowflake_dbt_test',
+    profile_args = {
+      "threads": 16
+    }
+  )
 )
