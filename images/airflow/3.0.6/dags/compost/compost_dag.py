@@ -2,12 +2,13 @@ import datetime
 
 from pendulum import duration
 from cosmos import DbtTaskGroup, RenderConfig, LoadMode, TestBehavior, DbtRunOperationLocalOperator
-from cosmos.operators.local import DbtSourceLocalOperator
+from cosmos.operators.local import DbtSourceLocalOperator, DbtTestLocalOperator
 from airflow.sdk import dag, chain, Variable
 from airflow.timetables.trigger import CronTriggerTimetable
 
 from common.slack_notifications import bad_boy, good_boy
 from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_WATCHER_EXECUTION_CONFIG, PROD_DBT_PROFILE_CONFIG, TEST_DBT_PROFILE_CONFIG, DBT_PROJECT_DIR, DBT_EXECUTABLE_PATH
+from common.dbt_custom_operators import runOperatorCustom
 
 @dag(
 #   on_failure_callback=bad_boy,
@@ -28,50 +29,63 @@ from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_WATCHER_EXECUTION_C
     render_template_as_native_obj=True
 )
 
-def compost():
+def compost_v2():
     '''
     Runs a series of dbt operations for maintenance purposes
     '''
     # 1. Tear Down Testing
-    # dbt run-operation clean_up_all_test --profiles-dir $PWD/.dbt --target test
-    clean_up_test_schemas = DbtRunOperationLocalOperator(
+    # dbt run-operation clean_up_all_test --target test
+    # TODO: Move into common - make baby run operator friend
+    clean_up_test_schemas = runOperatorCustom.testicle(
         task_id='clean_up_test_schemas',
-        # This is intentionally set to test so it cleans up test schemas 
-        profile_config=TEST_DBT_PROFILE_CONFIG, 
-        env={
-            'SF_AWS_KEY': Variable.get('dbt_sf_aws_key'),
-            'SF_AWS_SECRET': Variable.get('dbt_sf_aws_secret')
-        },
-        project_dir=DBT_PROJECT_DIR,
-        dbt_executable_path=DBT_EXECUTABLE_PATH,
         macro_name='clean_up_all_test',
     )
 
+    # clean_up_test_schemas = DbtRunOperationLocalOperator(
+    #     task_id='clean_up_test_schemas',
+    #     # This is intentionally set to test so it cleans up test schemas 
+    #     profile_config=TEST_DBT_PROFILE_CONFIG, 
+    #     env={
+    #         'SF_AWS_KEY': Variable.get('dbt_sf_aws_key'),
+    #         'SF_AWS_SECRET': Variable.get('dbt_sf_aws_secret')
+    #     },
+    #     project_dir=DBT_PROJECT_DIR,
+    #     dbt_executable_path=DBT_EXECUTABLE_PATH,
+    #     macro_name='clean_up_all_test',
+    # )
+
     # 2. Tear Down Old Models
-    # dbt run-operation cleanup_old_models --profiles-dir $PWD/.dbt --target prod
-    tear_down_old_models = DbtRunOperationLocalOperator(
-        task_id='tear_down_old_models',
-        profile_config=PROD_DBT_PROFILE_CONFIG, 
-        env={
-            'SF_AWS_KEY': Variable.get('dbt_sf_aws_key'),
-            'SF_AWS_SECRET': Variable.get('dbt_sf_aws_secret')
-        },
-        project_dir=DBT_PROJECT_DIR,
-        dbt_executable_path=DBT_EXECUTABLE_PATH,
-        macro_name='cleanup_old_models',
-    )
+    # dbt run-operation cleanup_old_models --target prod
+    # tear_down_old_models = DbtRunOperationLocalOperator(
+    #     task_id='tear_down_old_models',
+    #     profile_config=PROD_DBT_PROFILE_CONFIG, 
+    #     env={
+    #         'SF_AWS_KEY': Variable.get('dbt_sf_aws_key'),
+    #         'SF_AWS_SECRET': Variable.get('dbt_sf_aws_secret')
+    #     },
+    #     project_dir=DBT_PROJECT_DIR,
+    #     dbt_executable_path=DBT_EXECUTABLE_PATH,
+    #     macro_name='cleanup_old_models',
+    # )
 
     # 3. Test Source Freshness
     #TODO: Output to channel if possible
-    source_freshness = DbtSourceLocalOperator(
-        task_id='source_freshness',
-        profile_config=PROD_DBT_PROFILE_CONFIG,
-        env={
-            'SF_AWS_KEY': Variable.get('dbt_sf_aws_key'),
-            'SF_AWS_SECRET': Variable.get('dbt_sf_aws_secret')
-        },
-        project_dir=DBT_PROJECT_DIR,
-        dbt_executable_path=DBT_EXECUTABLE_PATH,
-    )
+    # dbt source freshness
+    # source_freshness = DbtSourceLocalOperator(
+    #     task_id='source_freshness',
+    #     profile_config=PROD_DBT_PROFILE_CONFIG,
+    #     env={
+    #         'SF_AWS_KEY': Variable.get('dbt_sf_aws_key'),
+    #         'SF_AWS_SECRET': Variable.get('dbt_sf_aws_secret')
+    #     },
+    #     project_dir=DBT_PROJECT_DIR,
+    #     dbt_executable_path=DBT_EXECUTABLE_PATH,
+    # )
 
-compost()
+    # 4. Test Harvest
+    # dbt test --selector harvest --target prod
+    # test_harvest = DbtTestLocalOperator(
+
+    # ) 
+
+compost_v2()
