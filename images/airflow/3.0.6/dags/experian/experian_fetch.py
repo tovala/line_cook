@@ -9,6 +9,7 @@ from pendulum import duration
 
 from airflow.sdk import dag, task, Variable
 from airflow.exceptions import AirflowException
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from common.slack_notifications import bad_boy, good_boy
 
@@ -67,7 +68,7 @@ def fetchExperianData():
         return token_response.json()['refresh_token']
     
     @task()
-    def batch_customers():
+    def startSnowflakeSession():
         sf_hook = SnowflakeHook(snowflake_conn_id='snowflake')
         sf_connection = sf_hook.get_conn()
 
