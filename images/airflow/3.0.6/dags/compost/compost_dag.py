@@ -35,34 +35,17 @@ def compost_v2():
     '''
     # 1. Tear Down Testing
     # dbt run-operation clean_up_all_test --target test
-    # TODO: Move into common - make baby run operator friend
     clean_up_test_schemas = runOperatorCustom.runInTest(
         task_id='clean_up_test_schemas',
         macro_name='clean_up_all_test',
     )
 
-    # clean_up_test_schemas = DbtRunOperationLocalOperator(
-    #     task_id='clean_up_test_schemas',
-    #     # This is intentionally set to test so it cleans up test schemas 
-    #     profile_config=TEST_DBT_PROFILE_CONFIG, 
-    #     project_dir=DBT_PROJECT_DIR,
-    #     dbt_executable_path=DBT_EXECUTABLE_PATH,
-    #     macro_name='clean_up_all_test',
-    # )
-
     # 2. Tear Down Old Models
     # dbt run-operation cleanup_old_models --target prod
-    # tear_down_old_models = DbtRunOperationLocalOperator(
-    #     task_id='tear_down_old_models',
-    #     profile_config=PROD_DBT_PROFILE_CONFIG, 
-    #     env={
-    #         'SF_AWS_KEY': Variable.get('dbt_sf_aws_key'),
-    #         'SF_AWS_SECRET': Variable.get('dbt_sf_aws_secret')
-    #     },
-    #     project_dir=DBT_PROJECT_DIR,
-    #     dbt_executable_path=DBT_EXECUTABLE_PATH,
-    #     macro_name='cleanup_old_models',
-    # )
+    tear_down_old_models = runOperatorCustom.runInTest(
+        task_id='tear_down_old_models',
+        macro_name='cleanup_old_models',
+    )
 
     # 3. Test Source Freshness
     #TODO: Output to channel if possible
@@ -82,6 +65,8 @@ def compost_v2():
     # dbt test --selector harvest --target prod
     # test_harvest = DbtTestLocalOperator(
 
-    # ) 
+    # )
+    
+
 
 compost_v2()
