@@ -42,7 +42,7 @@ def compost_v2():
 
     # 2. Tear Down Old Models
     # dbt run-operation cleanup_old_models --target prod
-    tear_down_old_models = runOperatorCustom.runInTest(
+    tear_down_old_models = runOperatorCustom.runInProd(
         task_id='tear_down_old_models',
         macro_name='cleanup_old_models',
     )
@@ -50,16 +50,16 @@ def compost_v2():
     # 3. Test Source Freshness
     #TODO: Output to channel if possible
     # dbt source freshness
-    # source_freshness = DbtSourceLocalOperator(
-    #     task_id='source_freshness',
-    #     profile_config=PROD_DBT_PROFILE_CONFIG,
-    #     env={
-    #         'SF_AWS_KEY': Variable.get('dbt_sf_aws_key'),
-    #         'SF_AWS_SECRET': Variable.get('dbt_sf_aws_secret')
-    #     },
-    #     project_dir=DBT_PROJECT_DIR,
-    #     dbt_executable_path=DBT_EXECUTABLE_PATH,
-    # )
+    source_freshness = DbtSourceLocalOperator(
+        task_id='source_freshness',
+        profile_config=PROD_DBT_PROFILE_CONFIG,
+        env={
+            'SF_AWS_KEY': Variable.get('dbt_sf_aws_key'),
+            'SF_AWS_SECRET': Variable.get('dbt_sf_aws_secret')
+        },
+        project_dir=DBT_PROJECT_DIR,
+        dbt_executable_path=DBT_EXECUTABLE_PATH,
+    )
 
     # 4. Test Harvest
     # dbt test --selector harvest --target prod

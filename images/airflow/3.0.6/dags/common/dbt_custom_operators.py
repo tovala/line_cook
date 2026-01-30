@@ -2,7 +2,7 @@ from cosmos import DbtRunOperationLocalOperator
 from cosmos.config import ProfileConfig
 from typing import Any, Sequence
 from airflow.sdk import Variable, task
-from common.dbt_cosmos_config import PROD_DBT_PROFILE_CONFIG, TEST_DBT_PROFILE_CONFIG, DBT_PROJECT_DIR, DBT_EXECUTABLE_PATH
+from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, PROD_DBT_PROFILE_CONFIG, TEST_DBT_PROFILE_CONFIG, DBT_PROJECT_DIR, DBT_EXECUTABLE_PATH
 
 class runOperatorCustom(DbtRunOperationLocalOperator):
     template_fields = (*DbtRunOperationLocalOperator.template_fields, "env")
@@ -16,7 +16,7 @@ class runOperatorCustom(DbtRunOperationLocalOperator):
         return cls(
             task_id=task_id,
             macro_name=macro_name,
-            env=env_vars,
+            env=DBT_PROJECT_CONFIG.env_vars,
             profile_config=TEST_DBT_PROFILE_CONFIG,
             project_dir=DBT_PROJECT_DIR,
             dbt_executable_path=DBT_EXECUTABLE_PATH
@@ -27,7 +27,7 @@ class runOperatorCustom(DbtRunOperationLocalOperator):
         return cls(
             task_id=task_id,
             macro_name=macro_name,
-            env=env_vars,
+            env=DBT_PROJECT_CONFIG.env_vars,
             profile_config=PROD_DBT_PROFILE_CONFIG,
             project_dir=DBT_PROJECT_DIR,
             dbt_executable_path=DBT_EXECUTABLE_PATH
