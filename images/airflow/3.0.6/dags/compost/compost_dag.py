@@ -6,7 +6,7 @@ from airflow.sdk import dag, Variable
 from airflow.timetables.trigger import CronTriggerTimetable
 
 from common.slack_notifications import bad_boy, good_boy
-from common.dbt_cosmos_config import PROD_DBT_PROFILE_CONFIG, DBT_PROJECT_DIR, DBT_EXECUTABLE_PATH
+from common.dbt_cosmos_config import PROD_DBT_PROFILE_CONFIG, DBT_PROJECT_DIR, DBT_EXECUTABLE_PATH, DBT_WATCHER_EXECUTION_CONFIG
 from common.dbt_custom_operators import runOperatorCustom
 
 @dag(
@@ -62,8 +62,19 @@ def compost():
 
     # 4. Test Harvest
     # dbt test --selector harvest --target prod
-    # test_harvest = DbtTestLocalOperator(
-
-    # )
+    #TODO: Output to channel
+    #TODO: Handle error in Airflow
+    test_harvest = DbtTestLocalOperator(
+        task_id='test_harvest',
+        profile_config=PROD_DBT_PROFILE_CONFIG,
+        execution_config=DBT_WATCHER_EXECUTION_CONFIG,
+        env={
+            'SF_AWS_KEY': Variable.get('dbt_sf_aws_key'),
+            'SF_AWS_SECRET': Variable.get('dbt_sf_aws_secret')
+        },
+        project_dir=DBT_PROJECT_DIR,
+        dbt_executable_path=DBT_EXECUTABLE_PATH,
+        selector='harvest'
+    )
 
 compost()
