@@ -26,7 +26,7 @@ from common.dbt_custom_operators import runOperatorCustom
     params={
         'channel_name': '#team-data-notifications'
     },
-    render_template_as_native_obj=True
+    # render_template_as_native_obj=True
 )
 
 def compost_v2():
@@ -36,7 +36,7 @@ def compost_v2():
     # 1. Tear Down Testing
     # dbt run-operation clean_up_all_test --target test
     # TODO: Move into common - make baby run operator friend
-    clean_up_test_schemas = runOperatorCustom.testicle(
+    clean_up_test_schemas = runOperatorCustom.runInTest(
         task_id='clean_up_test_schemas',
         macro_name='clean_up_all_test',
     )
@@ -45,10 +45,6 @@ def compost_v2():
     #     task_id='clean_up_test_schemas',
     #     # This is intentionally set to test so it cleans up test schemas 
     #     profile_config=TEST_DBT_PROFILE_CONFIG, 
-    #     env={
-    #         'SF_AWS_KEY': Variable.get('dbt_sf_aws_key'),
-    #         'SF_AWS_SECRET': Variable.get('dbt_sf_aws_secret')
-    #     },
     #     project_dir=DBT_PROJECT_DIR,
     #     dbt_executable_path=DBT_EXECUTABLE_PATH,
     #     macro_name='clean_up_all_test',
