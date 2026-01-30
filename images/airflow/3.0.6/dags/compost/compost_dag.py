@@ -25,7 +25,7 @@ from common.dbt_custom_operators import runOperatorCustom
     params={
         'channel_name': '#team-data-notifications'
     },
-    # render_template_as_native_obj=True
+    render_template_as_native_obj=True
 )
 
 def compost_v2():
