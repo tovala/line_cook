@@ -1,7 +1,4 @@
 from cosmos import DbtRunOperationLocalOperator
-from cosmos.config import ProfileConfig
-from typing import Any, Sequence
-from airflow.sdk import Variable, task
 from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, PROD_DBT_PROFILE_CONFIG, TEST_DBT_PROFILE_CONFIG, DBT_PROJECT_DIR, DBT_EXECUTABLE_PATH
 
 class runOperatorCustom(DbtRunOperationLocalOperator):

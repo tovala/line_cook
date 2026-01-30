@@ -20,7 +20,7 @@ from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_WATCHER_EXECUTION_C
     'retry_exponential_backoff': True,
     'max_retry_delay': duration(minutes=5),
   },
-  tags=['data_science'],
+  tags=['data_science', 'dbt'],
   params={
     'channel_name': '#team-data-notifications'
   },

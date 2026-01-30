@@ -1,13 +1,12 @@
 import datetime
 
 from pendulum import duration
-from cosmos import DbtTaskGroup, RenderConfig, LoadMode, TestBehavior, DbtRunOperationLocalOperator
 from cosmos.operators.local import DbtSourceLocalOperator, DbtTestLocalOperator
-from airflow.sdk import dag, chain, Variable
+from airflow.sdk import dag, Variable
 from airflow.timetables.trigger import CronTriggerTimetable
 
 from common.slack_notifications import bad_boy, good_boy
-from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_WATCHER_EXECUTION_CONFIG, PROD_DBT_PROFILE_CONFIG, TEST_DBT_PROFILE_CONFIG, DBT_PROJECT_DIR, DBT_EXECUTABLE_PATH
+from common.dbt_cosmos_config import PROD_DBT_PROFILE_CONFIG, DBT_PROJECT_DIR, DBT_EXECUTABLE_PATH
 from common.dbt_custom_operators import runOperatorCustom
 
 @dag(
@@ -22,7 +21,7 @@ from common.dbt_custom_operators import runOperatorCustom
     #     'retry_exponential_backoff': True,
     #     'max_retry_delay': duration(minutes=5),
     # },
-    tags=['internal'],
+    tags=['internal', 'dbt'],
     params={
         'channel_name': '#team-data-notifications'
     },
