@@ -10,17 +10,11 @@ from common.dbt_cosmos_config import PROD_DBT_PROFILE_CONFIG, DBT_PROJECT_DIR, D
 from common.dbt_custom_operators import runOperatorCustom
 
 @dag(
-#   on_failure_callback=bad_boy,
-#   on_success_callback=good_boy,
-    # schedule=CronTriggerTimetable("0 5 * * *", timezone="America/Chicago"),
+    on_failure_callback=bad_boy,
+    on_success_callback=good_boy,
+    schedule=CronTriggerTimetable("0 5 * * *", timezone="America/Chicago"),
     start_date=datetime.datetime(2026, 1, 15),
     catchup=False,
-    # default_args={
-    #     'retries': 2,
-    #     'retry_delay': duration(seconds=2),
-    #     'retry_exponential_backoff': True,
-    #     'max_retry_delay': duration(minutes=5),
-    # },
     tags=['internal', 'dbt'],
     params={
         'channel_name': '#team-data-notifications'
@@ -47,7 +41,7 @@ def compost():
     )
 
     # 3. Test Source Freshness
-    #TODO: Output to channel if possible
+    #TODO: Output failures to Slack
     # dbt source freshness
     source_freshness = DbtSourceLocalOperator(
         task_id='source_freshness',
@@ -58,12 +52,11 @@ def compost():
         },
         project_dir=DBT_PROJECT_DIR,
         dbt_executable_path=DBT_EXECUTABLE_PATH,
-        # callback=on_warning_callback
     )
 
     # 4. Test Harvest
+    #TODO: Output failures to Slack
     # dbt test --selector harvest --target prod
-    #TODO: Output to channel
     test_harvest = DbtTestLocalOperator(
         task_id='test_harvest',
         profile_config=PROD_DBT_PROFILE_CONFIG,
