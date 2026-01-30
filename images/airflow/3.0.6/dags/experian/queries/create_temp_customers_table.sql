@@ -1,4 +1,4 @@
-CREATE TEMPORARY TABLE brine.experian_customers_temp AS
+CREATE TABLE brine.experian_customers_temp AS
 SELECT 
     COALESCE(c.first_name, '') || '|' || 
     COALESCE(c.last_name, '') || '|' || 

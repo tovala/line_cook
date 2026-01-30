@@ -1,17 +1,13 @@
-from datetime import datetime
-from airflow.timetables.trigger import CronTriggerTimetable
 
 import json
 import requests
-from requests.auth import HTTPBasicAuth
-from requests import HTTPError, RequestException
-from pendulum import duration
+from requests import HTTPError
+from typing import List, Dict, Any
 
-from airflow.sdk import dag, task, Variable
+from airflow.sdk import dag, task, task_group, Variable
 from airflow.exceptions import AirflowException
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow.providers.amazon.aws.operators.s3 import S3CreateObjectOperator
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
-from common.slack_notifications import bad_boy, good_boy
 
 BATCH_SIZE = 300
 GET_TOKEN_URL = 'https://us-api.experian.com/oauth2/v1/token'
@@ -43,39 +39,93 @@ def fetchExperianData():
     Variables:
 
     '''
-    @task()
-    def getExperianToken():
-        """
-        :return: authorization token for requests, valid for 30 minutes; None if response not returned
-        """
-        try:
-            auth_values = {
-                'username': Variable.get('experian_username'),
-                'password': Variable.get('experian_password'),
-                'client_id': Variable.get('experian_client_id'),
-                'client_secret': Variable.get('experian_client_secret')
+
+    # TODO: pull customer data, format, save to temp table in sf - return size of temp table - use size to determine how many batches
+    # use a for loop at dag level (this is ok, as long as we have < 1000 iterations, speed is comparable to dynamic task mapping)
+
+    # TODO: SELECT * from brine.experian_customers_temp order by row_number limit {page_size} offset {page_size}*{{ ti.map_index }};  
+
+    # TODO: send batch to experian
+    @task_group()
+    def run_batch(customer_batch: str):
+        '''
+        Fetches experian data for a single batch of 300 customers.
+
+        Args:
+            customer_batch (str): formatted string of customer data to pass to Experian API
+        '''
+
+        #TODO: pull next batch from temp table cursor - can happen in parallel w get token
+        
+        @task()
+        def getExperianToken():
+            '''
+            :return: authorization token for requests, valid for 30 minutes; None if response not returned
+            '''
+            try:
+                auth_values = {
+                    'username': Variable.get('experian_username'),
+                    'password': Variable.get('experian_password'),
+                    'client_id': Variable.get('experian_client_id'),
+                    'client_secret': Variable.get('experian_client_secret')
+                }
+                token_response = requests.post(
+                    url= GET_TOKEN_URL,
+                    headers = {'Content-Type': 'application/json'},
+                    data = json.dumps(auth_values)
+                )
+                token_response.raise_for_status()
+                token_response_json = token_response.json()
+
+            except HTTPError as e:
+                raise AirflowException()
+            
+            return token_response_json['refresh_token']
+        
+        @task()
+        def createBatchRequest(current_batch: List[str]) -> Dict[str, Any]:
+            '''
+            Docstring for createBatchRequest
+            
+            :param current_batch: Description
+            :type current_batch: List[str]
+            :return: Description
+            :rtype: Dict[str, Any]
+            '''
+            formatted_req_body = {
+                'partyid': Variable.get('experian_party_id'),
+                'delimiter': '|',
+                'layout': 'fname|lname|addr1|addr2|city|state|zip|email|phone|lead_id',
             }
-            token_response = requests.post(
-                url= GET_TOKEN_URL,
-                headers = {'Content-Type': 'application/json'},
-                data = json.dumps(auth_values)
-            )
-            token_response.raise_for_status()
-        except:
-            # TODO: Handle Errors
-            print('Oh shit!')
-
-        return token_response.json()['refresh_token']
-    
-    @task()
-    def startSnowflakeSession():
-        sf_hook = SnowflakeHook(snowflake_conn_id='snowflake')
-        sf_connection = sf_hook.get_conn()
-
-        cursor = sf_connection.cursor()
-        #TODO: Use this to create a list of requests in batch format 
+            for index, cust_data in enumerate(current_batch, start=1):
+                current_key = 'rec' + str(index)
+                formatted_req_body[current_key] = cust_data 
 
 
+
+                
+
+            
+        # TODO: this task should have an execution timeout of 30mins
+        @task()
+        def fetchFromExperian():
+            '''
+            Docstring for fetchFromExperian
+            '''
+            pass
+
+        current_batch = SQLExecuteQueryOperator(
+            task_id="create_temporary_table", 
+            conn_id="snowflake", 
+            sql="queries/customer_batch.sql",
+        )
+
+        # TODO: response from experian to S3
+        S3CreateObjectOperator()
+
+        access_token = getExperianToken()
+
+    # TODO: S3 to Chili_V2 - separate dag?
     @task()
     #TODO: handle full refresh flag - set as parameter? 
     # Currently just including this to have the code in here 
@@ -112,10 +162,7 @@ def fetchExperianData():
         #     print(failed_customers)
         #     cap.publish_to_sns(F"Failed to load {len(failed_customers)} customers from Experian.", F"Experian Failure", C.SNS_PATH)
 
-    # 1. Get Token 
-    # TODO: Figure out how to regenerate token after 30 minutes 
-    access_token = getExperianToken()    
-
+        
     # 2. Get list of customers -- how to batch this in an Airflow-y way? 
     # TODO: Handle XCom Parsing - each record looks like: {'__data__': ['Samantha|Stuart|4845 SE Vintage Pl||Milwaukie|OR|97267|samanthastuart_dc@yahoo.com|5033208542|1936108'], '__version__': 1, '__classname__': 'builtins.tuple'}
     # TODO: Use a macro to generate the SQL for full_refresh (see cohort model code)

@@ -1,0 +1,1 @@
+SELECT * from brine.experian_customers_temp order by row_number limit 300 offset 300*{{ ti.map_index }};
