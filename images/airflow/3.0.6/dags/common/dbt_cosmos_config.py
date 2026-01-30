@@ -4,8 +4,8 @@ from cosmos.profiles import SnowflakePrivateKeyPemProfileMapping
 from airflow.sdk import Variable
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
-SF_AWS_KEY = Variable.get('dbt_sf_aws_key')
-SF_AWS_SECRET = Variable.get('dbt_sf_aws_secret')
+SF_AWS_KEY = "{{ var.value.get('dbt_sf_aws_key') }}"
+SF_AWS_SECRET = "{{ var.value.get('dbt_sf_aws_secret') }}"
 
 # To use with one-off operators
 DBT_PROJECT_DIR = f'{AIRFLOW_HOME}/dags/spice_rack'

@@ -58,12 +58,12 @@ def compost():
         },
         project_dir=DBT_PROJECT_DIR,
         dbt_executable_path=DBT_EXECUTABLE_PATH,
+        # callback=on_warning_callback
     )
 
     # 4. Test Harvest
     # dbt test --selector harvest --target prod
     #TODO: Output to channel
-    #TODO: Handle error in Airflow
     test_harvest = DbtTestLocalOperator(
         task_id='test_harvest',
         profile_config=PROD_DBT_PROFILE_CONFIG,
