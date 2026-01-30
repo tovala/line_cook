@@ -28,7 +28,7 @@ from common.dbt_custom_operators import runOperatorCustom
     render_template_as_native_obj=True
 )
 
-def compost_v2():
+def compost():
     '''
     Runs a series of dbt operations for maintenance purposes
     '''
@@ -65,7 +65,5 @@ def compost_v2():
     # test_harvest = DbtTestLocalOperator(
 
     # )
-    
 
-
-compost_v2()
+compost()
