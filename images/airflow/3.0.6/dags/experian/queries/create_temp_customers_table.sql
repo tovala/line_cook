@@ -1,4 +1,4 @@
-CREATE TABLE brine.{{ params.table_name }} AS
+CREATE OR REPLACE TABLE brine.{{ params.temp_table_prefix }}_temp AS
 SELECT 
     COALESCE(c.first_name, '') || '|' || 
     COALESCE(c.last_name, '') || '|' || 
@@ -19,8 +19,4 @@ WHERE c.customer_id NOT IN
 FROM wash.experian_responses
 WHERE customer_id IS NOT NULL);
 
-SELECT 
-  ROW_COUNT
-FROM 
-  INFORMATION_SCHEMA.TABLES
-where table_name = {{ params.table_name.upper() }};
+SELECT CEIL(COUNT(*)/{{ params.batch_size }}) FROM brine.{{ params.temp_table_prefix }}_temp;

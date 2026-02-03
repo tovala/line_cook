@@ -185,7 +185,7 @@ def fetchExperianData():
     # TODO: Use a macro to generate the SQL for full_refresh (see cohort model code)
     create_temporary_table = SQLExecuteQueryOperator(
         task_id="create_temporary_table", 
-        conn_id="snowflake",
+        conn_id="snowflake", 
         sql="queries/create_temp_customers_table.sql",
         split_statements=True,
         return_last=True
