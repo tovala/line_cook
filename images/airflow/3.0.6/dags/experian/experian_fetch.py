@@ -4,7 +4,7 @@ import requests
 from requests import HTTPError
 from typing import List, Dict, Any
 
-from airflow.sdk import dag, task, task_group, Variable
+from airflow.sdk import dag, task, task_group, Variable, chain
 from airflow.exceptions import AirflowException
 from airflow.providers.amazon.aws.operators.s3 import S3CreateObjectOperator
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
@@ -99,31 +99,48 @@ def fetchExperianData():
             }
             for index, cust_data in enumerate(current_batch, start=1):
                 current_key = 'rec' + str(index)
-                formatted_req_body[current_key] = cust_data 
-
-
-
+                formatted_req_body[current_key] = cust_data
+            
+            return formatted_req_body
                 
 
             
         # TODO: this task should have an execution timeout of 30mins
         @task()
-        def fetchFromExperian():
+        def fetchFromExperian(access_token, request_body: Dict[str, str]):
             '''
             Docstring for fetchFromExperian
             '''
-            pass
+            try:
+                experian_response = requests.post(
+                    url= GET_TOKEN_URL,
+                    headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {access_token}'},
+                    data = json.dumps(request_body)
+                )
+                experian_response.raise_for_status()
+                experian_response_json = experian_response.json()
+
+            except HTTPError as e:
+                raise AirflowException()
+            
+            # TODO: return what we care about
 
         current_batch = SQLExecuteQueryOperator(
-            task_id="create_temporary_table", 
+            task_id="get_current_batch", 
             conn_id="snowflake", 
             sql="queries/customer_batch.sql",
         )
 
+        access_token = getExperianToken()
+
+        batched_request_body = createBatchRequest(current_batch)
+
+        fetch_from_experian = fetchFromExperian(access_token, batched_request_body)
+
         # TODO: response from experian to S3
         S3CreateObjectOperator()
 
-        access_token = getExperianToken()
+        chain([current_batch, access_token], batched_request_body, )
 
     # TODO: S3 to Chili_V2 - separate dag?
     @task()
@@ -168,8 +185,10 @@ def fetchExperianData():
     # TODO: Use a macro to generate the SQL for full_refresh (see cohort model code)
     create_temporary_table = SQLExecuteQueryOperator(
         task_id="create_temporary_table", 
-        conn_id="snowflake", 
+        conn_id="snowflake",
         sql="queries/create_temp_customers_table.sql",
+        split_statements=True,
+        return_last=True
     )
 
     customers_to_process = SQLExecuteQueryOperator(

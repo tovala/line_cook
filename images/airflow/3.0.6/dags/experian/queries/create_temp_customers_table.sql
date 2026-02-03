@@ -1,4 +1,4 @@
-CREATE TABLE brine.experian_customers_temp AS
+CREATE TABLE brine.{{ params.table_name }} AS
 SELECT 
     COALESCE(c.first_name, '') || '|' || 
     COALESCE(c.last_name, '') || '|' || 
@@ -18,3 +18,9 @@ WHERE c.customer_id NOT IN
 (SELECT customer_id 
 FROM wash.experian_responses
 WHERE customer_id IS NOT NULL);
+
+SELECT 
+  ROW_COUNT
+FROM 
+  INFORMATION_SCHEMA.TABLES
+where table_name = {{ params.table_name.upper() }};
