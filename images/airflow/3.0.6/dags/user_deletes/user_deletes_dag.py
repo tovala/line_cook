@@ -12,26 +12,29 @@ from pendulum import duration
 from airflow.sdk import dag, task, chain, Variable
 from airflow.exceptions import AirflowException
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+
 from airflow.providers.slack.notifications.slack import SlackNotifier
 from common.slack_notifications import bad_boy, good_boy
 from user_deletes.process_delete_requests_task_group import processDeleteRequests
 from airflow.timetables.trigger import CronTriggerTimetable
+from common.sql_operator_handlers import fetch_results_array
 
 
 @dag(
-    on_failure_callback=bad_boy,
-    on_success_callback=good_boy,
-    schedule=CronTriggerTimetable("45 7 * * *", timezone="America/Chicago"),
+    # on_failure_callback=bad_boy,
+    # on_success_callback=good_boy,
+    # schedule=CronTriggerTimetable('45 7 * * *', timezone='America/Chicago'),
     catchup=False,
-    default_args={
-       "retries": 2,
-        "retry_delay": duration(seconds=2),
-        "retry_exponential_backoff": True,
-        "max_retry_delay": duration(minutes=5),
-    },
+    # default_args={
+    #    'retries': 2,
+    #     'retry_delay': duration(seconds=2),
+    #     'retry_exponential_backoff': True,
+    #     'max_retry_delay': duration(minutes=5),
+    # },
     tags=['internal', 'cleanup'],
     params={
-        "channel_name": "#team-data-notifications"
+        'channel_name': '#team-data-notifications'
     }
 )
 def user_deletes():
@@ -115,7 +118,7 @@ def user_deletes():
             # Handle HTTP 429 Too Many Requests (rate limiting)
             if response.status_code == 429:
                 retry_after = int(response.headers['retry-after'])
-                print(f"Rate limited. Retrying after {retry_after} seconds...")
+                print(f'Rate limited. Retrying after {retry_after} seconds...')
                 datetime.time.sleep(retry_after)
                 # Retry the request after waiting
                 response = requests.get(url, auth=auth, params=params)
@@ -386,19 +389,37 @@ def user_deletes():
   delete_requests_json = getDeleteRequests()
   
   # pre-processing steps
-  user_exception_ids = getUserExceptionIds()
-  parsed_delete_requests = parseDeleteRequests(delete_requests_json, user_exception_ids)
-  typeform_data = getTypeformResponseIds(parsed_delete_requests)
-  complete_delete_requests = completeDeleteRequests(parsed_delete_requests, typeform_data)
+  user_exception_ids = SQLExecuteQueryOperator(
+    task_id='user_exception_ids', 
+    conn_id='snowflake', 
+    sql='queries/user_exception_ids.sql',
+    handler=fetch_results_array,
+  )
 
-  # If there are no delete requests, short-circuit before pre-processing
-  chain(nonEmptyDeleteRequests(delete_requests_json), user_exception_ids, parsed_delete_requests)
-  # If none of the delete requests can be parsed, short-circuit
-  chain(nonEmptyParsedDeleteRequests(parsed_delete_requests), typeform_data, complete_delete_requests)
+  parsed_delete_requests = parseDeleteRequests(delete_requests_json, user_exception_ids.output)
+  # typeform_data = getTypeformResponseIds(parsed_delete_requests)
+
+  # typeform_data_v2 = SQLExecuteQueryOperator(
+  #   task_id='typeform_data_v2', 
+  #   conn_id='snowflake',
+  #   sql='queries/typeform_response_ids.sql',
+  #   params={'user_id_list' : user_id_list,
+  #           'email_list' : email_list
+  #   },
+  #   handler=fetch_results_array,
+  # )
+
+
+  # complete_delete_requests = completeDeleteRequests(parsed_delete_requests, typeform_data)
+
+  # # If there are no delete requests, short-circuit before pre-processing
+  # chain(nonEmptyDeleteRequests(delete_requests_json), user_exception_ids, parsed_delete_requests)
+  # # If none of the delete requests can be parsed, short-circuit
+  # chain(nonEmptyParsedDeleteRequests(parsed_delete_requests), typeform_data, complete_delete_requests)
   
-  # If there are valid delete requests to process, get CAPI token and process each ticket individually
-  capi_token = getCombinedAPIToken()
-  processDeleteRequests.partial(capi_token=capi_token).expand(delete_request=complete_delete_requests)
+  # # If there are valid delete requests to process, get CAPI token and process each ticket individually
+  # capi_token = getCombinedAPIToken()
+  # processDeleteRequests.partial(capi_token=capi_token).expand(delete_request=complete_delete_requests)
 
 
 
@@ -419,14 +440,14 @@ def cleanTicketDescription(ticket_desc: str) -> Dict[str, Any]:
   
   Args:
   ticket_desc (str): a str representation of the user data from the Zendesk ticket description. 
-  e.g. "UserID: 0000000\nEmail: customer@gmail.com\nCommitment: false"
+  e.g. 'UserID: 0000000\nEmail: customer@gmail.com\nCommitment: false'
   
   Output:
   user_data_dict (Dict[str, Any]): Dict representation of the user data from the Zendesk ticket description.
   {
-    "UserID": 0000000,
-    "Email": "customer@gmail.com",
-    "Commitment": True
+    'UserID': 0000000,
+    'Email': 'customer@gmail.com',
+    'Commitment': True
   }
 
   '''
@@ -436,7 +457,7 @@ def cleanTicketDescription(ticket_desc: str) -> Dict[str, Any]:
     desc_list = ticket_desc.split('\n') 
 
     for item in desc_list:
-      # Split each of the elements in the desc list, like "UserID: 0000000" into key = "UserID" and value = "0000000"
+      # Split each of the elements in the desc list, like 'UserID: 0000000' into key = 'UserID' and value = '0000000'
       key, value = item.split(': ')
       # convert str boolean values to Bool
       if value.lower() == 'true':
