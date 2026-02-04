@@ -22,16 +22,16 @@ from common.sql_operator_handlers import fetch_results_array
 
 
 @dag(
-    # on_failure_callback=bad_boy,
-    # on_success_callback=good_boy,
-    # schedule=CronTriggerTimetable('45 7 * * *', timezone='America/Chicago'),
+    on_failure_callback=bad_boy,
+    on_success_callback=good_boy,
+    schedule=CronTriggerTimetable('45 7 * * *', timezone='America/Chicago'),
     catchup=False,
-    # default_args={
-    #    'retries': 2,
-    #     'retry_delay': duration(seconds=2),
-    #     'retry_exponential_backoff': True,
-    #     'max_retry_delay': duration(minutes=5),
-    # },
+    default_args={
+       'retries': 2,
+        'retry_delay': duration(seconds=2),
+        'retry_exponential_backoff': True,
+        'max_retry_delay': duration(minutes=5),
+    },
     tags=['internal', 'cleanup'],
     params={
         'channel_name': '#team-data-notifications'
@@ -397,29 +397,18 @@ def user_deletes():
   )
 
   parsed_delete_requests = parseDeleteRequests(delete_requests_json, user_exception_ids.output)
-  # typeform_data = getTypeformResponseIds(parsed_delete_requests)
+  typeform_data = getTypeformResponseIds(parsed_delete_requests)
 
-  # typeform_data_v2 = SQLExecuteQueryOperator(
-  #   task_id='typeform_data_v2', 
-  #   conn_id='snowflake',
-  #   sql='queries/typeform_response_ids.sql',
-  #   params={'user_id_list' : user_id_list,
-  #           'email_list' : email_list
-  #   },
-  #   handler=fetch_results_array,
-  # )
+  complete_delete_requests = completeDeleteRequests(parsed_delete_requests, typeform_data)
 
-
-  # complete_delete_requests = completeDeleteRequests(parsed_delete_requests, typeform_data)
-
-  # # If there are no delete requests, short-circuit before pre-processing
-  # chain(nonEmptyDeleteRequests(delete_requests_json), user_exception_ids, parsed_delete_requests)
-  # # If none of the delete requests can be parsed, short-circuit
-  # chain(nonEmptyParsedDeleteRequests(parsed_delete_requests), typeform_data, complete_delete_requests)
+  # If there are no delete requests, short-circuit before pre-processing
+  chain(nonEmptyDeleteRequests(delete_requests_json), user_exception_ids, parsed_delete_requests)
+  # If none of the delete requests can be parsed, short-circuit
+  chain(nonEmptyParsedDeleteRequests(parsed_delete_requests), typeform_data, complete_delete_requests)
   
-  # # If there are valid delete requests to process, get CAPI token and process each ticket individually
-  # capi_token = getCombinedAPIToken()
-  # processDeleteRequests.partial(capi_token=capi_token).expand(delete_request=complete_delete_requests)
+  # If there are valid delete requests to process, get CAPI token and process each ticket individually
+  capi_token = getCombinedAPIToken()
+  processDeleteRequests.partial(capi_token=capi_token).expand(delete_request=complete_delete_requests)
 
 
 
