@@ -12,7 +12,7 @@ from common.dbt_custom_operators import runOperatorCustom
 @dag(
     on_failure_callback=bad_boy,
     on_success_callback=good_boy,
-    schedule=CronTriggerTimetable("0 5 * * *", timezone="America/Chicago"),
+    schedule=CronTriggerTimetable('0 5 * * *', timezone='America/Chicago'),
     start_date=datetime.datetime(2026, 1, 15),
     catchup=False,
     tags=['internal', 'dbt'],

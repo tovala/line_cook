@@ -11,7 +11,7 @@ from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_WATCHER_EXECUTION_C
 @dag(
   on_failure_callback=bad_boy,
   on_success_callback=good_boy,
-  schedule=CronTriggerTimetable("0 15 * * 4", timezone="America/Chicago"),
+  schedule=CronTriggerTimetable('0 15 * * 4', timezone='America/Chicago'),
   start_date=datetime.datetime(2026, 1, 15),
   catchup=False,
   default_args={

@@ -9,10 +9,11 @@ class runOperatorCustom(DbtRunOperationLocalOperator):
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def runInTest(cls, task_id, macro_name):
+    def runInTest(cls, task_id, macro_name, args=None):
         return cls(
-            macro_name=macro_name, # This is an arg so it goes first, dummy
-            task_id=task_id,
+            macro_name=macro_name, # 'macro_name' and 'args' are the only parameters specific to DbtRunOperationLocalOperator 
+            args=args,
+            task_id=task_id, # The other parameters are inherited from the base class(es)
             env=DBT_PROJECT_CONFIG.env_vars,
             profile_config=TEST_DBT_PROFILE_CONFIG,
             project_dir=DBT_PROJECT_DIR,
@@ -20,9 +21,10 @@ class runOperatorCustom(DbtRunOperationLocalOperator):
         )
 
     @classmethod
-    def runInProd(cls, task_id, macro_name):
+    def runInProd(cls, task_id, macro_name, args=None):
         return cls(
             macro_name=macro_name,
+            args=args,
             task_id=task_id,
             env=DBT_PROJECT_CONFIG.env_vars,
             profile_config=PROD_DBT_PROFILE_CONFIG,
