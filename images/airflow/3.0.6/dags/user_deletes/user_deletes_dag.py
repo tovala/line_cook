@@ -13,7 +13,7 @@ from airflow.sdk import dag, task, chain, Variable
 from airflow.exceptions import AirflowException
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.providers.slack.notifications.slack import SlackNotifier
-from common.slack_notifications import bad_boy, good_boy
+from common.slack_notifications import bad_boy, good_boy, getSlackChannelNameParam
 from user_deletes.process_delete_requests_task_group import processDeleteRequests
 from airflow.timetables.trigger import CronTriggerTimetable
 
@@ -31,7 +31,7 @@ from airflow.timetables.trigger import CronTriggerTimetable
     },
     tags=['internal', 'cleanup'],
     params={
-        "channel_name": "#team-data-notifications"
+        "channel_name": getSlackChannelNameParam()
     }
 )
 def user_deletes():

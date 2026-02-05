@@ -3,7 +3,7 @@ import datetime
 from airflow.sdk import dag, task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.timetables.trigger import MultipleCronTriggerTimetable
-from common.slack_notifications import bad_boy, good_boy
+from common.slack_notifications import bad_boy, good_boy, getSlackChannelNameParam
 from typing import Any, List
 
 @dag(
@@ -13,7 +13,7 @@ from typing import Any, List
     catchup=False,
     tags=['internal'],
     params={
-        "channel_name": "#autofill-notifications"
+        'channel_name': getSlackChannelNameParam('#autofill-notifications')
     }
 )
 def simple_af_prep():
