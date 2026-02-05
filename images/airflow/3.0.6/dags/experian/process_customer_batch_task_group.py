@@ -3,6 +3,7 @@ import re
 import requests
 from requests import HTTPError
 from typing import Dict
+from pendulum import duration
 
 from airflow.sdk import task, task_group, Variable, chain
 from airflow.exceptions import AirflowException
@@ -27,7 +28,7 @@ def processBatch(erichs: str, stupid_list:Dict[str, str]):
     '''
     :return: authorization token for requests, valid for 30 minutes; None if response not returned
     '''
-    GET_TOKEN_URL = 'https://us-api.experian.com/oauth2/v1/token'
+    get_token_url = 'https://us-api.experian.com/oauth2/v1/token'
     
     try:
       auth_values = {
@@ -37,7 +38,7 @@ def processBatch(erichs: str, stupid_list:Dict[str, str]):
         'client_secret': Variable.get('experian_client_secret')
       }
       token_response = requests.post(
-        url= GET_TOKEN_URL,
+        url= get_token_url,
         headers = {'Content-Type': 'application/json'},
         data = json.dumps(auth_values)
       )
@@ -50,15 +51,17 @@ def processBatch(erichs: str, stupid_list:Dict[str, str]):
     return token_response_json['access_token']
   
   # TODO: this task should have an execution timeout of 30mins
-  @task()
-  def fetchFromExperian(erich_values: str, access_token: str, customer_batch: Dict[str, str]):
+  @task(execution_timeout=duration(minutes=30))
+  def fetchFromExperian(erich_values: str, access_token: str, customer_batch: str):
     '''
     Docstring for fetchFromExperian
     '''
-    BATCH_URL = 'https://us-api.experian.com/marketing-services/targeting/v1/ue-microbatch'
+    batch_url = 'https://us-api.experian.com/marketing-services/targeting/v1/ue-microbatch'
+    customer_batch_dict = json.loads(customer_batch)
+    
     try:
       experian_response = requests.post(
-        url= BATCH_URL,
+        url= batch_url,
         headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {access_token}'},
         data = json.dumps({
           'partyid': Variable.get('experian_party_id'),
@@ -66,7 +69,7 @@ def processBatch(erichs: str, stupid_list:Dict[str, str]):
           'delimiter': '|',
           'layout': 'fname|lname|addr1|addr2|city|state|zip|email|phone|lead_id',
           'carryInput': 'true',
-          **customer_batch
+          **customer_batch_dict
         })
       )
       
@@ -76,7 +79,6 @@ def processBatch(erichs: str, stupid_list:Dict[str, str]):
     except HTTPError as e:
       raise AirflowException(f'Error from Experian API: {e}')
       
-    # TODO: return what we care about
     return experian_response_json
 
   
@@ -91,35 +93,24 @@ def processBatch(erichs: str, stupid_list:Dict[str, str]):
 
         customer_json_list.append(json.dumps(res_dict))
     
-    return customer_json_list
-
-  # TODO: response from experian to S3
-  # result_to_s3 = S3CreateObjectOperator()
-  @task()
-  def testBatch():
-    test_batch = {"rec1":"Dennis|Pearson|86 Lugo Ln||Napa|CA|94559|dennis@pearsonfamily.info|7072912069|1942160",
-                  "rec2":"Gary|Kucera||||||gkucera223@gmail.com||1942166",
-                  "rec3":"Danielle|Frazier||||||danielle.e.frazier1998@gmail.com||1942190",
-                  "rec4":"Valorie|Rodriguez|8407 Cotton Dr||Richmond|TX|77469|vjrodriguez71@gmail.com|2819355793|1942199",
-                  "rec5":"Aj|Vourakis||||||ajturbo@gmail.com||1942208",
-                  "rec6":"Shelitha|Scott|804 E Radbard St||Carson|CA|90746|shelithascott@gmail.com|3109015094|1942216",
-                  "rec7":"Lauren|Kaye|1336 W Grand Ave|Apt 2|Chicago|IL|60642|lauren92kaye@gmail.com|2028308178|1942219",
-                  "rec8":"Naila||780 Ivory Ln||Haverhill|FL|33415|montoyanaila0@gmail.com|5617792083|1942221",
-                  "rec9":"Todd|||||||trhaitsuka@yahoo.com||1942228",
-                  "rec10":"Harold|Henley|4659 S Drexel Blvd|Apt 315|Chicago|IL|60653|cj284056@gmail.com|7739936348|1942237",
-                  "rec11":"Nancy|Piereth|10 Broad Ave||Riverhead|NY|11901|mtkcwdncr@aol.com|6312362046|1942239",
-                  "rec12":"Suann|Lanton|3512 S Utah St||Arlington|VA|22206|dc24473820@gmail.com|8088958441|1942257"}
-
-    return test_batch  
+    # return a newline-delimited string of the json blobs
+    return '\n'.join(customer_json_list) 
   
   experian_token = getExperianToken()
-  retrieved_batch = testBatch()
-  #retrieved_batch = SQLExecuteQueryOperator(
-  #  task_id=f'customers_to_process_batch', 
-  #  conn_id='snowflake', 
-  #  sql='queries/customer_batch.sql',
-  #  handler=fetch_single_result
-  #)
 
-  fetch_from_experian = fetchFromExperian(erichs, experian_token, retrieved_batch)
+  retrieved_batch = SQLExecuteQueryOperator(
+    task_id=f'customers_to_process_batch', 
+    conn_id='snowflake', 
+    sql='queries/customer_batch.sql',
+    handler=fetch_single_result
+  )
+
+  fetch_from_experian = fetchFromExperian(erichs, experian_token, retrieved_batch.output)
   parsed_responses = parseResponse(fetch_from_experian)
+
+  responses_to_s3 = S3CreateObjectOperator(
+    task_id='experian_responses_to_s3',
+    s3_bucket='tovala-data-experian',
+    s3_key='parsed_responses_{{ run_id }}_batch{{ ti.map_index }}.txt',
+    data=parsed_responses
+  )

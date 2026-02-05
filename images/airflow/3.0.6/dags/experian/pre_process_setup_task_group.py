@@ -1,8 +1,4 @@
-import json
-import requests
-from requests import HTTPError
-
-from airflow.sdk import task, task_group, Variable, chain
+from airflow.sdk import task_group, chain
 from airflow.exceptions import AirflowException
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 

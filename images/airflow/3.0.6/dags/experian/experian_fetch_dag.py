@@ -1,8 +1,9 @@
+from pendulum import duration
 
-from airflow.sdk import dag, chain, task, Param
-from airflow.exceptions import AirflowException
+from airflow.sdk import dag, Param
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
+from common.slack_notifications import bad_boy, good_boy
 from experian.process_customer_batch_task_group import processBatch
 from experian.pre_process_setup_task_group import preProcessSetup
 
@@ -11,16 +12,16 @@ def fetch_single_result(cursor):
   return output
 
 @dag(
-  # on_failure_callback=bad_boy,
-  # on_success_callback=good_boy,
-  # schedule=CronTriggerTimetable('0 3 * * *', timezone='America/Chicago'),
+  on_failure_callback=bad_boy,
+  on_success_callback=good_boy,
+  #schedule=CronTriggerTimetable('0 3 * * *', timezone='America/Chicago'),
   catchup=False,
-  # default_args={
-  #     'retries': 2,
-  #     'retry_delay': duration(seconds=2),
-  #     'retry_exponential_backoff': True,
-  #     'max_retry_delay': duration(minutes=5),
-  # },
+  default_args={
+    'retries': 2,
+    'retry_delay': duration(seconds=2),
+    'retry_exponential_backoff': True,
+    'max_retry_delay': duration(minutes=5),
+  },
   tags=['internal', 'data-integration'],
   params={
     'channel_name': '',
@@ -43,12 +44,12 @@ def experianExtraction():
   
   process_batch = processBatch.partial(erichs=pre_process_setup['erichs']).expand(stupid_list=pre_process_setup['stupid_list'])
   
-  #delete_temporary_table = SQLExecuteQueryOperator(
-  #  task_id='delete_temporary_table', 
-  #  conn_id='snowflake',
-  #  sql='DROP TABLE brine.{{ params.temp_table_prefix }}_temp;'
-  #)
+  delete_temporary_table = SQLExecuteQueryOperator(
+    task_id='delete_temporary_table', 
+    conn_id='snowflake',
+    sql='DROP TABLE brine.{{ params.temp_table_prefix }}_temp;'
+  )
    
-  #chain(pre_process_setup, test_catch, delete_temporary_table) #customers_to_process, delete_temporary_table)
+  process_batch >> delete_temporary_table
 
 experianExtraction()
