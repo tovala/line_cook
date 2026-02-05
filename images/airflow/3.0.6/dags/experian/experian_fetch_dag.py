@@ -1,20 +1,17 @@
 from pendulum import duration
 
-from airflow.sdk import dag, Param
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+from airflow.sdk import dag, Param
+from airflow.timetables.trigger import CronTriggerTimetable
 
 from common.slack_notifications import bad_boy, good_boy
-from experian.process_customer_batch_task_group import processBatch
 from experian.pre_process_setup_task_group import preProcessSetup
-
-def fetch_single_result(cursor):
-  output, = cursor.fetchone()
-  return output
+from experian.process_customer_batch_task_group import processBatch
 
 @dag(
   on_failure_callback=bad_boy,
   on_success_callback=good_boy,
-  #schedule=CronTriggerTimetable('0 3 * * *', timezone='America/Chicago'),
+  schedule=CronTriggerTimetable('0 3 * * *', timezone='America/Chicago'),
   catchup=False,
   default_args={
     'retries': 2,

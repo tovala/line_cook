@@ -3,23 +3,23 @@ import re
 import requests
 from requests import HTTPError
 from typing import Dict
-from pendulum import duration
 
-from airflow.sdk import task, task_group, Variable, chain
+from airflow.sdk import task, task_group, Variable
 from airflow.exceptions import AirflowException
 from airflow.providers.amazon.aws.operators.s3 import S3CreateObjectOperator
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
-def fetch_single_result(cursor):
-  output, = cursor.fetchone()
+from common.sql_operator_handlers import fetch_single_result
 
-  return output
-
-@task_group(group_id='process_customer_batch')
+@task_group(group_id='process_customer_batch') 
 def processBatch(erichs: str, stupid_list:Dict[str, str]):
   '''
-  Fetches experian data for a single batch of 300 customers.
+  Fetches experian data for a single batch (size defined at dag-level params) of customers.
 
+  Experian access token is valid for 30 mins, if tasks downstream of getExperianToken are queued or rescheduled longer than that, 
+  the task group should be rerun if necessary, generating a new token. Unlikely since we fetch a new token at the start of processing
+  each batch.
+  
   Args:
     customer_batch (str): formatted string of customer data to pass to Experian API
   '''
@@ -50,8 +50,7 @@ def processBatch(erichs: str, stupid_list:Dict[str, str]):
     
     return token_response_json['access_token']
   
-  # TODO: this task should have an execution timeout of 30mins
-  @task(execution_timeout=duration(minutes=30))
+  @task()
   def fetchFromExperian(erich_values: str, access_token: str, customer_batch: str):
     '''
     Docstring for fetchFromExperian
