@@ -31,4 +31,4 @@ jobs:
       
       - name: Sync dags to S3
         run: |
-          aws s3 sync ./images/airflow/3.0.6/dags s3://${{ env.BUCKET_NAME }}/dags --follow-symlinks --delete
+          aws s3 sync ./images/airflow/3.0.6/dags s3://${{ env.BUCKET_NAME }}/dags --follow-symlinks --delete --exclude "spice_rack/*"
