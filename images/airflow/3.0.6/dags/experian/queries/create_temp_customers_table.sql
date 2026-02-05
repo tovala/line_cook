@@ -18,5 +18,3 @@ WHERE c.customer_id NOT IN
 (SELECT customer_id 
 FROM wash.experian_responses
 WHERE customer_id IS NOT NULL);
-
-SELECT CEIL(COUNT(*)/{{ params.batch_size }}) FROM brine.{{ params.temp_table_prefix }}_temp;
