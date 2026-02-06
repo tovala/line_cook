@@ -7,9 +7,10 @@ from airflow.timetables.trigger import CronTriggerTimetable
 from common.slack_notifications import bad_boy, good_boy, getSlackChannelNameParam
 from common.chili_load_task_group import loadIntoChili
 @dag(
+  dag_id='experian_load_to_chili',
   on_failure_callback=bad_boy,
   on_success_callback=good_boy,
-  schedule=CronTriggerTimetable('0 3 * * *', timezone='America/Chicago'),
+  schedule=None, # Externally triggered by experian_extraction_dag
   catchup=False,
   default_args={
     'retries': 2,
@@ -19,9 +20,7 @@ from common.chili_load_task_group import loadIntoChili
   },
   tags=['internal', 'data-integration'],
   params={
-    'channel_name': getSlackChannelNameParam(),
-    'batch_size': Param(100, type='integer', minimum=1, maximum=300, description='number of customers per batch. Due to Experian API limitations, must be <= 300.'),
-    'full_refresh': Param(False, type='boolean')
+    'channel_name': getSlackChannelNameParam()
   }
 )
 def experianLoad():

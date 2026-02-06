@@ -1,6 +1,7 @@
 from pendulum import duration
 
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.sdk import dag, Param
 from airflow.timetables.trigger import CronTriggerTimetable
 
@@ -9,6 +10,7 @@ from experian.pre_process_setup_task_group import preProcessSetup
 from experian.process_customer_batch_task_group import processBatch
 
 @dag(
+  dag_id='experian_extraction',
   on_failure_callback=bad_boy,
   on_success_callback=good_boy,
   schedule=CronTriggerTimetable('0 3 * * *', timezone='America/Chicago'),
@@ -48,7 +50,16 @@ def experianExtraction():
     conn_id='snowflake',
     sql='DROP TABLE brine.{{ params.temp_table_prefix }}_temp;'
   )
-   
-  process_batch >> delete_temporary_table
+  
+  trigger_chili_load = TriggerDagRunOperator(
+    task_id='trigger_chili_load_dag',
+    trigger_rule='all_success',
+    trigger_dag_id='experian_load_to_chili',
+    trigger_run_id='triggered_{{ run_id }}'
+  )
+
+  process_batch >> delete_temporary_table >> trigger_chili_load
+
+  
 
 experianExtraction()
