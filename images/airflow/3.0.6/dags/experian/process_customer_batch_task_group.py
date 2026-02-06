@@ -110,6 +110,6 @@ def processBatch(erichs: str, stupid_list:Dict[str, str]):
   responses_to_s3 = S3CreateObjectOperator(
     task_id='experian_responses_to_s3',
     s3_bucket='tovala-data-experian',
-    s3_key='parsed_responses_{{ run_id }}_batch{{ ti.map_index }}.txt',
+    s3_key='parsed_responses_{{ run_id }}_batch{{ ti.map_index }}.json',
     data=parsed_responses
   )

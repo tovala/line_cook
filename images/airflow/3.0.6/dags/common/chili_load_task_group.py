@@ -5,7 +5,7 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
 
 @task_group()
-def loadIntoChili(file_type: str, stage_name: str, s3_url: str, sf_storage_integration: str, copy_table_params: List[Dict[str, str]]):
+def loadIntoChili(file_type: str, stage_name: str, s3_url: str, sf_storage_integration: str, copy_table_args: List[Dict[str, str]]):
   create_external_stage = SQLExecuteQueryOperator(
       task_id=f'create_{stage_name}', 
       conn_id='snowflake', 
@@ -25,6 +25,6 @@ def loadIntoChili(file_type: str, stage_name: str, s3_url: str, sf_storage_integ
     snowflake_conn_id='snowflake',
     stage=f'MASALA.CHILI_V2.{stage_name}',
     file_format=f"(TYPE = '{file_type}')",
-  ).expand_kwargs(copy_table_params)
+  ).expand_kwargs(copy_table_args)
 
   chain(create_external_stage, copy_tables)
