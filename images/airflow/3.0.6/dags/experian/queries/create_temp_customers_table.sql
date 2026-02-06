@@ -13,8 +13,11 @@ SELECT
     , ROW_NUMBER() OVER (ORDER BY c.customer_id) AS row_number
 FROM grind.customers c
 LEFT JOIN grind.addresses a 
-ON c.customer_id = a.customer_id 
-WHERE c.customer_id NOT IN 
-(SELECT customer_id 
-FROM wash.experian_responses
-WHERE customer_id IS NOT NULL);
+ON c.customer_id = a.customer_id
+{% if not params.full_refresh %}
+    WHERE c.customer_id NOT IN 
+    (SELECT customer_id 
+    FROM wash.experian_responses
+    WHERE customer_id IS NOT NULL)
+{% endif %}
+;
