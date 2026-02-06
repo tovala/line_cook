@@ -23,7 +23,8 @@ from experian.process_customer_batch_task_group import processBatch
   params={
     'channel_name': getSlackChannelNameParam(),
     'temp_table_prefix': Param('experian_customers', type='string', description='prefix for temp table of all customers to send to experian at the time of the run - created in snowflake as {temp_table_prefix}_temp - table will not persist beyond dag run.'),
-    'batch_size': Param(100, type='integer', minimum=1, maximum=300, description='number of customers per batch. Due to Experian API limitations, must be <= 300.')
+    'batch_size': Param(100, type='integer', minimum=1, maximum=300, description='number of customers per batch. Due to Experian API limitations, must be <= 300.'),
+    'full_refresh': Param(False, type='boolean')
   }
 )
 def experianExtraction():
