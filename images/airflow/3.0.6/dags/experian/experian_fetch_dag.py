@@ -43,7 +43,8 @@ def experianExtraction():
   process_batch = processBatch.partial(erichs=pre_process_setup['erichs']).expand(stupid_list=pre_process_setup['stupid_list'])
   
   delete_temporary_table = SQLExecuteQueryOperator(
-    task_id='delete_temporary_table', 
+    task_id='delete_temporary_table',
+    trigger_rule='all_done_min_one_success', # always tear down as long as at least part of the dag was attempted successfully 
     conn_id='snowflake',
     sql='DROP TABLE brine.{{ params.temp_table_prefix }}_temp;'
   )
