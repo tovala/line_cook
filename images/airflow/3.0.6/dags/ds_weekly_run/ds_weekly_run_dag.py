@@ -5,7 +5,7 @@ from cosmos import DbtTaskGroup, RenderConfig, LoadMode, TestBehavior, DbtRunOpe
 from airflow.sdk import dag, chain, Variable
 from airflow.timetables.trigger import CronTriggerTimetable
 
-from common.slack_notifications import bad_boy, good_boy
+from common.slack_notifications import bad_boy, good_boy, getSlackChannelNameParam
 from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_WATCHER_EXECUTION_CONFIG, PROD_DBT_PROFILE_CONFIG, DBT_PROJECT_DIR, DBT_EXECUTABLE_PATH
 
 @dag(
@@ -22,7 +22,7 @@ from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_WATCHER_EXECUTION_C
   },
   tags=['data_science', 'dbt'],
   params={
-    'channel_name': '#team-data-notifications'
+    'channel_name': getSlackChannelNameParam()
   },
   render_template_as_native_obj=True
 )

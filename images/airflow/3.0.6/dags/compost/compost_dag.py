@@ -5,7 +5,7 @@ from cosmos.operators.local import DbtSourceLocalOperator, DbtTestLocalOperator
 from airflow.sdk import dag, Variable
 from airflow.timetables.trigger import CronTriggerTimetable
 
-from common.slack_notifications import bad_boy, good_boy
+from common.slack_notifications import bad_boy, good_boy, getSlackChannelNameParam
 from common.dbt_cosmos_config import PROD_DBT_PROFILE_CONFIG, DBT_PROJECT_DIR, DBT_EXECUTABLE_PATH, DBT_WATCHER_EXECUTION_CONFIG
 from common.dbt_custom_operators import runOperatorCustom
 
@@ -17,7 +17,7 @@ from common.dbt_custom_operators import runOperatorCustom
     catchup=False,
     tags=['internal', 'dbt'],
     params={
-        'channel_name': '#team-data-notifications'
+        'channel_name': getSlackChannelNameParam()
     },
     render_template_as_native_obj=True
 )
