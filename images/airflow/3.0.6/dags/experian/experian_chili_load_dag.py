@@ -42,11 +42,10 @@ def experianLoad():
     stage_name='experian_stage',
     s3_url='s3://tovala-data-experian',
     sf_storage_integration='EXPERIAN_STORAGE_INTEGRATION',
-    copy_table_args=[{
-      'table': 'CHILI_V2.EXPERIAN_CUSTOMERS',
-      'transform_columns': 'queries/copy_into_transform_columns.sql',
-      'pattern': 'parsed_responses.*[.]json'
-    }]
+    table='EXPERIAN_CUSTOMERS',
+    columns_array=['raw_data', 'filename', 'updated', 'customer_id'],
+    transform_columns='queries/copy_into_transform_columns.sql',
+    pattern='parsed_responses.*[.]json'
   )
 
 experianLoad()
