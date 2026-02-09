@@ -40,22 +40,24 @@ class CopyTransformFromExternalStageToSnowflakeOperator(CopyFromExternalStageToS
             into = self.table  # type: ignore[assignment]
 
         if self.columns_array:
-            into = f"{into}({', '.join(self.columns_array)})"
+            into = f'{into}({', '.join(self.columns_array)})'
 
         self._sql = f'''
-        COPY INTO {into}
-             FROM  @{self.stage}/{self.prefix or ""}
-        {"FILES=(" + ",".join(map(enclose_param, self.files)) + ")" if self.files else ""}
-        {"PATTERN=" + enclose_param(self.pattern) if self.pattern else ""}
+        COPY INTO {into} FROM (
+            SELECT {self.transform_columns}
+            FROM  @{self.stage}/{self.prefix or ""}
+        )
+        {'FILES=(' + ','.join(map(enclose_param, self.files)) + ')' if self.files else ''}
+        {'PATTERN=' + enclose_param(self.pattern) if self.pattern else ''}
         FILE_FORMAT={self.file_format}
-        {self.copy_options or ""}
-        {self.validation_mode or ""}
+        {self.copy_options or ''}
+        {self.validation_mode or ''}
         '''
-        self.log.info("Executing COPY command...")
+        self.log.info('Executing COPY command...')
         self._result = self.hook.run(  # type: ignore # mypy does not work well with return_dictionaries=True
             sql=self._sql,
             autocommit=self.autocommit,
             handler=lambda x: x.fetchall(),
             return_dictionaries=True,
         )
-        self.log.info("COPY command completed")
+        self.log.info('COPY command completed')
