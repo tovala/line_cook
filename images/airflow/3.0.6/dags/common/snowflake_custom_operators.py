@@ -1,8 +1,7 @@
 from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, ClassVar
 
-from airflow.providers.common.compat.sdk import BaseOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.providers.snowflake.utils.common import enclose_param
 
@@ -10,9 +9,9 @@ class CopyTransformFromExternalStageToSnowflakeOperator(CopyFromExternalStageToS
   '''
   Docstring for CopyTransformFromExternalStageToSnowflakeOperator
   '''
-
-  template_fields: Sequence[str] = ('transform_columns',)
-  template_fields_renderers = {'transform_columns': 'sql'}
+  template_fields: Sequence[str] = ('transform_columns', *CopyFromExternalStageToSnowflakeOperator.template_fields)
+  template_ext: Sequence[str] = ('.sql')
+  template_fields_renderers: ClassVar[dict] = {'transform_columns': 'sql'}
 
   def __init__(
       self,
