@@ -37,16 +37,6 @@ def experianLoad():
   Variables:
 
   '''
-
-  SELECT 
-  TRY_PARSE_JSON($1) AS raw_data
-  , METADATA$FILENAME AS filename
-  , CURRENT_TIMESTAMP()::TIMESTAMPTZ AS updated 
-  , {{ filename_timestamp_extractor() }} AS upload_time
-  , raw_data:lead_id::INTEGER AS customer_id
-  , REGEXP_SUBSTR(filename, 'experian-parsed-([0-9]+)-', 1, 1, 'e') AS transaction_id
-FROM {{ external_stage() }}
-
   load_into_chili = loadIntoChili(
     file_type='JSON',
     stage_name='experian_stage',
@@ -54,6 +44,7 @@ FROM {{ external_stage() }}
     sf_storage_integration='EXPERIAN_STORAGE_INTEGRATION',
     copy_table_args=[{
       'table': 'CHILI_V2.EXPERIAN_CUSTOMERS',
+      'transform_columns': 'queries/copy_into_transform_columns.sql',
       'pattern': 'parsed_responses.*[.]json'
     }]
   )

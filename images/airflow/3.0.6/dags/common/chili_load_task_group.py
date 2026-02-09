@@ -2,7 +2,8 @@ from typing import Dict, List
 
 from airflow.sdk import task_group, chain
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
-from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
+
+from common.snowflake_custom_operators import CopyTransformFromExternalStageToSnowflakeOperator
 
 @task_group()
 def loadIntoChili(file_type: str, stage_name: str, s3_url: str, sf_storage_integration: str, copy_table_args: List[Dict[str, str]]):
@@ -20,7 +21,7 @@ def loadIntoChili(file_type: str, stage_name: str, s3_url: str, sf_storage_integ
       },
     )
 
-  copy_tables = CopyFromExternalStageToSnowflakeOperator.partial(
+  copy_tables = CopyTransformFromExternalStageToSnowflakeOperator.partial(
     task_id='copyTable', 
     snowflake_conn_id='snowflake',
     stage=f'MASALA.CHILI_V2.{stage_name}',
