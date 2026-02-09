@@ -28,3 +28,5 @@ def loadIntoChili(file_type: str, stage_name: str, s3_url: str, sf_storage_integ
   ).expand_kwargs(copy_table_args)
 
   chain(create_external_stage, copy_tables)
+
+  

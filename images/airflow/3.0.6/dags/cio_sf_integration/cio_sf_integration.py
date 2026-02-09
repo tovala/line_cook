@@ -24,7 +24,7 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
         'retry_exponential_backoff': True,
         'max_retry_delay': duration(minutes=5),
     },
-    tags=['internal', 'data-integration'],
+    tags=['internal', 'data-integration', 'chili'],
     params={
         'channel_name': getSlackChannelNameParam()
     },
