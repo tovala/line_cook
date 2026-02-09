@@ -87,5 +87,5 @@ WHERE NOT c.is_internal_account AND NOT c.is_employee
 SELECT *
 -- DISTINCT customer_number, email_address
 FROM data_pull
-WHERE date_of_activity >= '{{ params.start_date }}'::DATE
-  AND date_of_activity < '{{ params.end_date }}'::DATE;
+WHERE date_of_activity >= '%(start_date)s'::DATE
+  AND date_of_activity < '%(end_date)s':::DATE;
