@@ -52,10 +52,8 @@ def ccc_direct_mail_send():
         query='queries/direct_mail_ccc.sql', 
         s3_bucket='tovala-ccc-direct-mail', 
         s3_key=f"data_sends/{dates_and_filename['filename']}", 
-        parameters={'start_date': dates_and_filename['start_date'],
-                    'end_date': dates_and_filename['end_date']},
         replace=True, 
-        file_format='CSV', 
+        file_format='CSV',
     )
 
     chain(dates_and_filename, upload_to_s3)
