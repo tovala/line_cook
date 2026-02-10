@@ -1,5 +1,6 @@
 import datetime
 
+from typing import Dict
 from airflow.sdk import dag, task, chain
 from airflow.timetables.trigger import CronTriggerTimetable
 from common.slack_notifications import bad_boy, good_boy, getSlackChannelNameParam
@@ -7,9 +8,9 @@ from airflow.providers.amazon.aws.transfers.sql_to_s3 import SqlToS3Operator
 from airflow.providers.amazon.aws.transfers.s3_to_sftp import S3ToSFTPOperator
 
 @dag(
-    # on_failure_callback=bad_boy,
-    # on_success_callback=good_boy,
-    # schedule=CronTriggerTimetable('0 2 * * 1', timezone='America/Chicago')
+    on_failure_callback=bad_boy,
+    on_success_callback=good_boy,
+    schedule=CronTriggerTimetable('0 2 * * 1', timezone='America/Chicago'),
     catchup=False,
     tags=['external'],
     params={
@@ -31,7 +32,11 @@ def ccc_direct_mail_send():
 
     '''
     @task(multiple_outputs=True)
-    def getDatesandFilename():
+    def getDatesandFilename() -> Dict[str, str]:
+        '''
+        Output:
+            (Dict) - {start_date: x, end_date: y, filename: z}
+        '''
         today = datetime.date.today()
         offset = (today.weekday() + 1) % 7
         end_date = today - datetime.timedelta(days=offset)
