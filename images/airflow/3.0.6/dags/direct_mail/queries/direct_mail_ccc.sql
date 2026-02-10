@@ -84,8 +84,35 @@ LEFT JOIN grind.big_picture_responses bpr
   AND bpr.nth = 1
 WHERE NOT c.is_internal_account AND NOT c.is_employee
 )
-SELECT *
--- DISTINCT customer_number, email_address
+SELECT -- TODO: Make all upper case
+  customer_number
+  , billing_first_name
+  , null AS billing_last_name
+  , null AS billing_company_name
+  , null AS billing_primary_address
+  , null AS billing_xline_address
+  , null AS billing_city
+  , null AS billing_state
+  , null AS billing_zipcode
+  , null AS shipping_first_name
+  , ms.destination_name AS shipping_last_name
+  , null AS shipping_company_name
+  , ms.destination_address_line1 AS shipping_primary_address
+  , ms.destination_address_line2 AS shipping_xline_address
+  , ms.destination_city AS shipping_city
+  , ms.destination_state AS shipping_state
+  , ms.destination_zip_cd AS shipping_zipcode
+  , c.email AS email_address
+  , mo.meal_order_id AS order_number
+  , mo.order_time AS date_of_activity
+  , cts.meal_arr AS line_item_demand
+  , mo.order_size AS units
+  , bpr.first_exposure_source AS channel_indicator
+  , mo.term_id::STRING AS sku
+  , 'meals order' AS item_description
+  , null AS size
+  , 'meals' AS category
+  , null AS sub_category
 FROM data_pull
-WHERE date_of_activity >= '{{ task_instance.xcom_pull(task_ids='getDatesandFilename', dag_id='ccc_direct_mail_send', key='start_date') }}'::DATE
-  AND date_of_activity < '{{ task_instance.xcom_pull(task_ids='getDatesandFilename', dag_id='ccc_direct_mail_send', key='end_date') }}'::DATE;
+WHERE date_of_activity >= DATE('{{ task_instance.xcom_pull(task_ids='getDatesandFilename', dag_id='ccc_direct_mail_send', key='start_date') }}')
+  AND date_of_activity < DATE('{{ task_instance.xcom_pull(task_ids='getDatesandFilename', dag_id='ccc_direct_mail_send', key='end_date') }}');
