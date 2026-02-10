@@ -1,13 +1,10 @@
 import datetime
 
 from airflow.sdk import dag, task, chain
-from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.timetables.trigger import CronTriggerTimetable
 from common.slack_notifications import bad_boy, good_boy, getSlackChannelNameParam
-from typing import Any, List
-from common.sql_operator_handlers import fetch_single_result
 from airflow.providers.amazon.aws.transfers.sql_to_s3 import SqlToS3Operator
-# from airflow.providers.sftp.operators.sftp import SFTPOperator
+from airflow.providers.amazon.aws.transfers.s3_to_sftp import S3ToSFTPOperator
 
 @dag(
     # on_failure_callback=bad_boy,
@@ -51,18 +48,19 @@ def ccc_direct_mail_send():
         sql_conn_id='snowflake',
         query='queries/direct_mail_ccc.sql', 
         s3_bucket='tovala-ccc-direct-mail', 
-        s3_key=f"data_sends/{dates_and_filename['filename']}", 
+        s3_key=f'data_sends/{dates_and_filename['filename']}', 
         replace=True, 
         file_format='CSV',
     )
 
-    chain(dates_and_filename, upload_to_s3)
+    send_to_sftp = S3ToSFTPOperator(
+        task_id='send_to_sftp',
+        s3_bucket='tovala-ccc-direct-mail',
+        s3_key=f'data_sends/{dates_and_filename['filename']}',
+        sftp_path=f'./{dates_and_filename['filename']}',
+        sftp_conn_id='direct_mail_ccc_sftp'
+    )
 
-    # send_to_sftp = S3ToSFTPOperator(
-    #     s3_bucket='tovala-ccc-direct-mail',
-    #     s3_key='data_sends/AXMATCH_TOVALA_Direct_Mail_{{params.start_date}}-{{params.end_date}}.csv',
-    #     sftp_path=,
-    #     sftp_conn_id=
-    # )
+    chain(dates_and_filename, upload_to_s3, send_to_sftp)
 
 ccc_direct_mail_send()
