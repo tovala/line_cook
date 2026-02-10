@@ -49,4 +49,4 @@ __pycache__
 .vscode
 
 #ignore spice_rack that is mounted during testing
-images/airflow/3.*/spice_rack/
+images/airflow/3.*/spice_rack/*
