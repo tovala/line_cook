@@ -62,12 +62,12 @@ def customerIOSnowflakeIntegration():
     conn_id='snowflake', 
     sql='create_stage.sql',
     params={
-      'parent_database': 'MASALA',
-      'schema_name': 'CHILI_V2',
-      'stage_name': 'cio_stage',
+      'database': 'MASALA',
+      'schema': 'CHILI_V2',
+      'stage': 'cio_stage',
       'url': 's3://tovala-data-customerio/',
       'storage_integration': 'CIO_STORAGE_INTEGRATION',
-      'file_type': 'parquet',
+      'file_format': 'parquet',
     },
   )
   

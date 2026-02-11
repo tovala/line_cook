@@ -1,3 +1,3 @@
 SELECT COUNT(*) 
 FROM INFORMATION_SCHEMA.TABLES
-WHERE TABLE_SCHEMA = {{ params.schema }} AND TABLE_NAME = {{ params.table }};
+WHERE TABLE_SCHEMA = '{{ params.schema }}' AND TABLE_NAME = '{{ params.table }}';

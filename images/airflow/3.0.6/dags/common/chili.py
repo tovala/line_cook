@@ -1,8 +1,9 @@
+from airflow.operators.python import get_current_context
 from airflow.providers.snowflake.utils.common import enclose_param
-from airflow.sdk import Params
+from airflow.sdk import Param, task
 
-
-def render_chili_query(table_exists, **context):
+@task(task_id='render_chili_sql', trigger_rule='one_success')
+def renderChiliQuery(table_exists, **context):
   '''
   User defined macro to generate the appropriate SQL query for a given chili load.
   
@@ -10,6 +11,8 @@ def render_chili_query(table_exists, **context):
   :param columns: sql string of the columns to bring in from the external stage, including any necessary parsing or transformations
   :param context: context object passed from the chili dag, which should include any params needed to generate the query (e.g. stage name, file format, where clause, etc.)
   '''
+  print(context)
+
   dag_params = context['params']
   run_id = context['run_id']
 
@@ -56,17 +59,25 @@ def chili_params(table, stage, columns, **kwargs):
   :param kwargs: optional parameters that can be passed to a chili dag as needed
   '''
   params_dict = {
-    'table': Params(table, type='string'),
-    'stage': Params(stage, type='string'),
-    'columns': Params(columns, type='string'),
+    'table': Param(table, type='string'),
+    'stage': Param(stage, type='string'),
+    'columns': Param(columns, type='string'),
   }
 
   for param_name, default_value in kwargs.items():
 
     if isinstance(default_value, bool):
-      params_dict.update({param_name: Params(default_value, type='boolean')})
+      params_dict.update({param_name: Param(default_value, type='boolean')})
     else:
-      params_dict.update({param_name: Params(default_value, type='string')})
+      params_dict.update({param_name: Param(default_value, type='string')})
+  
+  if 'database' not in params_dict:
+    params_dict.update({'database': 'MASALA'})
+  if 'schema' not in params_dict:
+    params_dict.update({'schema': 'CHILI_V2'})
+
+  if 'file_format' not in params_dict:
+    params_dict.update({'file_format': 'JSON'})
 
   return params_dict
 
