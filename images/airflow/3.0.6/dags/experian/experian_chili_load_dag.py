@@ -1,10 +1,11 @@
 import os
 from pendulum import duration
 
-from airflow.sdk import dag
+from airflow.sdk import dag, Param
 
 from common.slack_notifications import bad_boy, good_boy, getSlackChannelNameParam
-from common.chili_load_task_group import loadIntoChili
+from common.chili_load_task_group import initializeChili
+from common.snowflake_custom_operators import CopyTransformFromExternalStageToSnowflakeOperator
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
 
@@ -22,7 +23,8 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
   },
   tags=['internal', 'data-integration', 'chili'],
   params={
-    'channel_name': getSlackChannelNameParam()
+    'channel_name': getSlackChannelNameParam(),
+    'full_refresh': Param(False, type='boolean')
   },
   template_searchpath=f'{AIRFLOW_HOME}/dags/common/templates'
 )
@@ -37,11 +39,21 @@ def experianLoad():
   Variables:
 
   '''
-  load_into_chili = loadIntoChili(
+  initialize_chili = initializeChili(
     file_type='JSON',
     stage_name='experian_stage',
     s3_url='s3://tovala-data-experian',
     sf_storage_integration='EXPERIAN_STORAGE_INTEGRATION',
+
+  )
+
+  load_into_chili = CopyTransformFromExternalStageToSnowflakeOperator(
+    task_id='copyTable', 
+    snowflake_conn_id='snowflake',
+    stage=stage,
+    schema='CHILI_V2',
+    table=table,
+    file_format=f"(TYPE = '{file_type}')",
     table='EXPERIAN_CUSTOMERS',
     columns_array=['raw_data', 'filename', 'updated', 'customer_id'],
     transform_columns='queries/copy_into_transform_columns.sql',
