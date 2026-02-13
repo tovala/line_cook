@@ -1,44 +1,5 @@
-from airflow.operators.python import get_current_context
 from airflow.providers.snowflake.utils.common import enclose_param
-from airflow.sdk import Param, task
-
-@task(task_id='render_chili_sql', trigger_rule='one_success')
-def renderChiliQuery(table_exists, **context):
-  '''
-  User defined macro to generate the appropriate SQL query for a given chili load.
-  
-  :param table_exists: boolean indicating whether the destination table already exists in snowflake
-  :param columns: sql string of the columns to bring in from the external stage, including any necessary parsing or transformations
-  :param context: context object passed from the chili dag, which should include any params needed to generate the query (e.g. stage name, file format, where clause, etc.)
-  '''
-  print(context)
-
-  dag_params = context['params']
-  run_id = context['run_id']
-
-  # Get params if passed to the dag, otherwise use defaults
-  full_refresh = dag_params.get('full_refresh', False)
-  file_format = dag_params.get('file_format', 'JSON')
-  pattern = dag_params.get('pattern')
-  stage = dag_params.get('stage')
-  prefix = dag_params.get('prefix')
-
-  database = dag_params.get('database', 'MASALA')
-  schema = dag_params.get('schema', 'CHILI_V2')
-  table = dag_params.get('table')
-
-  columns = dag_params.get('columns')
-  where_clause = dag_params.get('where_clause')
-
-  query = f'''COPY INTO {database}.{schema}.{table} FROM (
-  SELECT
-    {_external_stage_select(columns, where_clause, stage, prefix)}
-  )
-  {'PATTERN=' + enclose_param(pattern) if pattern else ''}
-  FILE_FORMAT={file_format}
-  '''
-
-  return query
+from airflow.sdk import Param
 
 def chili_params(table, stage, columns, **kwargs):
   '''
@@ -103,5 +64,5 @@ def generate_copy_into_chili_query(table, columns, stage, **kwargs):
     {_external_stage_select(columns, where_clause, schema, stage, prefix)}
   )
   {'PATTERN=' + enclose_param(pattern) if pattern else ''}
-  FILE_FORMAT='{file_format}';
+  FILE_FORMAT= (TYPE = '{file_format}');
   '''

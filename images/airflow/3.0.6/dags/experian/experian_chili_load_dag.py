@@ -1,11 +1,10 @@
 import os
 from pendulum import duration
 
-from airflow.sdk import chain, dag, task
-from airflow.exceptions import AirflowException
+from airflow.sdk import chain, dag
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator, BranchSQLOperator
 
-from common.slack_notifications import bad_boy, good_boy, getSlackChannelNameParam
+from common.slack_notifications import bad_boy, good_boy
 from common.chili import chili_params, generate_copy_into_chili_query, generate_create_chili_table_query
 from experian.chili_vars import COLUMNS
 
@@ -66,7 +65,7 @@ def experianLoad():
     task_id='chili_load',
     conn_id='snowflake',
     sql='{{ generate_copy_into(table=params.table, columns=params.columns, stage=params.stage) }}',
-    trigger_rule='none_failed'
+    trigger_rule='none_failed' # should run in the case when the upstream create_chili_table task is skipped by branching
   )
 
   chain([table_exists, create_stage], create_chili_table, chili_load)
