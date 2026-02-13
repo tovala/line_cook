@@ -30,16 +30,7 @@ def renderChiliQuery(table_exists, **context):
   columns = dag_params.get('columns')
   where_clause = dag_params.get('where_clause')
 
-  query = ''
-
-  if not table_exists or full_refresh:
-    query = f'''
-    CREATE OR REPLACE TABLE {database}.{schema}.{table} AS (
-      {_external_stage_select(columns, where_clause, stage, run_id)}
-    );
-    '''
-
-  query = query + f'''COPY INTO {database}.{schema}.{table} FROM (
+  query = f'''COPY INTO {database}.{schema}.{table} FROM (
   SELECT
     {_external_stage_select(columns, where_clause, stage, prefix)}
   )
@@ -76,15 +67,41 @@ def chili_params(table, stage, columns, **kwargs):
   if 'schema' not in params_dict:
     params_dict.update({'schema': 'CHILI_V2'})
 
-  if 'file_format' not in params_dict:
-    params_dict.update({'file_format': 'JSON'})
-
   return params_dict
 
 
-def _external_stage_select(columns, where_clause, stage, prefix):
+def _external_stage_select(columns, where_clause, schema, stage, prefix):
   return f'''SELECT
     {columns}
-    FROM @{'/'.join([stage, prefix]) if prefix else stage}
-    {'WHERE' + where_clause if where_clause else ''}
+  FROM @{schema}.{'/'.join([stage, prefix]) if prefix else stage}
+  {'WHERE' + where_clause if where_clause else ''}
+  '''
+
+def generate_create_chili_table_query(table, columns, stage, run_id, **kwargs):
+  database = kwargs.get('database', 'MASALA')
+  schema = kwargs.get('schema', 'CHILI_V2')
+
+  where_clause = kwargs.get('where_clause')
+
+  clean_run_id = run_id.replace(':', '-').replace('+', '-').replace('.', '-')
+
+  return f'''CREATE OR REPLACE TABLE {database}.{schema}.{table} AS (
+    {_external_stage_select(columns, where_clause, schema, stage, clean_run_id)}
+  );
+  '''
+
+def generate_copy_into_chili_query(table, columns, stage, **kwargs):
+  database = kwargs.get('database', 'MASALA')
+  schema = kwargs.get('schema', 'CHILI_V2')
+  prefix = kwargs.get('prefix')
+
+  where_clause = kwargs.get('where_clause')
+  pattern = kwargs.get('pattern')
+  file_format = kwargs.get('file_format', 'JSON')
+
+  return f'''COPY INTO {database}.{schema}.{table} FROM (
+    {_external_stage_select(columns, where_clause, schema, stage, prefix)}
+  )
+  {'PATTERN=' + enclose_param(pattern) if pattern else ''}
+  FILE_FORMAT='{file_format}';
   '''
