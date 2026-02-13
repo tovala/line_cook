@@ -5,7 +5,7 @@ from airflow.sdk import Param
 
 SLACK_WEBHOOK_CONNECTION_ID = 'tovala_slack'
 
-def getSlackChannelNameParam(channel_name: str='#team-data-notifications'):
+def slack_param(channel_name: str='#team-data-notifications'):
     '''
     Returns an Airflow Param object for slack channel name.
     Defaults to #team-data-notifications channel for alerts unless otherwise specified.

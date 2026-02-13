@@ -5,7 +5,7 @@ from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOpe
 from airflow.sdk import dag, Param
 from airflow.timetables.trigger import CronTriggerTimetable
 
-from common.slack_notifications import bad_boy, good_boy, getSlackChannelNameParam
+from common.slack_notifications import bad_boy, good_boy, slack_param
 from experian.pre_process_setup_task_group import preProcessSetup
 from experian.process_customer_batch_task_group import processBatch
 
@@ -23,7 +23,7 @@ from experian.process_customer_batch_task_group import processBatch
   },
   tags=['internal', 'data-integration'],
   params={
-    'channel_name': getSlackChannelNameParam(),
+    'channel_name': slack_param(),
     'temp_table_prefix': Param('experian_customers', type='string', description='prefix for temp table of all customers to send to experian at the time of the run - created in snowflake as {temp_table_prefix}_temp - table will not persist beyond dag run.'),
     'batch_size': Param(100, type='integer', minimum=1, maximum=300, description='number of customers per batch. Due to Experian API limitations, must be <= 300.'),
     'full_refresh': Param(False, type='boolean')

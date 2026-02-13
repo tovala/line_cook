@@ -8,7 +8,7 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.timetables.trigger import CronTriggerTimetable
 from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
 
-from common.slack_notifications import bad_boy, good_boy, getSlackChannelNameParam
+from common.slack_notifications import bad_boy, good_boy, slack_param
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
 
@@ -26,7 +26,7 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
     },
     tags=['internal', 'data-integration', 'chili'],
     params={
-        'channel_name': getSlackChannelNameParam()
+        'channel_name': slack_param()
     },
     template_searchpath=f'{AIRFLOW_HOME}/dags/common/templates'
 )

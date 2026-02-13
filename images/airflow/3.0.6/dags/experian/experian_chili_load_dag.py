@@ -1,11 +1,10 @@
 import os
 from pendulum import duration
 
-from airflow.sdk import chain, dag
-from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator, BranchSQLOperator
+from airflow.sdk import dag
 
-from common.slack_notifications import bad_boy, good_boy
-from common.chili import chili_params, generate_copy_into_chili_query, generate_create_chili_table_query
+from common.slack_notifications import bad_boy, good_boy, slack_param
+from common.chili import chili_params, chili_macros, chiliLoad
 from experian.chili_vars import COLUMNS
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
@@ -24,7 +23,7 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
   },
   tags=['internal', 'data-integration', 'chili'],
   params={
-    #'channel_name': getSlackChannelNameParam(),
+    'channel_name': slack_param(),
     **chili_params(table='experian_customers',
                    stage='experian_stage',
                    columns=COLUMNS,
@@ -34,39 +33,9 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
     )
   },
   template_searchpath=f'{AIRFLOW_HOME}/dags/common/templates',
-  user_defined_macros={
-    'generate_copy_into': generate_copy_into_chili_query,
-    'generate_create': generate_create_chili_table_query
-  }
+  user_defined_macros=chili_macros()
 )
 def experianLoad():
+  chiliLoad()
 
-  table_exists = BranchSQLOperator(
-    task_id='check_table_exists',
-    conn_id='snowflake',
-    sql='check_table_existence.sql',
-    follow_task_ids_if_true='chili_load',
-    follow_task_ids_if_false='create_chili_table',
-  )
-
-  create_stage = SQLExecuteQueryOperator(
-    task_id='create_stage',
-    conn_id='snowflake', 
-    sql='create_stage.sql'
-  )
-
-  create_chili_table = SQLExecuteQueryOperator(
-    task_id='create_chili_table',
-    conn_id='snowflake',
-    sql='{{ generate_create(table=params.table, columns=params.columns, stage=params.stage, run_id=run_id) }}'
-  )
-
-  chili_load = SQLExecuteQueryOperator(
-    task_id='chili_load',
-    conn_id='snowflake',
-    sql='{{ generate_copy_into(table=params.table, columns=params.columns, stage=params.stage) }}',
-    trigger_rule='none_failed' # should run in the case when the upstream create_chili_table task is skipped by branching
-  )
-
-  chain([table_exists, create_stage], create_chili_table, chili_load)
 experianLoad()
