@@ -27,9 +27,8 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
     **chili_params(table='experian_customers',
                    stage='experian_stage',
                    columns=COLUMNS,
-                   full_refresh=False,
                    storage_integration='EXPERIAN_STORAGE_INTEGRATION',
-                   url='s3://tovala-data-experian/'
+                   s3_url='s3://tovala-data-experian/',
     )
   },
   template_searchpath=f'{AIRFLOW_HOME}/dags/common/templates',

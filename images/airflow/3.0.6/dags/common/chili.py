@@ -11,7 +11,7 @@ def chili_macros():
     'generate_copy_into': generate_copy_into_chili_query
   }
 
-def chili_params(table, stage, columns, **kwargs):
+def chili_params(table, stage, columns, storage_integration, s3_url, **kwargs):
   '''
   Generate a Params dict for chili dags. 
 
@@ -21,22 +21,27 @@ def chili_params(table, stage, columns, **kwargs):
   :param kwargs: optional parameters that can be passed to a chili dag as needed
   '''
   params_dict = {
+    'full_refresh': Param(False, type='boolean'),
+    'storage_integration': Param(storage_integration, type='string'),
+    's3_url': Param(s3_url, type='string'),
+    'database': Param('MASALA', type='string'),
+    'schema': Param('CHILI_V2', type='string'),
     'table': Param(table, type='string'),
     'stage': Param(stage, type='string'),
+    'prefix': Param(None, type=['string', 'null']),
     'columns': Param(columns, type='string'),
+    'where_clause': Param(None, type=['string', 'null']),
+    'file_format': Param('JSON', type='string'),
+    'pattern': Param(None, type=['string', 'null'])
   }
 
   for param_name, default_value in kwargs.items():
 
     if isinstance(default_value, bool):
-      params_dict.update({param_name: Param(default_value, type='boolean')})
+      params_dict[param_name] = Param(default_value, type='boolean')
     else:
-      params_dict.update({param_name: Param(default_value, type='string')})
+      params_dict[param_name] = Param(default_value, type=['string', 'null'])
   
-  if 'database' not in params_dict:
-    params_dict.update({'database': 'MASALA'})
-  if 'schema' not in params_dict:
-    params_dict.update({'schema': 'CHILI_V2'})
 
   return params_dict
 
@@ -48,12 +53,7 @@ def _external_stage_select(columns, where_clause, schema, stage, prefix):
   {'WHERE' + where_clause if where_clause else ''}
   '''
 
-def generate_create_chili_table_query(table, columns, stage, run_id, **kwargs):
-  database = kwargs.get('database', 'MASALA')
-  schema = kwargs.get('schema', 'CHILI_V2')
-
-  where_clause = kwargs.get('where_clause')
-
+def generate_create_chili_table_query(database, schema, table, columns, where_clause, stage, run_id):
   clean_run_id = run_id.replace(':', '-').replace('+', '-').replace('.', '-')
 
   return f'''CREATE OR REPLACE TABLE {database}.{schema}.{table} AS (
@@ -61,15 +61,7 @@ def generate_create_chili_table_query(table, columns, stage, run_id, **kwargs):
   );
   '''
 
-def generate_copy_into_chili_query(table, columns, stage, **kwargs):
-  database = kwargs.get('database', 'MASALA')
-  schema = kwargs.get('schema', 'CHILI_V2')
-  prefix = kwargs.get('prefix')
-
-  where_clause = kwargs.get('where_clause')
-  pattern = kwargs.get('pattern')
-  file_format = kwargs.get('file_format', 'JSON')
-
+def generate_copy_into_chili_query(database, schema, table, columns, where_clause, stage, prefix, pattern, file_format):
   return f'''COPY INTO {database}.{schema}.{table} FROM (
     {_external_stage_select(columns, where_clause, schema, stage, prefix)}
   )
@@ -96,13 +88,13 @@ def chiliLoad():
   create_chili_table = SQLExecuteQueryOperator(
     task_id='create_chili_table',
     conn_id='snowflake',
-    sql='{{ generate_create(table=params.table, columns=params.columns, stage=params.stage, run_id=run_id) }}'
+    sql='{{ generate_create(params.database, params.schema, params.table, params.columns, params.where_clause, params.stage, run_id) }}'
   )
 
   chili_copy_into = SQLExecuteQueryOperator(
     task_id='chili_copy_into',
     conn_id='snowflake',
-    sql='{{ generate_copy_into(table=params.table, columns=params.columns, stage=params.stage) }}',
+    sql='{{ generate_copy_into(params.database, params.schema, params.table, params.columns, params.where_clause, params.stage, params.prefix, params.pattern, params.file_format) }}',
     trigger_rule='none_failed' # should run in the case when the upstream create_chili_table task is skipped by branching
   )
 

@@ -52,7 +52,7 @@ def customerIOSnowflakeIntegration():
     expanded_args = []
 
     for table in tables: 
-        expanded_args.append({'table': f'CHILI_V2.{table}', 'pattern': f'.*{table}.*.parquet'})
+        expanded_args.append({'table': f'CHILI_V2.{table}', 'pattern': f'.*{table}.*.parquet'}) 
 
     return expanded_args 
 
@@ -65,7 +65,7 @@ def customerIOSnowflakeIntegration():
       'database': 'MASALA',
       'schema': 'CHILI_V2',
       'stage': 'cio_stage',
-      'url': 's3://tovala-data-customerio/',
+      's3_url': 's3://tovala-data-customerio/',
       'storage_integration': 'CIO_STORAGE_INTEGRATION',
       'file_format': 'parquet',
     },
