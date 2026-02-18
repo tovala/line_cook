@@ -15,7 +15,7 @@ from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 from airflow.providers.slack.notifications.slack import SlackNotifier
-from common.slack_notifications import bad_boy, good_boy, getSlackChannelNameParam
+from common.slack_notifications import bad_boy, good_boy, slack_param
 from user_deletes.process_delete_requests_task_group import processDeleteRequests
 from airflow.timetables.trigger import CronTriggerTimetable
 from common.sql_operator_handlers import fetch_results_array
@@ -34,7 +34,7 @@ from common.sql_operator_handlers import fetch_results_array
     },
     tags=['internal', 'cleanup'],
     params={
-        "channel_name": getSlackChannelNameParam()
+        "channel_name": slack_param()
     }
 )
 def user_deletes():

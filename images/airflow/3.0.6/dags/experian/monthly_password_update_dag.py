@@ -19,7 +19,7 @@ UPDATE_PASSWORD_URL = 'https://ss3.experian.com/securecontrol/reset/passwordrese
     on_failure_callback=bad_boy,
     on_success_callback=good_boy,
     schedule=duration(days=28),
-    start_date=datetime(2026, 2, 1, 3, tzinfo=ZoneInfo('America/Chicago')),
+    start_date=datetime(2026, 2, 19, 2, tzinfo=ZoneInfo('America/Chicago')),
     catchup=False,
     default_args={
         'retries': 2,
