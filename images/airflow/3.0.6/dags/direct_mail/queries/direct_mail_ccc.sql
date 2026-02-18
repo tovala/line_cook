@@ -29,6 +29,7 @@ SELECT
   , null AS size
   , 'oven' AS category
   , null AS sub_category
+  , cf.bullseye_persona
 FROM grind.customers c
 INNER JOIN grind.oven_orders oo
   ON c.customer_id = oo.customer_id
@@ -37,10 +38,12 @@ INNER JOIN grind.oven_shipments os
 LEFT JOIN grind.big_picture_responses bpr
   ON c.customer_id = bpr.customer_id
   AND bpr.nth = 1
+LEFT JOIN season.customer_facts cf 
+  ON c.customer_id = cf.customer_id
 WHERE NOT c.is_internal_account AND NOT c.is_employee
   AND oo.status IN ('refunded', 'backordered', 'complete')
 
-UNION
+UNION ALL
 
 --meals
 SELECT
@@ -72,6 +75,7 @@ SELECT
   , null AS size
   , 'meals' AS category
   , null AS sub_category
+  , cf.bullseye_persona
 FROM grind.customers c
 INNER JOIN grind.meal_orders mo
   ON c.customer_id = mo.customer_id
@@ -82,6 +86,8 @@ LEFT JOIN season.customer_term_summary cts
 LEFT JOIN grind.big_picture_responses bpr
   ON c.customer_id = bpr.customer_id
   AND bpr.nth = 1
+LEFT JOIN season.customer_facts cf 
+  ON c.customer_id = cf.customer_id
 WHERE NOT c.is_internal_account AND NOT c.is_employee
 )
 SELECT
