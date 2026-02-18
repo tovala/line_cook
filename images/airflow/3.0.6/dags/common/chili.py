@@ -77,8 +77,8 @@ def chiliLoad():
     task_id='check_table_exists',
     conn_id='snowflake',
     sql='check_table_existence.sql',
-    follow_task_ids_if_true=f'chili_load.chili_copy_into',
-    follow_task_ids_if_false=f'chili_load.create_chili_table',
+    follow_task_ids_if_true='chili_load.chili_copy_into',
+    follow_task_ids_if_false='chili_load.create_chili_table',
   )
 
   create_stage = SQLExecuteQueryOperator(
