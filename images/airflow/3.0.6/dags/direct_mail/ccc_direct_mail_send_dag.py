@@ -3,7 +3,7 @@ import datetime
 from typing import Dict
 from airflow.sdk import dag, task, chain
 from airflow.timetables.trigger import CronTriggerTimetable
-from common.slack_notifications import bad_boy, good_boy, getSlackChannelNameParam
+from common.slack_notifications import bad_boy, good_boy, slack_param
 from airflow.providers.amazon.aws.transfers.sql_to_s3 import SqlToS3Operator
 from airflow.providers.amazon.aws.transfers.s3_to_sftp import S3ToSFTPOperator
 
