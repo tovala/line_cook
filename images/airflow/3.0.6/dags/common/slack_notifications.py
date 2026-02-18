@@ -5,7 +5,7 @@ from airflow.sdk import Param
 
 SLACK_WEBHOOK_CONNECTION_ID = 'tovala_slack'
 
-def getSlackChannelNameParam(channel_name: str='#team-data-notifications'):
+def slack_param(channel_name: str='#team-data-notifications'):
     '''
     Returns an Airflow Param object for slack channel name.
     Defaults to #team-data-notifications channel for alerts unless otherwise specified.
@@ -13,7 +13,7 @@ def getSlackChannelNameParam(channel_name: str='#team-data-notifications'):
     :param channel_name: Description
     :type channel_name: str
     '''
-    return Param(channel_name, type='string', description='Slack channel to send alerts. If a private channel, the Airflow Notifications slack app MUST be explicitly invited into the channel.')
+    return Param(channel_name, type=['string', 'null'], description='Slack channel to send alerts. If a private channel, the Airflow Notifications slack app MUST be explicitly invited into the channel.')
 
 # Shamelessly poached from: https://github.com/enchant3dmango/lugvloei/blob/65726392386200c2420ee8f70b3682834c1ddaad/utilities/slack.py#L105
 def generate_failure_message(context: Dict[str, Any]) ->  Dict[str, Any]:
