@@ -18,6 +18,8 @@ def chili_params(table, stage, columns, storage_integration, s3_url, **kwargs):
   :param table: Name of the destination table
   :param stage: Name of the source external stage
   :param columns: sql string of the columns to bring in
+  :param storage_integration: Name of the Snowflake storage integration for this bucket
+  :param s3_url: url for the s3 bucket associated with this source and stage
   :param kwargs: optional parameters that can be passed to a chili dag as needed
   '''
   params_dict = {
