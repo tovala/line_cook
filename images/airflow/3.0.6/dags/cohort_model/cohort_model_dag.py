@@ -1,8 +1,10 @@
 import os
 
-from airflow.sdk import dag, chain, task_group
+from airflow.sdk import dag, chain, task_group, Param
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
+
+from common.slack_notifications import slack_param
 
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
@@ -15,9 +17,9 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
     catchup=False,
     tags=['internal'],
     params={
-        'channel_name': '',
-        'parent_database': 'MASALA',
-        'schema_name': 'TEST_TAYLOR_BRINE'
+        'channel_name': slack_param(),
+        'database': Param('MASALA', type='string'),
+        'schema_name': Param('COHORT_MODEL_INPUTS', type='string')
     },
     template_searchpath = f'{AIRFLOW_HOME}/dags/common/templates'
 )
@@ -33,7 +35,7 @@ def cohortModel():
 
     '''
 
-    MODELS = ['historical_meal_orders']
+    MODELS = ['actual_oven_sales', 'combined_oven_sales', 'historical_meal_orders', 'projected_oven_sales', 'weekly_meal_and_meal_order_counts']
     
     #### Custom Task Definitions
     @task_group(group_id='create_temp_table')
@@ -87,16 +89,18 @@ def cohortModel():
       },
     )
     
-    test_schema = SQLExecuteQueryOperator(
-        task_id='create_test_schema',
+    create_temp_schema = SQLExecuteQueryOperator(
+        task_id='create_temp_schema',
         conn_id='snowflake',
         sql='CREATE SCHEMA IF NOT EXISTS {{ params.schema_name }};'
     )
 
     create_temp_tables = createTempTable.expand(MODELS)
 
+    # TODO: DROP temp schema
+
     
 
-    chain([test_schema, cohort_model_input_stage], create_temp_tables)
+    chain([create_temp_schema, cohort_model_input_stage], create_temp_tables)
 
 cohortModel()
