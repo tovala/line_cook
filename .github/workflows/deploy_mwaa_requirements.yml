@@ -26,7 +26,7 @@ jobs:
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::307553795271:role/sous_chef_github_actions
+          role-to-assume: arn:aws:iam::307553795271:role/line_cook_github_actions
           aws-region: ${{ env.AWS_REGION }}
       
       - name: Sync requirements
