@@ -1,4 +1,5 @@
 from typing import Dict
+from pendulum import duration
 from airflow.sdk import dag, task, chain
 from airflow.timetables.trigger import CronTriggerTimetable
 from common.slack_notifications import bad_boy, good_boy, slack_param
@@ -11,6 +12,12 @@ from airflow.providers.sftp.hooks.sftp import SFTPHook
   # on_success_callback=good_boy,
   # schedule=CronTriggerTimetable('5 3 * * *', timezone='America/Chicago'),
   catchup=False,
+  default_args={
+    'retries': 2,
+    'retry_delay': duration(seconds=2),
+    'retry_exponential_backoff': True,
+    'max_retry_delay': duration(minutes=5),
+  },
   tags=['external'],
   params={
     'channel_name': slack_param('#team-data-notifications'),
@@ -30,6 +37,7 @@ def CCCDirectMailDownload():
   '''
 
   @task()
+  #TODO: short circuit if this returns nothing
   def fetchSFTPFiles(filename_pattern: str = 'CLIENT_OUTPUT_') -> list:
     sftp_hook = SFTPHook(ssh_conn_id='direct_mail_ccc_sftp')
     files = sftp_hook.list_directory('.')
