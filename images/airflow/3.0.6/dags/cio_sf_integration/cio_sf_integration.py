@@ -8,7 +8,7 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.timetables.trigger import CronTriggerTimetable
 from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
 
-from common.slack_notifications import bad_boy, good_boy
+from common.slack_notifications import bad_boy, good_boy, slack_param
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
 
@@ -24,9 +24,9 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
         'retry_exponential_backoff': True,
         'max_retry_delay': duration(minutes=5),
     },
-    tags=['internal', 'data-integration'],
+    tags=['internal', 'data-integration', 'chili'],
     params={
-        'channel_name': '#team-data-notifications'
+        'channel_name': slack_param()
     },
     template_searchpath=f'{AIRFLOW_HOME}/dags/common/templates'
 )
@@ -52,7 +52,7 @@ def customerIOSnowflakeIntegration():
     expanded_args = []
 
     for table in tables: 
-        expanded_args.append({'table': f'CHILI_V2.{table}', 'pattern': f'.*{table}.*.parquet'})
+        expanded_args.append({'table': f'CHILI_V2.CIO_{table}', 'pattern': f'.*{table}.*.parquet'}) 
 
     return expanded_args 
 
@@ -62,12 +62,12 @@ def customerIOSnowflakeIntegration():
     conn_id='snowflake', 
     sql='create_stage.sql',
     params={
-      'parent_database': 'MASALA',
-      'schema_name': 'CHILI_V2',
-      'stage_name': 'cio_stage',
-      'url': 's3://tovala-data-customerio/',
+      'database': 'MASALA',
+      'schema': 'CHILI_V2',
+      'stage': 'cio_stage',
+      's3_url': 's3://tovala-data-customerio/',
       'storage_integration': 'CIO_STORAGE_INTEGRATION',
-      'file_type': 'parquet',
+      'file_format': 'parquet',
     },
   )
   

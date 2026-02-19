@@ -3,7 +3,7 @@
 This Module generates Fernet keys, which are used by Airflow for connection encryption
 """
 
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet # pyright: ignore[reportMissingImports]
 import json
 
 def generate_fernet_key():

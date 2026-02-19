@@ -47,3 +47,6 @@ __pycache__
 
 #ignore local dev 
 .vscode
+
+#ignore spice_rack that is mounted during testing
+images/airflow/3.*/spice_rack/*
