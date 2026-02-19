@@ -99,8 +99,13 @@ def cohortModel():
 
     # TODO: DROP temp schema
 
+    drop_temp_schema = SQLExecuteQueryOperator(
+        task_id='drop_temp_schema',
+        conn_id='snowflake',
+        sql='DROP SCHEMA {{ params.schema_name }};'
+    )
     
 
-    chain([create_temp_schema, cohort_model_input_stage], create_temp_tables)
+    chain([create_temp_schema, cohort_model_input_stage], create_temp_tables, drop_temp_schema)
 
 cohortModel()
