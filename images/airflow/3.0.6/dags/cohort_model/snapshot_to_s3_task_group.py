@@ -1,10 +1,14 @@
+from airflow.sdk import task_group, chain
+from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+
+from common.sql_operator_handlers import fetch_results_array
 
 @task_group()
 def snapshotSnowflakeToS3():
   '''
   '''
-  unload_stage = SQLExecuteQueryOperator(
-    task_id='create_unload_stage', 
+  cohort_model_snapshot_stage = SQLExecuteQueryOperator(
+    task_id='create_cohort_model_snapshot_stage', 
     conn_id='snowflake', 
     sql='create_stage.sql',
     params={
@@ -29,3 +33,5 @@ def snapshotSnowflakeToS3():
     conn_id='snowflake',
     sql='unload_to_stage.sql'
   ).expand(params=[{'table': t} for t in get_table_names])
+
+  chain(cohort_model_snapshot_stage, get_table_names, unload_tables)
