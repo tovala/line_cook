@@ -1,9 +1,12 @@
-from typing import List
+import os
+from typing import List, Dict
 
 from airflow.sdk import task_group, task, chain
-from airflow.providers.amazon.aws.operators.s3 import S3ListOperator
+from airflow.providers.amazon.aws.operators.s3 import S3ListOperator, S3FileTransformOperator
 from airflow.providers.amazon.aws.transfers.sftp_to_s3 import SFTPToS3Operator
 from airflow.utils.trigger_rule import TriggerRule
+
+AIRFLOW_HOME = os.environ['AIRFLOW_HOME']
     
 @task_group(group_id='process_sftp_file')
 def processSFTPFiles(sftp_filenames):
@@ -18,27 +21,24 @@ def processSFTPFiles(sftp_filenames):
   5. Short circuit if file already exists
   6. Load to S3
   '''
+  
+  @task()
+  def generateFilenames(filename:str, **context) -> Dict[str, str]:
+    '''
+    Generate a dictionary of permutations of filename for downstream tasks
+    
+    :param filename: filename to be processed
+    :return: dictionary of filenames/sftp/s3 locations
+    '''
+    s3_key = f'data_downloads/{filename}'
+    gz_filename = s3_key.replace('TXT', 'gz')
+    bucket_address = f"s3://{context['params']['direct_mail_bucket']}"
+    filename_dict = {'s3_key': s3_key, 
+                     'sftp_path': f'./{filename}', 
+                     'source_s3_key': f'{bucket_address}/{s3_key}',
+                     'dest_s3_key': f'{bucket_address}/{gz_filename}'}
+    return filename_dict
 
-  @task()
-  def generateS3Key(filename: str) -> str:
-    '''
-    Creates the S3 key for filename to process
-    
-    :param filename: filename to process
-    :return: data_downloads/filename
-    '''
-    return f'data_downloads/{filename}'
-  
-  @task()
-  def generateSFTPPath(filename:str) -> str:
-    '''
-    Creates the SFTP path for filename to process
-    
-    :param filename: filename to process
-    :return: ./filename
-    '''
-    return f'./{filename}'
-  
   @task.short_circuit
   def fileAlreadyProcessed(s3_filename: List) -> bool:
     '''
@@ -63,14 +63,15 @@ def processSFTPFiles(sftp_filenames):
       return ['process_sftp_file.sftp_to_s3']
     else:
       return ['process_sftp_file.check_processed_files']
-    
-  s3_key = generateS3Key(filename=sftp_filenames)
-  sftp_path = generateSFTPPath(filename=sftp_filenames)
+  
+  filename_dict = generateFilenames(filename=sftp_filenames)
+
+  fetch_all_check = fetchAllorNot()
 
   check_processed_files = S3ListOperator(
-    task_id="check_processed_files",
+    task_id='check_processed_files',
     bucket='{{ params.direct_mail_bucket }}',
-    prefix=s3_key
+    prefix=filename_dict['s3_key']
   )
 
   file_already_processed = fileAlreadyProcessed(check_processed_files.output)
@@ -79,12 +80,18 @@ def processSFTPFiles(sftp_filenames):
     task_id='sftp_to_s3',
     sftp_conn_id='direct_mail_ccc_sftp',
     s3_bucket='{{ params.direct_mail_bucket }}',
-    s3_key=s3_key, 
-    sftp_path=sftp_path,
+    s3_key=filename_dict['s3_key'], 
+    sftp_path=filename_dict['sftp_path'],
     # This means that sftp_to_s3 runs as long as all upstream tasks were either skipped or succeeded
     trigger_rule=TriggerRule.NONE_FAILED
   )
-  
-  fetch_all_check = fetchAllorNot()
 
-  chain((s3_key, sftp_path), fetch_all_check, check_processed_files, file_already_processed, sftp_to_s3)
+  file_transform = S3FileTransformOperator(
+    task_id='file_transform',
+    source_s3_key=filename_dict['source_s3_key'],
+    dest_s3_key=filename_dict['dest_s3_key'],
+    transform_script=f'{AIRFLOW_HOME}/dags/direct_mail/scripts/txt_to_gz.py',
+    replace=True,
+  )
+
+  chain(filename_dict, fetch_all_check, check_processed_files, file_already_processed, sftp_to_s3, file_transform)

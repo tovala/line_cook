@@ -72,4 +72,6 @@ def CCCDirectMailDownload():
 
   chain(nonEmptySFTPFiles(sftp_filenames), processSFTPFiles.expand(sftp_filenames=sftp_filenames))
 
+  #TODO: Trigger ingestion dag
+
 CCCDirectMailDownload()

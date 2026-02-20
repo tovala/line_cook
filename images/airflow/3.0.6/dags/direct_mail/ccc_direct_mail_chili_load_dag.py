@@ -29,6 +29,7 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
                    columns=COLUMNS,
                    storage_integration='DIRECT_MAIL_STORAGE_INTEGRATION',
                    s3_url='s3://tovala-ccc-direct-mail/data_downloads/',
+                   pattern='.*(.gz)',
     )
   },
   template_searchpath=f'{AIRFLOW_HOME}/dags/common/templates',
