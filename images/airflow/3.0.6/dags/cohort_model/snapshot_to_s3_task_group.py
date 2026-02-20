@@ -17,5 +17,15 @@ def snapshotSnowflakeToS3():
     },
   )
 
-  # TODO: for each table in the temp cohort model schema, run the COPY INTO unload command
+  get_table_names = SQLExecuteQueryOperator(
+    task_id='get_table_names',
+    conn_id='snowflake',
+    sql='get_tables_from_schema.sql',
+    handler=fetch_results_array
+  )
 
+  unload_tables = SQLExecuteQueryOperator.partial(
+    task_id='unload_table',
+    conn_id='snowflake',
+    sql='unload_to_stage.sql'
+  ).expand(params=[{'table': t} for t in get_table_names])
