@@ -1,11 +1,13 @@
 from typing import List, Dict
 import re
 from pendulum import duration
+
 from airflow.sdk import dag, task, chain
 from airflow.timetables.trigger import CronTriggerTimetable
-from common.slack_notifications import bad_boy, good_boy, slack_param
-from airflow.providers.amazon.aws.transfers.sftp_to_s3 import SFTPToS3Operator
 from airflow.providers.sftp.hooks.sftp import SFTPHook
+
+from common.slack_notifications import bad_boy, good_boy, slack_param
+from direct_mail.ccc_download_task_group import processSFTPFiles
 
 @dag(
   dag_id='ccc_direct_mail_download',
@@ -14,7 +16,7 @@ from airflow.providers.sftp.hooks.sftp import SFTPHook
   # schedule=CronTriggerTimetable('5 3 * * *', timezone='America/Chicago'),
   catchup=False,
   default_args={
-    'retries': 2,
+    'retries': 3,
     'retry_delay': duration(seconds=2),
     'retry_exponential_backoff': True,
     'max_retry_delay': duration(minutes=5),
@@ -22,6 +24,7 @@ from airflow.providers.sftp.hooks.sftp import SFTPHook
   tags=['external'],
   params={
     'channel_name': slack_param('#team-data-notifications'),
+    'direct_mail_bucket': 'tovala-ccc-direct-mail',
   }
 )
 def CCCDirectMailDownload():
@@ -53,7 +56,7 @@ def CCCDirectMailDownload():
     files = sftp_hook.list_directory('.')
 
     return [f for f in files if re.fullmatch(filename_pattern, f.upper())]
-
+    
   @task.short_circuit
   def nonEmptySFTPFiles(sftp_filenames: List[str]) -> bool:
     '''
@@ -66,30 +69,10 @@ def CCCDirectMailDownload():
       return False
     else:
       return True
-
-  @task()
-  def generateSFTPDictionary(file_list: List[str]) -> List[Dict[str, str]]:
-    '''
-    Generates sftp_path and s3_key for files to be processed
-    
-    :param file_list: files to be processed
-    :return: dictionary of files to be processed with sftp_path and s3_key
-      ex: [{'sftp_path': ./filename1.txt, 's3_key':'data_downloads/filename1.txt}...]
-    '''
-    sftp_dict = [{'sftp_path': './'+ f, 's3_key': 'data_downloads/' + f} for f in file_list]
-    return sftp_dict
   
   sftp_filenames = fetchSFTPFiles()
 
-  sftp_dict = generateSFTPDictionary(sftp_filenames)
-
-  chain(nonEmptySFTPFiles(sftp_filenames), sftp_dict)
-
-  sftp_to_s3 = SFTPToS3Operator.partial(
-    task_id='sftp_to_s3',
-    sftp_conn_id='direct_mail_ccc_sftp',
-    s3_bucket='tovala-ccc-direct-mail',
-  ).expand_kwargs(sftp_dict)
+  chain(nonEmptySFTPFiles(sftp_filenames), processSFTPFiles.expand(sftp_filenames=sftp_filenames))
 
   #TODO: Either convert to CSV or load as pipe delimited 
   # Option 1: Convert using operator (but that is processed locally)
