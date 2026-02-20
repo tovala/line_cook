@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List
 import re
 from pendulum import duration
 
@@ -11,9 +11,9 @@ from direct_mail.ccc_download_task_group import processSFTPFiles
 
 @dag(
   dag_id='ccc_direct_mail_download',
-  # on_failure_callback=bad_boy,
-  # on_success_callback=good_boy,
-  # schedule=CronTriggerTimetable('5 3 * * *', timezone='America/Chicago'),
+  on_failure_callback=bad_boy,
+  on_success_callback=good_boy,
+  schedule=CronTriggerTimetable('5 3 * * *', timezone='America/Chicago'),
   catchup=False,
   default_args={
     'retries': 3,
@@ -21,9 +21,9 @@ from direct_mail.ccc_download_task_group import processSFTPFiles
     'retry_exponential_backoff': True,
     'max_retry_delay': duration(minutes=5),
   },
-  tags=['external'],
+  tags=['external', 'ingestion'],
   params={
-    'channel_name': slack_param('#team-data-notifications'),
+    'channel_name': slack_param(),
     'direct_mail_bucket': Param('tovala-ccc-direct-mail', type='string'),
     'fetch_all': Param(False, type='boolean', description='If true, reprocess previously processed files.')
   }
@@ -32,10 +32,7 @@ def CCCDirectMailDownload():
   '''CCC Direct Mail Import
   Description: Grabs files from CCC SFTP and sends to S3
   # 1. Fetch files to be processed from S3 (short circuit task to stop DAG if there are none)
-  # 2. Process filenames into a dictionary for downstream tasks
-  # 3. Upload raw files to S3
-  # 4. TODO Convert files to JSON
-  # 5. TODO Trigger ingestion DAG
+  # 2. Pass to task group to process each file 
 
   Schedule: Daily at 3:05 AM 
 
@@ -74,10 +71,5 @@ def CCCDirectMailDownload():
   sftp_filenames = fetchSFTPFiles()
 
   chain(nonEmptySFTPFiles(sftp_filenames), processSFTPFiles.expand(sftp_filenames=sftp_filenames))
-
-  #TODO: Either convert to CSV or load as pipe delimited 
-  # Option 1: Convert using operator (but that is processed locally)
-  # Option 2: Convert using a Lambda
-  # Option 3: Convert all the old files - down side is that it breaks if we add new fields (which they have done)
 
 CCCDirectMailDownload()
