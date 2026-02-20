@@ -21,7 +21,7 @@ from experian.process_customer_batch_task_group import processBatch
     'retry_exponential_backoff': True,
     'max_retry_delay': duration(minutes=5),
   },
-  tags=['internal', 'data-integration'],
+  tags=['external', 'data-integration'],
   params={
     'channel_name': slack_param(),
     'temp_table_prefix': Param('experian_customers', type='string', description='prefix for temp table of all customers to send to experian at the time of the run - created in snowflake as {temp_table_prefix}_temp - table will not persist beyond dag run.'),
