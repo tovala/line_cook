@@ -50,3 +50,4 @@ __pycache__
 
 #ignore spice_rack that is mounted during testing
 images/airflow/3.*/spice_rack/*
+images/airflow/3.*/dags/spice_rack/*
