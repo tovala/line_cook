@@ -5,6 +5,7 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
 
 from common.slack_notifications import slack_param
+from cohort_model.snapshot_to_s3_task_group import snapshotSnowflakeToS3
 
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
@@ -19,7 +20,7 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
     params={
         'channel_name': slack_param(),
         'database': Param('MASALA', type='string'),
-        'schema_name': Param('COHORT_MODEL_INPUTS', type='string')
+        'schema': Param('COHORT_MODEL_INPUTS', type='string')
     },
     template_searchpath = f'{AIRFLOW_HOME}/dags/common/templates'
 )
@@ -45,7 +46,7 @@ def cohortModel():
             conn_id='snowflake', 
             sql='create_table.sql',
             params={
-                'table_name': model,
+                'table': model,
                 'table_columns_file': f'queries/{model}/table_columns.sql'
             }
         )
@@ -55,7 +56,7 @@ def cohortModel():
             conn_id='snowflake', 
             sql='create_table.sql',
             params={
-                'table_name': model,
+                'table': model,
                 'table_columns_file': f'queries/{model}/default_input.sql'
             }
         )
@@ -97,6 +98,7 @@ def cohortModel():
 
     create_temp_tables = createTempTable.expand(MODELS)
 
+    snapshot_inputs = snapshotSnowflakeToS3()
     # TODO: DROP temp schema
 
     drop_temp_schema = SQLExecuteQueryOperator(
@@ -106,6 +108,6 @@ def cohortModel():
     )
     
 
-    chain([create_temp_schema, cohort_model_input_stage], create_temp_tables, drop_temp_schema)
+    chain([create_temp_schema, cohort_model_input_stage], create_temp_tables, snapshot_inputs, drop_temp_schema)
 
 cohortModel()

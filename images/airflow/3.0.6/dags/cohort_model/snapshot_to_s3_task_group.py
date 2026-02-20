@@ -12,8 +12,6 @@ def snapshotSnowflakeToS3():
     conn_id='snowflake', 
     sql='create_stage.sql',
     params={
-      'database': 'MASALA',
-      'schema': 'BRINE',
       'stage': 'cohort_model_snapshot_stage',
       's3_url': 's3://tovala-data-cohort-model/output/',
       'storage_integration': 'COHORT_MODEL_STORAGE_INTEGRATION',

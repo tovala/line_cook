@@ -1,4 +1,4 @@
-CREATE OR REPLACE TABLE {{ params.parent_database }}.{{ params.schema_name }}.{{ params.table_name }} (
+CREATE OR REPLACE TABLE {{ params.database }}.{{ params.schema }}.{{ params.table }} (
     {% import params.table_columns_file as columns %}
     {{ columns.table_columns() }}
 );
