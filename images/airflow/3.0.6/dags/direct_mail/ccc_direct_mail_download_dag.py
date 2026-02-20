@@ -2,7 +2,7 @@ from typing import List, Dict
 import re
 from pendulum import duration
 
-from airflow.sdk import dag, task, chain
+from airflow.sdk import dag, task, chain, Param
 from airflow.timetables.trigger import CronTriggerTimetable
 from airflow.providers.sftp.hooks.sftp import SFTPHook
 
@@ -24,7 +24,8 @@ from direct_mail.ccc_download_task_group import processSFTPFiles
   tags=['external'],
   params={
     'channel_name': slack_param('#team-data-notifications'),
-    'direct_mail_bucket': 'tovala-ccc-direct-mail',
+    'direct_mail_bucket': Param('tovala-ccc-direct-mail', type='string'),
+    'fetch_all': Param(False, type='boolean', description='If true, reprocess previously processed files.')
   }
 )
 def CCCDirectMailDownload():
