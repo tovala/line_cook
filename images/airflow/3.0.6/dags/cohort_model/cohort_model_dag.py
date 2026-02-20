@@ -20,7 +20,7 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
     params={
         'channel_name': slack_param(),
         'database': Param('MASALA', type='string'),
-        'schema': Param('COHORT_MODEL_INPUTS', type='string')
+        'schema': Param('COHORT_MODEL_TEMP', type='string')
     },
     template_searchpath = f'{AIRFLOW_HOME}/dags/common/templates'
 )
@@ -93,18 +93,19 @@ def cohortModel():
     create_temp_schema = SQLExecuteQueryOperator(
         task_id='create_temp_schema',
         conn_id='snowflake',
-        sql='CREATE SCHEMA IF NOT EXISTS {{ params.schema_name }};'
+        sql='CREATE SCHEMA IF NOT EXISTS {{ params.schema }};'
     )
 
     create_temp_tables = createTempTable.expand(MODELS)
 
+    # TODO: pull input csvs from S3 to tables in temp schema
+
     snapshot_inputs = snapshotSnowflakeToS3()
-    # TODO: DROP temp schema
 
     drop_temp_schema = SQLExecuteQueryOperator(
         task_id='drop_temp_schema',
         conn_id='snowflake',
-        sql='DROP SCHEMA {{ params.schema_name }};'
+        sql='DROP SCHEMA {{ params.schema }};'
     )
     
 
