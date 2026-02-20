@@ -1,4 +1,4 @@
-from airflow.sdk import task_group, task
+from airflow.sdk import task_group, task, chain
 from airflow.providers.amazon.aws.operators.s3 import S3ListOperator
 from airflow.providers.amazon.aws.transfers.sftp_to_s3 import SFTPToS3Operator
     
@@ -12,6 +12,13 @@ def processSFTPFiles(sftp_filenames):
   @task()
   def generateSFTPPath(filename):
     return f'./{filename}'
+  
+  @task.short_circuit
+  def fileAlreadyProcessed(s3_key: str) -> bool:
+    if s3_key:
+      return False
+    else:
+      return True
 
   s3_key = generateS3Key(filename=sftp_filenames)
   sftp_path = generateSFTPPath(filename=sftp_filenames)
@@ -22,6 +29,8 @@ def processSFTPFiles(sftp_filenames):
     prefix=s3_key
   )
 
+  file_check = fileAlreadyProcessed(checkProcessedFiles)
+
   sftp_to_s3 = SFTPToS3Operator(
     task_id='sftp_to_s3',
     sftp_conn_id='direct_mail_ccc_sftp',
@@ -29,3 +38,5 @@ def processSFTPFiles(sftp_filenames):
     s3_key=s3_key, 
     sftp_path=sftp_path
   )
+
+  chain(file_check, sftp_to_s3)
