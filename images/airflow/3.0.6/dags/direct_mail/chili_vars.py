@@ -1,0 +1,5 @@
+COLUMNS = '''
+  TRY_PARSE_JSON($1) AS raw_data
+  , METADATA$FILENAME AS filename
+  , CURRENT_TIMESTAMP()::TIMESTAMPTZ AS updated 
+'''
