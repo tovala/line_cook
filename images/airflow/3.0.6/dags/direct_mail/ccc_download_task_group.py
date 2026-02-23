@@ -14,15 +14,14 @@ def processSFTPFiles(sftp_filenames):
   Task group for processing each file present in CCC SFTP
   
   :param sftp_filenames: filename from SFTP to process
-  1. Generate S3 Key
-  2. Generate SFTP Path
-  3. Check if fetch_all - if not, go directly to Load to S3
-  4. Grab filenames from S3 if they match filename being processed
-  5. Short circuit if file already exists
-  6. Load to S3
+  1. Generate required paths/filenames
+  2. Check if fetch_all - if not, go directly to Load to S3
+  3. Grab filenames from S3 if they match filename being processed
+  4. Short circuit if file already exists
+  5. Load to S3
   '''
   
-  @task()
+  @task(multiple_outputs=True)
   def generateFilenames(filename:str, **context) -> Dict[str, str]:
     '''
     Generate a dictionary of permutations of filename for downstream tasks

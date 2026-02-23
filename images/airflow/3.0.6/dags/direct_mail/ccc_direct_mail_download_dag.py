@@ -45,7 +45,7 @@ def CCCDirectMailDownload():
   '''
 
   @task()
-  def fetchSFTPFiles(filename_pattern: str = 'CLIENT_OUTPUT_(.*).TXT') -> List[str]:
+  def fetchSFTPFiles(filename_pattern: str = '(.*)CLIENT_OUTPUT_(.*).TXT') -> List[str]:
     '''
     Fetches all the files matching the specified pattern from the CCC SFTP
     
