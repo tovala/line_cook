@@ -5,7 +5,7 @@ WITH all_responses AS (
     , userid 
     , email
    FROM dry.typeform_landings 
-   WHERE userid IN ({{ task_instance.xcom_pull(task_ids='fetchTypeformStrings', dag_id='user_deletes', key='user_ids') }}, '560579'))
+   WHERE userid IN ({{ task_instance.xcom_pull(task_ids='fetchTypeformStrings', dag_id='user_deletes', key='user_ids') }}))
   UNION 
   (SELECT 
     form_id
