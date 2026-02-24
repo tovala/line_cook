@@ -1,3 +1,4 @@
+import os
 from typing import List
 import re
 from pendulum import duration
@@ -6,10 +7,13 @@ from airflow.sdk import dag, task, chain, Param
 from airflow.timetables.trigger import CronTriggerTimetable
 from airflow.providers.sftp.hooks.sftp import SFTPHook
 from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
+from airflow.operators.bash import BashOperator
 from airflow.utils.trigger_rule import TriggerRule
 
 from common.slack_notifications import bad_boy, good_boy, slack_param
 from direct_mail.ccc_download_task_group import processSFTPFiles
+
+AIRFLOW_HOME = os.environ['AIRFLOW_HOME']
 
 @dag(
   dag_id='ccc_direct_mail_download',
@@ -70,6 +74,11 @@ def CCCDirectMailDownload():
     else:
       return True
   
+  make_script_executable = BashOperator(
+    task_id='make_script_executable',
+    bash_command='chmod +x ${AIRFLOW_HOME}/dags/direct_mail/scripts/txt_to_gz.py',
+  )
+
   sftp_filenames = fetchSFTPFiles()
 
   trigger_chili_load = TriggerDagRunOperator(
@@ -79,6 +88,6 @@ def CCCDirectMailDownload():
     trigger_run_id='triggered_{{ run_id }}'
   )
 
-  chain(nonEmptySFTPFiles(sftp_filenames), processSFTPFiles.expand(sftp_filenames=sftp_filenames), trigger_chili_load)
+  chain(nonEmptySFTPFiles(sftp_filenames), make_script_executable, processSFTPFiles.expand(sftp_filenames=sftp_filenames), trigger_chili_load)
 
 CCCDirectMailDownload()
