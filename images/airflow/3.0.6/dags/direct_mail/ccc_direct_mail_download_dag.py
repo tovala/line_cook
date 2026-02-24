@@ -74,9 +74,9 @@ def CCCDirectMailDownload():
     else:
       return True
   
-  make_script_executable = BashOperator(
-    task_id='make_script_executable',
-    bash_command='chmod +x ${AIRFLOW_HOME}/dags/direct_mail/scripts/txt_to_gz.py',
+  script_setup = BashOperator(
+    task_id='script_setup',
+    bash_command='cp ${AIRFLOW_HOME}/dags/direct_mail/scripts/txt_to_gz.py /tmp/txt_to_gz.py; chmod 777 /tmp/txt_to_gz.py' ,
   )
 
   sftp_filenames = fetchSFTPFiles()
@@ -88,6 +88,6 @@ def CCCDirectMailDownload():
     trigger_run_id='triggered_{{ run_id }}'
   )
 
-  chain(nonEmptySFTPFiles(sftp_filenames), make_script_executable, processSFTPFiles.expand(sftp_filenames=sftp_filenames), trigger_chili_load)
+  chain(nonEmptySFTPFiles(sftp_filenames), script_setup, processSFTPFiles.expand(sftp_filenames=sftp_filenames), trigger_chili_load)
 
 CCCDirectMailDownload()
