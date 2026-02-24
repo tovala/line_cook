@@ -1,12 +1,9 @@
-import os
 from typing import List, Dict
 
 from airflow.sdk import task_group, task, chain
 from airflow.providers.amazon.aws.operators.s3 import S3ListOperator, S3FileTransformOperator
 from airflow.providers.amazon.aws.transfers.sftp_to_s3 import SFTPToS3Operator
 from airflow.utils.trigger_rule import TriggerRule
-
-AIRFLOW_HOME = os.environ['AIRFLOW_HOME']
     
 @task_group(group_id='process_sftp_file')
 def processSFTPFiles(sftp_filenames):
@@ -89,7 +86,7 @@ def processSFTPFiles(sftp_filenames):
     task_id='file_transform',
     source_s3_key=filename_dict['source_s3_key'],
     dest_s3_key=filename_dict['dest_s3_key'],
-    transform_script=f'{AIRFLOW_HOME}/dags/direct_mail/scripts/txt_to_gz.py',
+    transform_script='/tmp/txt_to_gz.py',
     replace=True,
   )
 
