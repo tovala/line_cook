@@ -1,0 +1,25 @@
+WITH all_responses AS (
+  (SELECT 
+    form_id
+    , response_id
+    , userid 
+    , email
+   FROM dry.typeform_landings 
+   WHERE userid IN ({{ task_instance.xcom_pull(task_ids='fetchTypeformStrings', dag_id='user_deletes', key='user_ids') }}, '560579'))
+  UNION 
+  (SELECT 
+    form_id
+    , response_id
+    , userid 
+    , email
+   FROM dry.typeform_landings 
+   WHERE email IN ({{ task_instance.xcom_pull(task_ids='fetchTypeformStrings', dag_id='user_deletes', key='emails') }})))
+SELECT 
+  CASE WHEN userid IS NOT NULL
+       THEN userid 
+       ELSE LOWER(email) 
+  END AS user_identifier
+  , form_id
+  , ARRAY_TO_STRING(ARRAY_AGG(response_id), ', ')
+FROM all_responses 
+GROUP BY 1,2;
