@@ -1,0 +1,34 @@
+name: MWAA Startup Script Deploy
+on:
+  push:
+    paths:
+    - "images/airflow/3.0.6/startup/startup.sh"
+    branches:
+    - master
+
+  workflow_dispatch: # allows for manual trigger of action
+
+env:
+  BUCKET_NAME: "tovala-airflow-prod"
+  AWS_REGION: "us-east-1"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@main
+      
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::307553795271:role/line_cook_github_actions
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Sync startup script
+        run: |
+          aws s3 cp ./images/airflow/3.0.6/startup/startup.sh s3://${{ env.BUCKET_NAME }}/startup.sh
