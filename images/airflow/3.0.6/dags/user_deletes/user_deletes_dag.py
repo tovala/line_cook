@@ -11,17 +11,16 @@ from pendulum import duration
 
 from airflow.sdk import dag, task, chain, Variable
 from airflow.exceptions import AirflowException
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
-from airflow.providers.slack.notifications.slack import SlackNotifier
 from common.slack_notifications import bad_boy, good_boy, slack_param
 from user_deletes.process_delete_requests_task_group import processDeleteRequests
 from airflow.timetables.trigger import CronTriggerTimetable
-from common.sql_operator_handlers import fetch_results_array
+from common.sql_operator_handlers import fetch_results_array, fetch_typeform_responses
 
 
 @dag(
+    dag_id='user_deletes',
     on_failure_callback=bad_boy,
     on_success_callback=good_boy,
     schedule=CronTriggerTimetable('45 7 * * *', timezone='America/Chicago'),
@@ -54,40 +53,6 @@ def user_deletes():
 
   '''
   
-
-  @task(
-    on_failure_callback=SlackNotifier(
-        slack_conn_id='tovala_slack',
-        text='Snowflake Connection Failure for getUserExceptionIds',
-        channel='team-data-notifications'
-    ) 
-  )
-  def getUserExceptionIds() -> List[str]:
-    '''
-    Retrieve user IDs from Snowflake from a list of users flagged not to delete.
-    
-    Args:
-    None
-
-    Output:
-    user_exception_ids (List[str]): list of the user exception ids returned from the query
-    '''
-    user_exception_ids = []
-    query = '''SELECT zendesk_user_id
-            FROM masala.brine.user_deletes_exceptions
-            ORDER BY zendesk_user_id;'''
-
-    sf_hook = SnowflakeHook(snowflake_conn_id='snowflake')
-    sf_connection = sf_hook.get_conn()
-
-    cursor = sf_connection.cursor()
-
-    for user_ids in cursor.execute(query):
-      user_exception_ids.append(user_ids)
-    
-    return user_exception_ids
-
-
   @task()
   def getDeleteRequests() -> List[Dict[str, Any]]:
     '''Retrieve all open Zendesk tickets with a `delete_request` tag with an HTTP Request to Zendesk Search API.
@@ -277,82 +242,10 @@ def user_deletes():
      else:
         return True
 
-  @task(
-    on_failure_callback=SlackNotifier(
-        slack_conn_id='tovala_slack',
-        text='Snowflake Connection Failure for getTypeformResponseIds',
-        channel='team-data-notifications'
-    )
-  )
-  def getTypeformResponseIds(parsed_delete_requests: List[Dict[str, Any]]) -> Dict[str, Dict[str, List[str]]]:
-    '''
-    Retrieve forms with response IDs for each of the users with a delete request. Meant to run once for all delete requests.
-    
-    Args:
-      delete_requests (List[Dict[str, Any]]): The complete list of parsed delete requests to be processed
-
-    Output:
-      forms_and_responses (Dict[str, Dict[str, List[str]]]): Dictionary with user ID (or email) as the primary key, with values of a list of dictionaries with form ID as key and a list of response IDs for that form as values
-      e.g.
-      {
-        '1122334':{
-            'formA': ['response1', 'response2'],
-            'formB': ['response10']
-        },
-        '1234567':{
-            'formA': ['response4', 'response98'],
-            'formC': ['response323123']
-        },
-        'example@email.com':{
-            'formA': ['response999'],
-            'formC': ['response323123'],
-            'formE': ['123', '3456']
-        }
-      }
-    '''
-    forms_and_responses = {}
-    # For some unholy reason, we store userid in typeform_landings as a string
-    user_ids = ', '.join(["'" + str(d['UserID']) + "'" for d in parsed_delete_requests])
-    emails = ', '.join(["'" + d['Email'] + "'" for d in parsed_delete_requests])
-
-    query = f'''WITH all_responses AS (
-                  (SELECT 
-                    form_id
-                    , response_id
-                    , userid 
-                    , email
-                  FROM dry.typeform_landings 
-                  WHERE userid IN ({user_ids}))
-                  UNION 
-                  (SELECT 
-                    form_id
-                    , response_id
-                    , userid 
-                    , email
-                  FROM dry.typeform_landings 
-                  WHERE email IN ({emails})))
-                SELECT 
-                  CASE WHEN userid IS NOT NULL
-                       THEN userid 
-                       ELSE LOWER(email) 
-                  END AS user_identifier
-                  , form_id
-                  , ARRAY_TO_STRING(ARRAY_AGG(response_id), ', ')
-                FROM all_responses 
-                GROUP BY 1,2;'''
-
-    sf_hook = SnowflakeHook(snowflake_conn_id='snowflake')
-    sf_connection = sf_hook.get_conn()
-
-    cursor = sf_connection.cursor()
-
-    for response in cursor.execute(query):
-      form_dict = {}
-      form_dict[response[1]] = response[2].split(', ')
-      forms_and_responses[response[0]] = form_dict
-    
-    return forms_and_responses
-
+  @task(multiple_outputs=True)
+  def fetchTypeformStrings(parsed_delete_requests: List[Dict[str, Any]]) -> Dict[str, str]:
+    return {'user_ids': ', '.join(["'" + str(d['UserID']) + "'" for d in parsed_delete_requests]),
+            'emails' : ', '.join(["'" + d['Email'] + "'" for d in parsed_delete_requests])}
 
   @task()
   def completeDeleteRequests(parsed_delete_requests: List[Dict[str, Any]], typeform_data: Dict[str, Dict[str, List[str]]]) -> List[Dict[str, Any]]:
@@ -397,14 +290,22 @@ def user_deletes():
   )
 
   parsed_delete_requests = parseDeleteRequests(delete_requests_json, user_exception_ids.output)
-  typeform_data = getTypeformResponseIds(parsed_delete_requests)
+  
+  fetch_typeform_strings = fetchTypeformStrings(parsed_delete_requests)
+  
+  typeform_data = SQLExecuteQueryOperator(
+    task_id='typeform_data', 
+    conn_id='snowflake', 
+    sql='queries/typeform_response_ids.sql',
+    handler=fetch_typeform_responses,
+  )
 
-  complete_delete_requests = completeDeleteRequests(parsed_delete_requests, typeform_data)
+  complete_delete_requests = completeDeleteRequests(parsed_delete_requests, typeform_data.output)
 
   # If there are no delete requests, short-circuit before pre-processing
   chain(nonEmptyDeleteRequests(delete_requests_json), user_exception_ids, parsed_delete_requests)
   # If none of the delete requests can be parsed, short-circuit
-  chain(nonEmptyParsedDeleteRequests(parsed_delete_requests), typeform_data, complete_delete_requests)
+  chain(nonEmptyParsedDeleteRequests(parsed_delete_requests), fetch_typeform_strings, typeform_data, complete_delete_requests)
   
   # If there are valid delete requests to process, get CAPI token and process each ticket individually
   capi_token = getCombinedAPIToken()
