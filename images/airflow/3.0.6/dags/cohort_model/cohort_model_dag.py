@@ -5,6 +5,8 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 from common.slack_notifications import slack_param
 from cohort_model.snapshot_to_s3_task_group import snapshotSnowflakeToS3
+from cohort_model.default_inputs import LOOKBACK_ADJUSTMENT_WINDOW, LONGTAIL_WEEKLY_RETENTION_MULTIPLIER
+from cohort_model.cohort_model_params import mealsPerOrderAssumptionsParam
 
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
@@ -19,7 +21,15 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
     params={
         'channel_name': slack_param(),
         'database': Param('MASALA', type='string'),
-        'schema': Param('COHORT_MODEL_TEMP', type='string')
+        'schema': Param('COHORT_MODEL_TEMP', type='string'),
+        'lookback_adjustment_window': Param(LOOKBACK_ADJUSTMENT_WINDOW, type='number'),
+        'longtail_weekly_retention_multiplier': Param(LONGTAIL_WEEKLY_RETENTION_MULTIPLIER, type='number'),
+        'meals_per_order_d2c_not_holiday': mealsPerOrderAssumptionsParam('D2C Not Holiday', 6.200),
+        'meals_per_order_d2c_holiday': mealsPerOrderAssumptionsParam('D2C Holiday', 5.680),
+        'meals_per_order_sale': mealsPerOrderAssumptionsParam('Sale', 6.000),
+        'meals_per_order_amazon': mealsPerOrderAssumptionsParam('Amazon', 5.200),
+        'meals_per_order_costco': mealsPerOrderAssumptionsParam('Costco', 5.000),
+        'meals_per_order_other': mealsPerOrderAssumptionsParam('Other', 5.200),
     },
     template_searchpath = f'{AIRFLOW_HOME}/dags/common/templates'
 )
@@ -36,7 +46,7 @@ def cohortModel():
   '''
 
   INPUT_MODELS = ['actual_oven_sales', 'combined_oven_sales', 'historical_meal_orders', 'projected_oven_sales', 'weekly_meal_and_meal_order_counts']
-  CSV_INPUTS = ['attach_rates', 'cohort_mix_projections', 'constants', 'daily_oven_d2c_sales_splits', 'daily_oven_sales_projections', 'holiday_term_skip_adjustments', 'meal_retention_curves', 'meals_per_order_assumptions', 'model_order_retention_curves']
+  CSV_INPUTS = ['cohort_mix_projections', 'daily_oven_d2c_sales_splits', 'daily_oven_sales_projections', 'meal_retention_curves', 'model_order_retention_curves']
     
 #### Custom Task Definitions
 @task_group(group_id='create_temp_table')
