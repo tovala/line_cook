@@ -10,9 +10,8 @@ USING TEMPLATE(
   SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*))
     FROM TABLE(
       INFER_SCHEMA(
-        LOCATION => '@{{ params.stage }}'
+        LOCATION => '@{{ params.stage }}/{{ params.file }}'
         , FILE_FORMAT => 's3_csv_format'
-        , FILES => ( '{{ params.file }}' )
         , IGNORE_CASE => TRUE
       )
     )

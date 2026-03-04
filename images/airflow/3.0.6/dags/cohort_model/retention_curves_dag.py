@@ -25,9 +25,9 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
       'database': Param('MASALA', type='string'),
       'schema': Param('MUGWORT', type='string'),
       'stage': Param('retention_curves_stage', type='string'),
-      's3_url': Param('s3://tovala-data-cohort-model/inputs/retention_curves', type='string'),
+      's3_url': Param('s3://tovala-data-cohort-model/inputs/', type='string'),
       'storage_integration': Param('COHORT_MODEL_STORAGE_INTEGRATION', type='string'),
-      'file_format': Param('csv', type='string'),
+      'file_format': Param('CSV', type='string'),
     },
     template_searchpath = f'{AIRFLOW_HOME}/dags/common/templates'
 )
@@ -56,7 +56,7 @@ def retentionCurves():
     sql='queries/retention_curves/create_table_from_file.sql',
     params={
       'table': 'MEAL_RETENTION_CURVES',
-      'file': 'cohort_model_meal_retention_curves.csv'
+      'file': 'retention_curves/cohort_model_meal_retention_curves.csv'
     },
   )
 
@@ -66,7 +66,7 @@ def retentionCurves():
     sql='queries/retention_curves/create_table_from_file.sql',
     params={
       'table': 'ORDER_RETENTION_CURVES',
-      'file': 'cohort_model_order_retention_curves.csv'
+      'file': 'retention_curves/cohort_model_order_retention_curves.csv'
     },
   )
 
@@ -74,20 +74,20 @@ def retentionCurves():
     task_id='copy_meal_retention_curves', 
     snowflake_conn_id='snowflake',
     stage='MASALA.MUGWORT.retention_curves_stage',
-    file_format="(TYPE = 'csv')",
-    copy_options='PARSE_HEADER=True',
-    table='MEAL_RETENTION_CURVES',
-    files=['cohort_model_meal_retention_curves.csv']
+    file_format='mugwort.s3_csv_format',
+    table='MUGWORT.MEAL_RETENTION_CURVES',
+    files=['cohort_model_meal_retention_curves.csv'],
+    copy_options='MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE'
   )
 
   copy_order_retention_table = CopyFromExternalStageToSnowflakeOperator(
     task_id='copy_order_retention_curves', 
     snowflake_conn_id='snowflake',
     stage='MASALA.MUGWORT.retention_curves_stage',
-    file_format="(TYPE = 'csv')",
-    copy_options='PARSE_HEADER=True',
-    table='MUGWORT.MEAL_RETENTION_CURVES',
-    files=['cohort_model_order_retention_curves.csv']
+    file_format='mugwort.s3_csv_format',
+    table='MUGWORT.ORDER_RETENTION_CURVES',
+    files=['cohort_model_order_retention_curves.csv'],
+    copy_options='MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE'
   )
   
 
