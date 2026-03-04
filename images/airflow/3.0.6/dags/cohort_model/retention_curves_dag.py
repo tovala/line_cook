@@ -43,16 +43,6 @@ def retentionCurves():
   Variables:
 
   '''
-  RETENTION_CURVE_INPUTS = [
-    {
-      'table': 'MUGWORT.MEAL_RETENTION_CURVES',
-      'pattern': '.*meal_retention_curves.*.csv'
-    },
-    {
-      'table': 'MUGWORT.ORDER_RETENTION_CURVES',
-      'pattern': '.*order_retention_curves.*.csv'
-    }
-  ]
 
   retention_curve_source_stage = SQLExecuteQueryOperator(
     task_id='create_retention_curve_stage', 
@@ -60,7 +50,7 @@ def retentionCurves():
     sql='create_stage.sql'
   )
 
-  create_meal_retention_curve_table = SQLExecuteQueryOperator.partial(
+  create_meal_retention_curve_table = SQLExecuteQueryOperator(
     task_id='create_meal_retention_curve_table', 
     conn_id='snowflake', 
     sql='queries/retention_curves/create_table_from_file.sql',
@@ -70,7 +60,7 @@ def retentionCurves():
     },
   )
 
-  create_order_retention_curve_table = SQLExecuteQueryOperator.partial(
+  create_order_retention_curve_table = SQLExecuteQueryOperator(
     task_id='create_order_retention_curve_table', 
     conn_id='snowflake', 
     sql='queries/retention_curves/create_table_from_file.sql',
@@ -86,7 +76,7 @@ def retentionCurves():
     stage='MASALA.MUGWORT.retention_curves_stage',
     file_format="(TYPE = 'csv')",
     copy_options='PARSE_HEADER=True',
-    table='MUGWORT.MEAL_RETENTION_CURVES',
+    table='MEAL_RETENTION_CURVES',
     files=['cohort_model_meal_retention_curves.csv']
   )
 
