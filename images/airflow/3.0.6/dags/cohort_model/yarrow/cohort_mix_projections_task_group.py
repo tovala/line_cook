@@ -7,8 +7,6 @@ from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromEx
 from common.common_tasks  import getDagParams
 
 
-AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
-
 @task_group(group_id='cohort_mix_projections')
 def cohortMixProjections():
   '''
