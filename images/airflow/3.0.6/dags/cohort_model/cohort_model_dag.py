@@ -1,6 +1,6 @@
 import os
 
-from airflow.sdk import dag, chain, task_group, Param
+from airflow.sdk import dag, chain, task_group, Param, task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
 
@@ -23,7 +23,10 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
     params={
         'channel_name': slack_param(),
         'database': Param('MASALA', type='string'),
-        'schema': Param('COHORT_MODEL_TEMP', type='string'),
+        'schema': Param('MUGWORT', type='string'),
+        'runtime_schema': Param('COHORT_MODEL_TEMP', type='string'),
+        'refresh_cohort_mix_projections': Param(False, type='boolean'),
+        'refresh_retention_curves': Param(False, type='boolean'),
         'lookback_adjustment_window': Param(LOOKBACK_ADJUSTMENT_WINDOW, type='number'),
         'longtail_weekly_retention_multiplier': Param(LONGTAIL_WEEKLY_RETENTION_MULTIPLIER, type='number'),
         'meals_per_order_d2c_not_holiday': mealsPerOrderAssumptionsParam('D2C Not Holiday', 6.200),
@@ -107,6 +110,17 @@ def cohortModel():
       'file_type': 'csv',
     },
   )
+
+  ## TODO: add retention curve task group here - use the cohort model input stage - if refresh flag = True
+
+  ## TODO: add cohort mix projection task group here - use cohort model input stage - if refresh flag = True
+
+  @task.branch
+  def refreshManualInputs(context):
+    # TODO: set up logic for when to trigger the load inputs task groups
+    pass
+
+
 
   create_temp_schema = SQLExecuteQueryOperator(
     task_id='create_temp_schema',
