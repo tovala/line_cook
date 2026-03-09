@@ -1,34 +1,11 @@
 import os
 
-from airflow.sdk import dag, chain, Param
+from airflow.sdk import chain, task_group
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
 
-from common.slack_notifications import slack_param
 
-
-AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
-
-@dag(
-    dag_id='retention_curves',
-    # on_failure_callback=bad_boy,
-    # on_success_callback=good_boy,
-    # TODO: add schedule
-    # schedule=MultipleCronTriggerTimetable('30 8 * * 1', '25 22 * * 3', timezone='America/Chicago'),
-    catchup=False,
-    tags=['internal'],
-    params={
-      'channel_name': slack_param(),
-      'database': Param('MASALA', type='string'),
-      'schema': Param('YARROW', type='string'),
-      'stage': Param('cohort_model_inputs_stage', type='string'),
-      's3_url': Param('s3://tovala-data-cohort-model/inputs/', type='string'),
-      'storage_integration': Param('COHORT_MODEL_STORAGE_INTEGRATION', type='string'),
-      'file_format': Param('CSV', type='string'),
-      'file_format_name': Param('retention_curves_file_format', type='string')
-    },
-    template_searchpath = f'{AIRFLOW_HOME}/dags/common/templates'
-)
+@task_group(group_id='retention_curves')
 def retentionCurves():
   '''Retention Curves
 
@@ -41,20 +18,6 @@ def retentionCurves():
   Variables:
 
   '''
-  retention_curve_file_format = SQLExecuteQueryOperator(
-    task_id='create_retention_curve_file_format',
-    conn_id='snowflake',
-    sql='create_file_format.sql',
-    params={
-      'file_format_options': 'PARSE_HEADER = true'
-    }
-  )
-  
-  retention_curve_source_stage = SQLExecuteQueryOperator(
-    task_id='create_retention_curve_stage', 
-    conn_id='snowflake', 
-    sql='create_stage.sql'
-  )
 
   create_meal_retention_curve_table = SQLExecuteQueryOperator(
     task_id='create_meal_retention_curve_table', 
@@ -97,12 +60,5 @@ def retentionCurves():
   )
   
 
-
-  chain(retention_curve_file_format, retention_curve_source_stage, [create_meal_retention_curve_table, create_order_retention_curve_table])
   chain(create_meal_retention_curve_table, copy_meal_retention_table)
   chain(create_order_retention_curve_table, copy_order_retention_table)
-
-    
-
-
-retentionCurves()
