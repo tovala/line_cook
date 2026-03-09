@@ -1,9 +1,9 @@
 
-from airflow.sdk import chain, task_group, task
+from airflow.sdk import chain, task_group
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
 
-
+from common.common_tasks import getDagParams
 
 @task_group(group_id='extended_monthly_oven_sales_predictions')
 def extendedMonthlyOvenSalesPredictions():
@@ -18,17 +18,6 @@ def extendedMonthlyOvenSalesPredictions():
   Variables:
 
   '''
-  @task(task_id='setup_copy_into_args', multiple_outputs=True)
-  def getDagParams(**context):
-    dag_params = context['params']
-
-    return {
-      'database': dag_params.get('database'),
-      'schema': dag_params.get('schema'),
-      'stage': dag_params.get('stage')
-    }
-
-
   create_table = SQLExecuteQueryOperator(
     task_id='create_table', 
     conn_id='snowflake', 
@@ -45,7 +34,7 @@ def extendedMonthlyOvenSalesPredictions():
     task_id='copy_from_s3', 
     snowflake_conn_id='snowflake',
     stage=f'{dag_params['database']}.{dag_params['schema']}.{dag_params['stage']}',
-    file_format="(TYPE = 'CSV')",
+    file_format=f'{dag_params['database']}.{dag_params['schema']}.{dag_params['file_format']}',
     copy_options='MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE'
   )
 
