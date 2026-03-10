@@ -15,6 +15,12 @@ from common.dbt_custom_operators import runOperatorCustom
     schedule=CronTriggerTimetable('0 5 * * *', timezone='America/Chicago'),
     start_date=datetime.datetime(2026, 1, 15),
     catchup=False,
+    default_args={
+        'retries': 2,
+        'retry_delay': duration(seconds=2),
+        'retry_exponential_backoff': True,
+        'max_retry_delay': duration(minutes=5),
+    },
     tags=['internal', 'dbt'],
     params={
         'channel_name': slack_param()
