@@ -1,8 +1,8 @@
 {% macro table_columns() -%}
-"year" NUMBER
-, "month" NUMBER
-, d2c NUMBER
-, amazon NUMBER
-, costco NUMBER
-, other NUMBER
+"year" VARCHAR
+, "month" VARCHAR
+, d2c VARCHAR
+, amazon VARCHAR
+, costco VARCHAR
+, other VARCHAR
 {%- endmacro %}
