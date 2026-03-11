@@ -52,7 +52,7 @@ def cohortModelDefaultInputs():
       'file_format_options': 'PARSE_HEADER = true'
     }
   )
-  
+
   create_cohort_model_inputs_stage = SQLExecuteQueryOperator(
     task_id='create_cohort_model_inputs_stage', 
     conn_id='snowflake', 
