@@ -5,9 +5,9 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
 
 from common.slack_notifications import slack_param
-from yarrow.retention_curves_task_group import retentionCurves
-from yarrow.extended_monthly_oven_sales_predictions_task_group import extendedMonthlyOvenSalesPredictions
-from yarrow.cohort_mix_projections_task_group import cohortMixProjections
+from cohort_model.yarrow.retention_curves_task_group import retentionCurves
+from cohort_model.yarrow.extended_monthly_oven_sales_predictions_task_group import extendedMonthlyOvenSalesPredictions
+from cohort_model.yarrow.cohort_mix_projections_task_group import cohortMixProjections
 
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
@@ -61,7 +61,10 @@ def cohortModelDefaultInputs():
 
   create_retention_curve_tables = retentionCurves()
 
-  create_extended_sales_prediction_table = extendedMonthlyOvenSalesPredictions()
+  create_extended_sales_prediction_table = extendedMonthlyOvenSalesPredictions(
+    table='extended_monthly_oven_sales_predictions',
+    table_columns_file='queries/extended_monthly_sales_predictions/table_columns.sql'
+  )
 
   create_cohort_mix_projections = cohortMixProjections()
   
