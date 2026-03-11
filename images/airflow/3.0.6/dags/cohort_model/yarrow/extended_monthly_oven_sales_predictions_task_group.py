@@ -33,7 +33,7 @@ def extendedMonthlyOvenSalesPredictions(table: str, table_columns_file: str):
     snowflake_conn_id='snowflake',
     stage='{{ params.database }}.{{ params.schema }}.{{ params.stage }}',
     file_format='{{ params.database }}.{{ params.schema }}.{{ params.file_format_name }}',
-    table=f'{{ params.database }}.{{ params.schema }}.{table}',
+    table='{{ params.database }}.{{ params.schema }}.%s' % (table),
     copy_options='MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE'
   )
 
