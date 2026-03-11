@@ -1,10 +1,8 @@
-import os
 
 from airflow.sdk import chain, task_group
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
-from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
 
-from common.common_tasks import getDagParams
+from common.extended_operators import TemplatedCopyFromExternalStageToSnowflakeOperator
 
 
 @task_group(group_id='retention_curves')
@@ -20,8 +18,7 @@ def retentionCurves():
   Variables:
 
   '''
-  dag_params = getDagParams()
-
+  
   create_meal_retention_curve_table = SQLExecuteQueryOperator(
     task_id='create_meal_retention_curve_table', 
     conn_id='snowflake', 
@@ -42,22 +39,22 @@ def retentionCurves():
     },
   )
 
-  copy_meal_retention_table = CopyFromExternalStageToSnowflakeOperator(
+  copy_meal_retention_table = TemplatedCopyFromExternalStageToSnowflakeOperator(
     task_id='copy_meal_retention_curves', 
     snowflake_conn_id='snowflake',
-    stage=f'{dag_params['database']}.{dag_params['schema']}.{dag_params['stage']}',
-    file_format=f'{ dag_params['database']}.{dag_params['schema']}.{dag_params['file_format_name']}',
-    table=f'{dag_params['database']}.{dag_params['schema']}.MEAL_RETENTION_CURVES',
+    stage='{{ params.database }}.{{ params.schema }}.{{ params.stage }}',
+    file_format='{{ params.database }}.{{ params.schema }}.{{ params.file_format_name }}',
+    table='{{ params.database }}.{{ params.schema }}.MEAL_RETENTION_CURVES',
     files=['cohort_model_meal_retention_curves.csv'],
     copy_options='MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE'
   )
 
-  copy_order_retention_table = CopyFromExternalStageToSnowflakeOperator(
+  copy_order_retention_table = TemplatedCopyFromExternalStageToSnowflakeOperator(
     task_id='copy_order_retention_curves', 
     snowflake_conn_id='snowflake',
-    stage=f'{dag_params['database']}.{dag_params['schema']}.{dag_params['stage']}',
-    file_format=f'{ dag_params['database']}.{dag_params['schema']}.{dag_params['file_format_name']}',
-    table=f'{dag_params['database']}.{dag_params['schema']}.ORDER_RETENTION_CURVES',
+    stage='{{ params.database }}.{{ params.schema }}.{{ params.stage }}',
+    file_format='{{ params.database }}.{{ params.schema }}.{{ params.file_format_name }}',
+    table='{{ params.database }}.{{ params.schema }}.ORDER_RETENTION_CURVES',
     files=['cohort_model_order_retention_curves.csv'],
     copy_options='MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE'
   )
