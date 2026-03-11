@@ -45,7 +45,7 @@ def retentionCurves():
     stage='{{ params.database }}.{{ params.schema }}.{{ params.stage }}',
     file_format='{{ params.database }}.{{ params.schema }}.{{ params.file_format_name }}',
     table='{{ params.database }}.{{ params.schema }}.MEAL_RETENTION_CURVES',
-    files=['cohort_model_meal_retention_curves.csv'],
+    files=['retention_curves/cohort_model_meal_retention_curves.csv'],
     copy_options='MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE'
   )
 
@@ -55,7 +55,7 @@ def retentionCurves():
     stage='{{ params.database }}.{{ params.schema }}.{{ params.stage }}',
     file_format='{{ params.database }}.{{ params.schema }}.{{ params.file_format_name }}',
     table='{{ params.database }}.{{ params.schema }}.ORDER_RETENTION_CURVES',
-    files=['cohort_model_order_retention_curves.csv'],
+    files=['retention_curves/cohort_model_order_retention_curves.csv'],
     copy_options='MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE'
   )
   
