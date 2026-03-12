@@ -49,7 +49,7 @@ def cohortModelDefaultInputs():
     conn_id='snowflake',
     sql='create_file_format.sql',
     params={
-      'file_format_options': 'PARSE_HEADER = true'
+      'file_format_options': 'PARSE_HEADER = true TRIM_SPACE = true ERROR_ON_COLUMN_COUNT_MISMATCH = false'
     }
   )
 
