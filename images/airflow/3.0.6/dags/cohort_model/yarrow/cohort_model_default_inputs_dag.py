@@ -2,7 +2,6 @@ import os
 
 from airflow.sdk import dag, chain, Param
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
-from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
 
 from common.slack_notifications import slack_param
 from cohort_model.yarrow.retention_curves_task_group import retentionCurves
