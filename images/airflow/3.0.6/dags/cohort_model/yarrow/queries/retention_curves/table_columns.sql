@@ -1,6 +1,7 @@
 {% macro table_columns() -%}
 id VARCHAR PRIMARY KEY
-, curve_id VARCHAR 
+, curve_definition_id VARCHAR
+, created TIMESTAMP_TZ
 {% for week_num in range(79) %}
 , week_{{ week_num }} FLOAT
 {% endfor %}
