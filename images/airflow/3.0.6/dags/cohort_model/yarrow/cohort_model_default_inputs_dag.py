@@ -63,11 +63,11 @@ def cohortModelDefaultInputs():
     table_columns_file='queries/extended_monthly_sales_predictions/table_columns.sql'
   )
 
-  create_cohort_mix_projections = cohortMixProjections()
+  create_cohort_characteristics_projections = cohortCharacteristicsProjections()
   
 
 
-  chain(create_file_format, create_cohort_model_inputs_stage, [create_retention_curve_tables, create_extended_sales_prediction_table, create_cohort_mix_projections])
+  chain(create_file_format, create_cohort_model_inputs_stage, [create_extended_sales_prediction_table, create_cohort_characteristics_projections])
 
     
 
