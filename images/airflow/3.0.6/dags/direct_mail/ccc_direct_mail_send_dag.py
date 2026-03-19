@@ -1,4 +1,5 @@
 import datetime
+from pendulum import duration
 
 from typing import Dict
 from airflow.sdk import dag, task, chain
@@ -12,6 +13,12 @@ from airflow.providers.amazon.aws.transfers.s3_to_sftp import S3ToSFTPOperator
   on_success_callback=good_boy,
   schedule=CronTriggerTimetable('0 2 * * 1', timezone='America/Chicago'),
   catchup=False,
+  default_args={
+    'retries': 3,
+    'retry_delay': duration(seconds=2),
+    'retry_exponential_backoff': True,
+    'max_retry_delay': duration(minutes=5),
+  },
   tags=['external'],
   params={
     'channel_name': slack_param('#team-data-notifications'),

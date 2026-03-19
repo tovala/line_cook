@@ -24,3 +24,11 @@ def fetch_stupid_list(cursor):
   
   except ValueError as e:
     raise AirflowException('Query did not return an integer, cannot get range.')
+  
+def fetch_typeform_responses(cursor):
+  forms_and_responses = {}
+  for response in cursor.fetchall():
+      form_dict = {}
+      form_dict[response[1]] = response[2].split(', ')
+      forms_and_responses[response[0]] = form_dict
+  return forms_and_responses
