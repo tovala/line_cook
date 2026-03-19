@@ -4,9 +4,8 @@ from airflow.sdk import dag, chain, Param
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 from common.slack_notifications import slack_param
-from cohort_model.yarrow.retention_curves_task_group import retentionCurves
 from cohort_model.yarrow.extended_monthly_oven_sales_predictions_task_group import extendedMonthlyOvenSalesPredictions
-from cohort_model.yarrow.cohort_mix_projections_task_group import cohortMixProjections
+from cohort_model.yarrow.cohort_characteristics_projections_task_group import cohortCharacteristicsProjections
 
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
@@ -27,7 +26,8 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
       's3_url': Param('s3://tovala-data-cohort-model/inputs/', type='string'),
       'storage_integration': Param('COHORT_MODEL_STORAGE_INTEGRATION', type='string'),
       'file_format': Param('CSV', type='string'),
-      'file_format_name': Param('yarrow_csv_file_format', type='string')
+      'file_format_name': Param('yarrow_csv_file_format', type='string'),
+      'cohort_characteristics': Param(['purchase_month', 'on_commitment', 'price_bucket'], type='array')
     },
     template_searchpath = f'{AIRFLOW_HOME}/dags/common/templates'
 )
@@ -57,8 +57,6 @@ def cohortModelDefaultInputs():
     conn_id='snowflake', 
     sql='create_stage.sql'
   )
-
-  create_retention_curve_tables = retentionCurves()
 
   create_extended_sales_prediction_table = extendedMonthlyOvenSalesPredictions(
     table='extended_monthly_oven_sales_predictions',
