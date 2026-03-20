@@ -23,7 +23,7 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
     params={
         'channel_name': slack_param(),
         'database': Param('MASALA', type='string'),
-        'schema': Param('MUGWORT', type='string'),
+        'schema': Param('YARROW', type='string'),
         'runtime_schema': Param('COHORT_MODEL_TEMP', type='string'),
         'refresh_cohort_mix_projections': Param(False, type='boolean'),
         'refresh_retention_curves': Param(False, type='boolean'),
