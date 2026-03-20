@@ -43,9 +43,14 @@ def generateAggregateRetentionCurve():
   Variables:
 
   '''
+  # TODO: Should this be a task group that runs in the larger cohort model dag? or should it run independently?
+  # if standalone, default tables should live in yarrow, if task group tables are temp for each run and stored in temp schema
+  
   # TODO: create table in temp schema from queries/combined_cohort_characteristics_data.sql
 
-  # TODO: create table in temp schema from queries/aggregate_retention_curves_by_cohort.sql
+  # TODO: create table in temp schema from queries/aggregate_retention_curves_by_cohort.sql 
+  # for meal_retention_curves
+  # for order_retention_curves
 
   # TODO: trigger next step in cohort model pipeline
 
