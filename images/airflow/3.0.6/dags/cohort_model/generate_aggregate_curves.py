@@ -43,6 +43,11 @@ def generateAggregateRetentionCurve():
   Variables:
 
   '''
+  # TODO: create table in temp schema from queries/combined_cohort_characteristics_data.sql
+
+  # TODO: create table in temp schema from queries/aggregate_retention_curves_by_cohort.sql
+
+  # TODO: trigger next step in cohort model pipeline
 
     
 
