@@ -50,15 +50,15 @@ def experianExtraction():
     sql='DROP TABLE brine.{{ params.temp_table_prefix }}_temp;'
   ).as_teardown()
 
-  # trigger_chili_load = TriggerDagRunOperator(
-  #   task_id='trigger_chili_load_dag',
-  #   trigger_rule='one_success',
-  #   trigger_dag_id='experian_load_to_chili',
-  #   trigger_run_id='triggered_{{ run_id }}'
-  # )
+  trigger_chili_load = TriggerDagRunOperator(
+    task_id='trigger_chili_load_dag',
+    trigger_rule='one_success',
+    trigger_dag_id='experian_load_to_chili',
+    trigger_run_id='triggered_{{ run_id }}'
+  )
 
   process_batch >> delete_temporary_table
-  # process_batch >> trigger_chili_load
+  process_batch >> trigger_chili_load
   
 
 experianExtraction()
