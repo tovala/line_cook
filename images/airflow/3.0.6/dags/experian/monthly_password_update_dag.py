@@ -17,9 +17,9 @@ from common.slack_notifications import bad_boy, good_boy
 UPDATE_PASSWORD_URL = 'https://ss3.experian.com/securecontrol/reset/passwordreset?newpassword=%s&command=resetpassword&application=netconnect&version=1'
 
 @dag(
-    # on_failure_callback=bad_boy,
-    # on_success_callback=good_boy,
-    # schedule=duration(days=28),
+    on_failure_callback=bad_boy,
+    on_success_callback=good_boy,
+    schedule=duration(days=28),
     start_date=datetime(2026, 2, 19, 2, tzinfo=ZoneInfo('America/Chicago')),
     catchup=False,
     default_args={
