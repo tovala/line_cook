@@ -11,7 +11,7 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 from common.sql_operator_handlers import fetch_single_result
 
-@task_group(group_id='process_customer_batch') 
+@task_group(group_id='process_customer_batch', max_active_tis_per_dagrun=5)
 def processBatch(erichs: str, stupid_list:Dict[str, str]):
   '''
   Fetches experian data for a single batch (size defined at dag-level params) of customers.
