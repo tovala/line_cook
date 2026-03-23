@@ -11,9 +11,9 @@ from experian.process_customer_batch_task_group import processBatch
 
 @dag(
   dag_id='experian_extraction',
-  # on_failure_callback=bad_boy,
-  # on_success_callback=good_boy,
-  # schedule=CronTriggerTimetable('0 3 * * *', timezone='America/Chicago'),
+  on_failure_callback=bad_boy,
+  on_success_callback=good_boy,
+  schedule=CronTriggerTimetable('0 3 * * *', timezone='America/Chicago'),
   catchup=False,
   default_args={
     'retries': 2,
@@ -43,7 +43,7 @@ def experianExtraction():
   pre_process_setup = preProcessSetup()
 
   process_batch = processBatch.partial(erichs=pre_process_setup['erichs']).expand(stupid_list=pre_process_setup['stupid_list'])
-
+  
   delete_temporary_table = SQLExecuteQueryOperator(
     task_id='delete_temporary_table',
     conn_id='snowflake',
