@@ -2,7 +2,7 @@ from pendulum import duration
 
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
-from airflow.sdk import dag, task, Param, Variable
+from airflow.sdk import dag, Param
 from airflow.timetables.trigger import CronTriggerTimetable
 
 from common.slack_notifications import bad_boy, good_boy, slack_param
@@ -17,7 +17,7 @@ from experian.process_customer_batch_task_group import processBatch
   catchup=False,
   default_args={
     'retries': 2,
-    'retry_delay': duration(seconds=10),
+    'retry_delay': duration(seconds=2),
     'retry_exponential_backoff': True,
     'max_retry_delay': duration(minutes=5),
   },
@@ -41,31 +41,22 @@ def experianExtraction():
 
   '''
   pre_process_setup = preProcessSetup()
-  
   process_batch = processBatch.partial(erichs=pre_process_setup['erichs']).expand(stupid_list=pre_process_setup['stupid_list'])
-  
+
   delete_temporary_table = SQLExecuteQueryOperator(
     task_id='delete_temporary_table',
     conn_id='snowflake',
     sql='DROP TABLE brine.{{ params.temp_table_prefix }}_temp;'
   ).as_teardown()
 
-  @task(task_id='clear_token_cache')
-  def clearTokenCache():
-    Variable.delete('experian_token_cache')
-
-  clear_token_cache = clearTokenCache().as_teardown()
-
-  trigger_chili_load = TriggerDagRunOperator(
-    task_id='trigger_chili_load_dag',
-    trigger_rule='one_success',
-    trigger_dag_id='experian_load_to_chili',
-    trigger_run_id='triggered_{{ run_id }}'
-  )
+  # trigger_chili_load = TriggerDagRunOperator(
+  #   task_id='trigger_chili_load_dag',
+  #   trigger_rule='one_success',
+  #   trigger_dag_id='experian_load_to_chili',
+  #   trigger_run_id='triggered_{{ run_id }}'
+  # )
 
   process_batch >> delete_temporary_table
-  process_batch >> clear_token_cache
-  process_batch >> trigger_chili_load
   
 
 experianExtraction()
