@@ -1,6 +1,5 @@
 import json
 import re
-import time
 import requests
 from requests import HTTPError
 from typing import Dict
@@ -12,13 +11,14 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 from common.sql_operator_handlers import fetch_single_result
 
-@task_group(group_id='process_customer_batch')
+@task_group(group_id='process_customer_batch') 
 def processBatch(erichs: str, stupid_list:Dict[str, str]):
   '''
   Fetches experian data for a single batch (size defined at dag-level params) of customers.
 
-  Experian access token is valid for 30 mins and is cached in the `experian_token_cache` Airflow Variable,
-  shared across all concurrent batches. A new token is only fetched when fewer than 5 minutes remain on the current one.
+  Experian access token is valid for 30 mins, if tasks downstream of getExperianToken are queued or rescheduled longer than that, 
+  the task group should be rerun if necessary, generating a new token. Unlikely since we fetch a new token at the start of processing
+  each batch.
   
   Args:
     customer_batch (str): formatted string of customer data to pass to Experian API
@@ -27,19 +27,9 @@ def processBatch(erichs: str, stupid_list:Dict[str, str]):
   def getExperianToken():
     '''
     :return: authorization token for requests, valid for 30 minutes; None if response not returned
-
-    Token is cached in the `experian_token_cache` Variable and reused across batches.
-    A new token is fetched when fewer than 5 minutes remain on the current one.
     '''
     get_token_url = 'https://us-api.experian.com/oauth2/v1/token'
-
-    try:
-      token_cache = json.loads(Variable.get('experian_token_cache', default_var='{}'))
-      if token_cache.get('expires_at', 0) - time.time() > 300:
-        return token_cache['access_token']
-    except (json.JSONDecodeError, KeyError):
-      pass
-
+    
     try:
       auth_values = {
         'username': Variable.get('experian_username'),
@@ -57,15 +47,10 @@ def processBatch(erichs: str, stupid_list:Dict[str, str]):
 
     except HTTPError as e:
       raise AirflowException()
-
-    access_token = token_response_json['access_token']
-    Variable.set('experian_token_cache', json.dumps({
-      'access_token': access_token,
-      'expires_at': time.time() + 1800
-    }))
-    return access_token
+    
+    return token_response_json['access_token']
   
-  @task(max_active_tis_per_dag=10)
+  @task()
   def fetchFromExperian(erich_values: str, access_token: str, customer_batch: str):
     '''
     Docstring for fetchFromExperian
