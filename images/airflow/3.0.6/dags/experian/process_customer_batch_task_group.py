@@ -1,6 +1,7 @@
 import json
 import re
 import requests
+from pendulum import duration
 from requests import HTTPError
 from typing import Dict
 
@@ -50,7 +51,7 @@ def processBatch(erichs: str, stupid_list:Dict[str, str]):
     
     return token_response_json['access_token']
   
-  @task()
+  @task(retries=5, retry_delay=duration(seconds=5), retry_exponential_backoff=True, max_retry_delay=duration(minutes=5))
   def fetchFromExperian(erich_values: str, access_token: str, customer_batch: str):
     '''
     Docstring for fetchFromExperian

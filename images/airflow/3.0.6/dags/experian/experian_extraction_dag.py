@@ -43,7 +43,7 @@ def experianExtraction():
   pre_process_setup = preProcessSetup()
 
   process_batch = processBatch.partial(erichs=pre_process_setup['erichs']).expand(stupid_list=pre_process_setup['stupid_list'])
-  
+
   delete_temporary_table = SQLExecuteQueryOperator(
     task_id='delete_temporary_table',
     conn_id='snowflake',
