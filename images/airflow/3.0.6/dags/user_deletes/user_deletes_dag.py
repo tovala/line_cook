@@ -31,7 +31,7 @@ from common.sql_operator_handlers import fetch_results_array, fetch_typeform_res
         'retry_exponential_backoff': True,
         'max_retry_delay': duration(minutes=5),
     },
-    tags=['internal', 'cleanup'],
+    tags=['external', 'cleanup'],
     params={
         "channel_name": slack_param()
     }
