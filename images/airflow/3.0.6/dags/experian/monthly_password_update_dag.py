@@ -47,11 +47,20 @@ def monthlyExperianPasswordUpdate():
   '''
   @task()
   def fetchNewPassword():
-      """Fetches and parses suggested pw from Experian API
+      """Randomly generates a password s.t. it has at least one uppercase, one lowercase, one symbol, and one digit
       :return: new password suggestion
       """      
-      alphabet = string.ascii_letters + string.digits + '!@#$%^&*'
-      return ''.join(secrets.choice(alphabet) for _ in range(16))
+      symbols = '!$^*'
+      required = [
+          secrets.choice(string.ascii_uppercase),
+          secrets.choice(string.ascii_lowercase),
+          secrets.choice(string.digits),
+          secrets.choice(symbols),
+      ]
+      remaining = [secrets.choice(string.ascii_letters + string.digits + symbols) for _ in range(12)]
+      password = required + remaining
+      secrets.SystemRandom().shuffle(password)
+      return ''.join(password)
 
   @task()
   def updateSavedPassword(new_password):
