@@ -2,7 +2,7 @@
 Historical meal and order counts.
 These are used to backfill past values with historical actuals.
 */
-CREATE OR REPLACE TABLE {{ params.database }}.{{ params.temp_schema }}.historical_meal_orders
+CREATE OR REPLACE TABLE {{ params.database }}."{{ params.runtime_schema_prefix }}_{{ run_id }}".historical_meal_orders
 AS
   SELECT
       cts.term_id

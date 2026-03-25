@@ -17,7 +17,7 @@ Note that by pulling the actuals directly from the query below,
 these actuals may differ slightly from what is in the Excel
 version of the cohort model (any cases where historical
 data was restated). */
-CREATE OR REPLACE {{ params.database }}.{{ params.temp_schema }}.actual_oven_sales
+CREATE OR REPLACE TABLE {{ params.database }}."{{ params.runtime_schema_prefix }}_{{ run_id }}".actual_oven_sales
 AS
   SELECT 
     sale_date_chicago

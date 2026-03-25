@@ -1,4 +1,4 @@
-CREATE OR REPLACE TABLE {{ params.database }}.{{ params.temp_schema }}.combined_cohort_characteristics_data 
+CREATE OR REPLACE TABLE {{ params.database }}."{{ params.runtime_schema_prefix }}_{{ run_id }}".combined_cohort_characteristics_data 
 AS
   SELECT 
     rcd.id AS curve_definition_id

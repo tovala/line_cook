@@ -52,9 +52,3 @@ def generateAggregateRetentionCurves():
   )
 
   chain(create_characteristic_data_table, [create_agg_order_retention_curves_table, create_agg_meal_retention_curves_table])
-
-
-    
-
-
-generateAggregateRetentionCurve()

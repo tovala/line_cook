@@ -26,7 +26,7 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
         'channel_name': slack_param(),
         'database': Param('MASALA', type='string'),
         'schema': Param('YARROW', type='string'),
-        'runtime_schema': Param('COHORT_MODEL_TEMP', type='string'),
+        'runtime_schema_prefix': Param('COHORT_MODEL', type='string'),
         'refresh_cohort_mix_projections': Param(False, type='boolean'),
         'refresh_retention_curves': Param(False, type='boolean'),
         'lookback_adjustment_window': Param(LOOKBACK_ADJUSTMENT_WINDOW, type='number'),
@@ -57,10 +57,12 @@ def cohortModel():
   Variables:
 
   '''
-  create_temp_schema = SQLExecuteQueryOperator(
-    task_id='create_temp_schema',
+
+
+  create_runtime_schema = SQLExecuteQueryOperator(
+    task_id='create_runtime_schema',
     conn_id='snowflake',
-    sql='CREATE SCHEMA IF NOT EXISTS {{ params.temp_schema }};'
+    sql='CREATE SCHEMA IF NOT EXISTS {{ params.database }}."{{ params.runtime_schema_prefix }}_{{ run_id }}";'
   )
 
   create_agg_retention_curves = generateAggregateRetentionCurves()
@@ -68,14 +70,13 @@ def cohortModel():
   create_temp_queries = runtimeQueries(default_queries=['historical_meal_orders', 'actual_oven_sales'])
 
   #snapshot_inputs = snapshotSnowflakeToS3()
-
-  drop_temp_schema = SQLExecuteQueryOperator(
-    task_id='drop_temp_schema',
+  
+  drop_runtime_schema = SQLExecuteQueryOperator(
+    task_id='drop_runtime_schema',
     conn_id='snowflake',
-    sql='DROP SCHEMA {{ params.schema }};'
-  ).as_teardown(setups=create_temp_schema)
-    
+    sql='DROP SCHEMA {{ params.database }}."{{ params.runtime_schema_prefix }}_{{ run_id }}";'
+  ).as_teardown(setups=create_runtime_schema)
 
-  chain(create_temp_schema, [create_temp_queries, create_agg_retention_curves], drop_temp_schema)
+  chain(create_runtime_schema, [create_temp_queries, create_agg_retention_curves], drop_runtime_schema)
 
 cohortModel()
