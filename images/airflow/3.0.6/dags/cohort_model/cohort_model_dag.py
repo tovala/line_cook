@@ -8,6 +8,8 @@ from common.slack_notifications import slack_param
 from cohort_model.snapshot_to_s3_task_group import snapshotSnowflakeToS3
 from cohort_model.default_inputs import LOOKBACK_ADJUSTMENT_WINDOW, LONGTAIL_WEEKLY_RETENTION_MULTIPLIER
 from cohort_model.cohort_model_params import mealsPerOrderAssumptionsParam, sixWeekAttachRateParam
+from cohort_model.generate_aggregate_curves_task_group import generateAggregateRetentionCurves
+from cohort_model.runtime_queries_task_group import runtimeQueries
 
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
@@ -55,92 +57,15 @@ def cohortModel():
   Variables:
 
   '''
-
-  INPUT_MODELS = ['actual_oven_sales', 'combined_oven_sales', 'historical_meal_orders', 'projected_oven_sales', 'weekly_meal_and_meal_order_counts']
-  CSV_INPUTS = ['cohort_mix_projections', 'daily_oven_d2c_sales_splits', 'daily_oven_sales_projections', 'meal_retention_curves', 'model_order_retention_curves']
-    
-  #### Custom Task Definitions
-  @task_group(group_id='create_temp_table')
-  def createTempTable(model: str) -> None:
-    create_empty_model = SQLExecuteQueryOperator(
-      task_id='create_cohort_models', 
-      conn_id='snowflake', 
-      sql='create_table.sql',
-      params={
-        'table': model,
-        'table_columns_file': f'queries/{model}/table_columns.sql'
-      }
-    )
-
-    load_model_default = SQLExecuteQueryOperator(
-      task_id='load_model_default', 
-      conn_id='snowflake', 
-      sql='create_table.sql',
-      params={
-        'table': model,
-        'table_columns_file': f'queries/{model}/default_input.sql'
-      }
-    )
-          
-    # TODO: Add S3 override here - maybe add an override param? like a list of models w override - set comparison to standard list to avoid doing both?
-    # copy_from_csv = CopyFromExternalStageToSnowflakeOperator.partial(
-    #   task_id='copyTable', 
-    #   snowflake_conn_id='snowflake',
-    #   stage='MASALA.CHILI_V2.cohort_model_input_stage',
-    #   file_format="(TYPE = 'csv')",
-    #   params={
-    #       'table': f'CHILI_V2.{model}',
-    #       'pattern': f'.*{model}.*.parquet'
-    #   }
-    # )
-
-    chain(create_empty_model, load_model_default)
-
-  #### Task Instances
-  cohort_model_input_stage = SQLExecuteQueryOperator(
-    task_id='createCohortModelInputStage', 
-    conn_id='snowflake', 
-    sql='create_stage.sql',
-    params={
-      'parent_database': 'MASALA',
-      'schema_name': 'CHILI_V2',
-      'stage_name': 'cohort_model_input_stage',
-      'url': 's3://tovala-data-cohort-model/input/',
-      'storage_integration': 'COHORT_MODEL_STORAGE_INTEGRATION',
-      'file_type': 'csv',
-    },
-  )
-
-  ## TODO: add retention curve task group here - use the cohort model input stage - if refresh flag = True
-
-  ## TODO: add cohort mix projection task group here - use cohort model input stage - if refresh flag = True
-
-  @task.branch
-  def refreshManualInputs(context):
-    # TODO: set up logic for when to trigger the load inputs task groups
-    pass
-
-
-
   create_temp_schema = SQLExecuteQueryOperator(
     task_id='create_temp_schema',
     conn_id='snowflake',
-    sql='CREATE SCHEMA IF NOT EXISTS {{ params.schema }};'
+    sql='CREATE SCHEMA IF NOT EXISTS {{ params.temp_schema }};'
   )
 
-  #create_temp_tables = createTempTable.expand(model=INPUT_MODELS)
+  create_agg_retention_curves = generateAggregateRetentionCurves()
 
-  # TODO: pull input csvs from S3 to tables in temp schema
-  #copy_from_csv = CopyFromExternalStageToSnowflakeOperator.partial(
-  #task_id='copyTable', 
-  #  snowflake_conn_id='snowflake',
-  #  stage='MASALA.CHILI_V2.cohort_model_input_stage',
-  #  file_format="(TYPE = 'csv')",
-  #  params={
-  #    'table': f'CHILI_V2.{model}',
-  #    'pattern': f'.*{model}.*.parquet'
-  #  }
-  #)
+  create_temp_queries = runtimeQueries(default_queries=['historical_meal_orders', 'actual_oven_sales'])
 
   #snapshot_inputs = snapshotSnowflakeToS3()
 
@@ -148,9 +73,9 @@ def cohortModel():
     task_id='drop_temp_schema',
     conn_id='snowflake',
     sql='DROP SCHEMA {{ params.schema }};'
-  )
+  ).as_teardown(setups=create_temp_schema)
     
 
-  chain([create_temp_schema, cohort_model_input_stage], drop_temp_schema)
+  chain(create_temp_schema, [create_temp_queries, create_agg_retention_curves], drop_temp_schema)
 
 cohortModel()
