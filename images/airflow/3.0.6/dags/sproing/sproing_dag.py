@@ -62,10 +62,19 @@ def sproing():
         sqs_client = SqsHook(aws_conn_id=AWS_CONN_ID).get_conn()
         lambda_hook = LambdaHook(aws_conn_id=AWS_CONN_ID)
 
+        # This gets the approximate number of messages - according to docs, this can lag by up to a minute
+        attrs = sqs_client.get_queue_attributes(
+            QueueUrl=queue_url,
+            AttributeNames=["ApproximateNumberOfMessages"],
+        )
+        approx_count = int(attrs["Attributes"]["ApproximateNumberOfMessages"])
+        # +2 accounts for integer division rounding and SQS approximate count variance
+        max_batches = (approx_count // 10) + 2
+
         processed = 0
         failed = 0
 
-        while True:
+        for _ in range(max_batches):
             response = sqs_client.receive_message(
                 QueueUrl=queue_url,
                 MaxNumberOfMessages=10,
