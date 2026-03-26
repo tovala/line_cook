@@ -69,7 +69,7 @@ def sproing():
             response = sqs_client.receive_message(
                 QueueUrl=queue_url,
                 MaxNumberOfMessages=10,
-                WaitTimeSeconds=5,
+                WaitTimeSeconds=1,
                 AttributeNames=["All"],
                 VisibilityTimeout=300,
             )
