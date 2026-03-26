@@ -1,6 +1,7 @@
 from typing import Dict
 
 from pendulum import duration
+from datetime import timedelta
 
 from airflow.sdk import dag, task, Variable
 from airflow.timetables.trigger import CronTriggerTimetable
@@ -17,6 +18,7 @@ AWS_CONN_ID = "aws_main_account"
     on_failure_callback=bad_boy,
     on_success_callback=good_boy,
     schedule=CronTriggerTimetable("0 4 * * *", timezone="America/Chicago"),
+    dagrun_timeout=timedelta(hours=1),
     catchup=False,
     default_args={
         "retries": 2,
