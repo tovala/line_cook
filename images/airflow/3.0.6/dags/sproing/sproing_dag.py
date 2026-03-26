@@ -68,8 +68,8 @@ def sproing():
             AttributeNames=["ApproximateNumberOfMessages"],
         )
         approx_count = int(attrs["Attributes"]["ApproximateNumberOfMessages"])
-        # +2 accounts for integer division rounding and SQS approximate count variance
-        max_batches = (approx_count // 10) + 2
+        # +10 accounts for in-flight messages/rounding errors/fuckery - this also terminates if there are no messages returned from the queue
+        max_batches = (approx_count // 10) + 10
 
         processed = 0
         failed = 0
