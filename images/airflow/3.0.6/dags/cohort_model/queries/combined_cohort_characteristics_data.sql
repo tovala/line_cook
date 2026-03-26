@@ -21,7 +21,7 @@ AS
       WHEN rcd.on_commitment::BOOLEAN AND rcd.price_bucket_id = 4 THEN NULL -- this isn't modeled in the current retention curves (on commitment but unknown purchase price)
       ELSE cmur.known_cohort_characteristics
     END AS known_unknown_multiplier
-    , (on_commitment_ratio * price_bucket_ratio * known_unknown_multiplier) AS percentage_of_cohort
+    , COALESCE(on_commitment_ratio * price_bucket_ratio * known_unknown_multiplier, known_unknown_multiplier) AS percentage_of_cohort -- if known characteristics, use the calculated percent of cohort, else use unkown characteristics multiplier
   FROM yarrow.retention_curve_definitions AS rcd
   JOIN yarrow.purchase_month_mix AS pmm ON rcd.purchase_month = pmm."FIRST MONTH" -- by definition, the mix tables need to have one entry per cohort
   JOIN yarrow.on_commitment_mix AS ocm ON ocm.cohort = pmm.cohort
