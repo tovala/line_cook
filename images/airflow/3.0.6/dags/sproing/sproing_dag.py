@@ -67,14 +67,12 @@ def sproing():
             QueueUrl=queue_url,
             AttributeNames=["ApproximateNumberOfMessages"],
         )
-        approx_count = int(attrs["Attributes"]["ApproximateNumberOfMessages"])
-        # +10 accounts for in-flight messages/rounding errors/fuckery - this also terminates if there are no messages returned from the queue
-        max_batches = (approx_count // 10) + 10
+        approx_count = int(attrs["Attributes"]["ApproximateNumberOfMessages"])  
 
         processed = 0
         failed = 0
 
-        for _ in range(max_batches):
+        while approx_count > 0:
             response = sqs_client.receive_message(
                 QueueUrl=queue_url,
                 MaxNumberOfMessages=10,
@@ -101,6 +99,11 @@ def sproing():
                     ReceiptHandle=message["ReceiptHandle"],
                 )
                 processed += 1
+            attrs = sqs_client.get_queue_attributes(
+                QueueUrl=queue_url,
+                AttributeNames=["ApproximateNumberOfMessages"],
+            )
+            approx_count = int(attrs["Attributes"]["ApproximateNumberOfMessages"])
 
         if failed > 0:
             raise AirflowException(f"{failed} message(s) failed Lambda invocation")
