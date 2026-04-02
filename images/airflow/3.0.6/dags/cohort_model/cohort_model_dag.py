@@ -67,16 +67,16 @@ def cohortModel():
 
   create_agg_retention_curves = generateAggregateRetentionCurves()
 
-  create_temp_queries = runtimeQueries(default_queries=['historical_meal_orders', 'actual_oven_sales'])
+  create_temp_queries = runtimeQueries(default_queries=['historical_meal_orders', 'actual_oven_sales', 'future_cohort_initial_order_predictions', 'cohort_age'])
 
   #snapshot_inputs = snapshotSnowflakeToS3()
-  
+  '''
   drop_runtime_schema = SQLExecuteQueryOperator(
     task_id='drop_runtime_schema',
     conn_id='snowflake',
     sql='DROP SCHEMA {{ params.database }}."{{ params.runtime_schema_prefix }}_{{ run_id }}";'
   ).as_teardown(setups=create_runtime_schema)
-
-  chain(create_runtime_schema, [create_temp_queries, create_agg_retention_curves], drop_runtime_schema)
+  '''
+  chain(create_runtime_schema, [create_temp_queries, create_agg_retention_curves])
 
 cohortModel()
