@@ -1,3 +1,5 @@
+CREATE OR REPLACE TABLE {{ params.database }}."{{ params.runtime_schema_prefix }}_{{ run_id }}".cohort_age
+AS
 SELECT DISTINCT 
   cohort 
   , term_id 

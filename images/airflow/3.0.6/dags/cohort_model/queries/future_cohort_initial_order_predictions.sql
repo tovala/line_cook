@@ -1,3 +1,5 @@
+CREATE OR REPLACE TABLE {{ params.database }}."{{ params.runtime_schema_prefix }}_{{ run_id }}".future_cohort_initial_order_predictions
+AS
 WITH sales_splits AS (
 SELECT 
 coalesce(cohort_id, term_id) AS cohort
