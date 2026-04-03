@@ -329,4 +329,4 @@ def processDeleteRequests(capi_token:str, delete_request:Dict[str, Any]) -> None
   closed_ticket = updateZendeskTicketToClosed(delete_request)
   zendesk_delete = deleteUserZendesk(closed_ticket['zendesk_requester_id'])
 
-  chain([capi_delete, airtable_delete, cio_delete, typeform_delete], closed_ticket, zendesk_delete)
+  chain([airtable_delete, cio_delete, typeform_delete], capi_delete, closed_ticket, zendesk_delete)
