@@ -79,7 +79,7 @@ def processDeleteRequests(capi_token:str, delete_request:Dict[str, Any]) -> None
     
   
   @task()
-  def deleteUserCustomerIO(delete_request: Dict[str, Any], delete_identifier: str) -> bool:
+  def deleteUserCustomerIO(delete_request: Dict[str, Any]) -> bool:
     '''Make request to CustomerIO API to delete user from system based on their email.
     
     Args:
@@ -88,12 +88,7 @@ def processDeleteRequests(capi_token:str, delete_request:Dict[str, Any]) -> None
     Output:
       (bool) - True, unless exception is raised.
     '''
-    if delete_identifier == 'email':
-      email = delete_request['Email']
-      identifiers = {'email': email}
-    elif delete_identifier == 'id':
-      user_id = delete_request['UserID']
-      identifiers = {'id': user_id}
+    user_id = delete_request['UserID']
     cio_auth = HTTPBasicAuth(Variable.get('cio_site_id'), Variable.get('cio_api_key'))
 
     cio_response = requests.post(
@@ -104,7 +99,7 @@ def processDeleteRequests(capi_token:str, delete_request:Dict[str, Any]) -> None
         },
         data=json.dumps({
           'type': 'person',
-          'identifiers': identifiers,
+          'identifiers': {'id': user_id},
           'action': 'delete'
         })
       )
@@ -326,11 +321,10 @@ def processDeleteRequests(capi_token:str, delete_request:Dict[str, Any]) -> None
   # process_user_deletes task group implementation
   capi_delete = deleteUserCombinedAPI(capi_token, delete_request)
   airtable_delete = deleteUserAirtable(delete_request)
-  cio_email_delete = deleteUserCustomerIO(delete_request, 'email')
-  cio_user_id_delete = deleteUserCustomerIO(delete_request, 'id')
+  cio_delete = deleteUserCustomerIO(delete_request)
   typeform_delete = deleteUserTypeform(delete_request)
 
   closed_ticket = updateZendeskTicketToClosed(delete_request)
   zendesk_delete = deleteUserZendesk(closed_ticket['zendesk_requester_id'])
 
-  chain([airtable_delete, cio_email_delete, cio_user_id_delete, typeform_delete], capi_delete, closed_ticket, zendesk_delete)
+  chain([airtable_delete, cio_delete, typeform_delete], capi_delete, closed_ticket, zendesk_delete)
