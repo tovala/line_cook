@@ -37,7 +37,7 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
         'meals_per_order_amazon': mealsPerOrderAssumptionsParam('Amazon', 5.200),
         'meals_per_order_costco': mealsPerOrderAssumptionsParam('Costco', 5.000),
         'meals_per_order_other': mealsPerOrderAssumptionsParam('Other', 5.200),
-        'six_week_attach_rates_d2c_not_holiday': sixWeekAttachRateParam('D2C Not Holiday', [0.721, 0.188, 0.026, 0.010, 0.010, 0.000]),
+        'six_week_attach_rates_d2c_non_holiday': sixWeekAttachRateParam('D2C Non-Holiday', [0.721, 0.188, 0.026, 0.010, 0.010, 0.000]),
         'six_week_attach_rates_d2c_holiday': sixWeekAttachRateParam('D2C Holiday', [0.704, 0.109, 0.061, 0.023, 0.029, 0.021]),
         'six_week_attach_rates_sale': sixWeekAttachRateParam('Sale', [0.704, 0.109, 0.061, 0.023, 0.029, 0.021]),
         'six_week_attach_rates_amazon': sixWeekAttachRateParam('Amazon', [0.000, 0.000, 0.200, 0.050, 0.000, 0.000]),
