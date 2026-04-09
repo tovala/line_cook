@@ -1,13 +1,8 @@
 import os
 
-from airflow.sdk import dag, chain, task_group, Param
+from airflow.sdk import chain, task_group
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
-from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
 
-from common.slack_notifications import slack_param
-from cohort_model.snapshot_to_s3_task_group import snapshotSnowflakeToS3
-from cohort_model.default_inputs import LOOKBACK_ADJUSTMENT_WINDOW, LONGTAIL_WEEKLY_RETENTION_MULTIPLIER
-from cohort_model.cohort_model_params import mealsPerOrderAssumptionsParam, sixWeekAttachRateParam
 
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
