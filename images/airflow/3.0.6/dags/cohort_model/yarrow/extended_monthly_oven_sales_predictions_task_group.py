@@ -1,0 +1,41 @@
+
+from airflow.sdk import chain, task_group
+from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+
+from common.extended_operators import TemplatedCopyFromExternalStageToSnowflakeOperator
+
+@task_group(group_id='extended_monthly_oven_sales_predictions')
+def extendedMonthlyOvenSalesPredictions(table: str, table_columns_file: str):
+  '''Retention Curves
+
+  Description: Current State for V1. Pull manual retention curve csv from S3, create aggregate retention curve for each cohort.
+
+  Schedule: TBD
+
+  Dependencies:
+
+  Variables:
+
+  '''
+  create_table = SQLExecuteQueryOperator(
+    task_id='create_table', 
+    conn_id='snowflake', 
+    sql='create_table.sql',
+    params={
+      'table': table,
+      'table_columns_file': table_columns_file
+    }
+  )
+
+
+  copy_from_s3 = TemplatedCopyFromExternalStageToSnowflakeOperator(
+    task_id='copy_from_s3', 
+    snowflake_conn_id='snowflake',
+    stage='{{ params.database }}.{{ params.schema }}.{{ params.stage }}',
+    file_format='{{ params.database }}.{{ params.schema }}.{{ params.file_format_name }}',
+    table='{{ params.database }}.{{ params.schema }}.%s' % (table),
+    files=['extended_monthly_sales_predictions.csv'],
+    copy_options='MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE'
+  )
+
+  chain(create_table, copy_from_s3)
