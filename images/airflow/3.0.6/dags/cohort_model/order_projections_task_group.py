@@ -1,3 +1,4 @@
+from functools import reduce
 from typing import List, Dict
 import ast
 import polars as pl
@@ -22,7 +23,7 @@ def fetch_all_future_term_cohort_age(cursor):
 
 @task_group(group_id='order_projections')
 def orderProjections() -> None:
-
+    
   @task
   def computeOrderProjections(projection_terms_array: List[int], cohort_age_dict: Dict[str, List[int]], **context):
     dag_params = context['params']
@@ -31,16 +32,14 @@ def orderProjections() -> None:
     lookback_window = dag_params.get('lookback_adjustment_window')
     longtail_value = dag_params.get('longtail_weekly_retention_multiplier')
 
-    # Set up dataframes from local data
-    projection_terms_vector = pl.Series('projection_terms', projection_terms_array)
-
 
     hook = SnowflakeHook(snowflake_conn_id='snowflake')
     conn = hook.get_conn()
     cursor = conn.cursor()
 
-    # Set Up dataframes from Snowflake Queries
+    cohort_age_matrix = pl.DataFrame(cohort_age_dict).transpose(include_header=True, header_name='COHORT', column_names = projection_terms_array).cast({'COHORT': pl.Int64})
 
+    # Set Up dataframes from Snowflake Queries
     # fetch aggregate order retention curve generated for this run as a DataFrame
     agg_order_retention_curves_arrow_table = cursor.execute(f'''SELECT *
     FROM { database }."{ runtime_schema }".AGGREGATE_ORDER_RETENTION_CURVES;
@@ -64,6 +63,33 @@ def orderProjections() -> None:
 
     inital_order_values_by_cohort_matrix = pl.from_arrow(init_order_val_arrow_table)
 
+    # fetch cohort ages during the lookback window terms
+    lookback_cohort_age_arrow_table  = cursor.execute(f'''WITH lookback_cohort_age AS (
+    SELECT 
+      cohort
+      , term_id
+      , cohort_age
+    FROM { database }."{ runtime_schema }".cohort_age
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY cohort ORDER BY term_id DESC)<= { lookback_window }
+    )
+    SELECT 
+      *
+    FROM lookback_cohort_age PIVOT (MIN(cohort_age) FOR term_id IN (ANY ORDER BY term_id)) ORDER BY cohort;
+    ''').fetch_arrow_all()
+
+    lookback_cohort_age_matrix = pl.from_arrow(lookback_cohort_age_arrow_table)
+      
+    lookback_all_data = pl.concat([lookback_cohort_age_matrix, agg_order_retention_curves, inital_order_values_by_cohort_matrix], how='align')
+    
+    lookback_projected_order_counts = lookback_all_data.select(
+      pl.col('COHORT')
+      ,get_projected_order_counts_expr(longtail_value=longtail_value, col_regex='^\d+$')
+    ).select(
+      pl.col('COHORT')
+      ,PROJECTED_ORDER_COUNTS_TOTAL = pl.sum_horizontal(pl.exclude('COHORT'))
+    )
+
+    # Calculate Correction Factor
     # fetch total order count within lookback window
     lookback_order_sum_arrow_table = cursor.execute(f'''WITH lookback as (
     SELECT 
@@ -80,45 +106,48 @@ def orderProjections() -> None:
 
     lookback_order_sum_by_cohort_matrix = pl.from_arrow(lookback_order_sum_arrow_table)
 
-    # get retention curve values based on cohort age
-    all_cohort_projections = []
-    column_names = [f'TERM_{t}' for t in projection_terms_array]
-    for cohort, age_array in cohort_age_dict.items():
+    correction_factor_order_counts = pl.concat([lookback_order_sum_by_cohort_matrix, lookback_projected_order_counts], how='align')
 
-      projections = []
-      cohort_retention_curve = agg_order_retention_curves.filter(pl.col('COHORT') == int(cohort))
+    correction_factor_matrix = correction_factor_order_counts.select(
+      pl.col('COHORT')
+      ,pl.when(pl.col('ACTUAL_ORDER_COUNTS_TOTAL').is_not_null())
+      .then(pl.col('ACTUAL_ORDER_COUNTS_TOTAL')/pl.col('PROJECTED_ORDER_COUNTS_TOTAL'))
+      .otherwise(1).alias('CORRECTION_FACTOR')
+    )
 
-      try:
-        initial_order_count = inital_order_values_by_cohort_matrix.filter(pl.col('COHORT') == int(cohort)).item(0, 'INIT_ORDER_VAL')
-      except IndexError:
-        initial_order_count = 0
-      
-      for age in age_array:
-        if age < 0:
-          projections.append(None)
-        elif age <= 78:
-          if cohort_retention_curve.is_empty():
-            proj = -1
-          else:
-            proj = cohort_retention_curve.item(0, f'AGG_WEEK_{ age }') * initial_order_count
-          projections.append(proj) 
-        else:
-          if cohort_retention_curve.is_empty():
-            proj = -1
-          else:
-            proj = (agg_order_retention_curves.item(0, 'AGG_WEEK_78') * (longtail_value ** (age - 78))) * initial_order_count
-          projections.append(proj)
-
-      cohort_row = {'cohort': cohort, **dict(zip(column_names, projections))}
-      all_cohort_projections.append(cohort_row)
-
+    all_data = pl.concat([cohort_age_matrix, agg_order_retention_curves, inital_order_values_by_cohort_matrix], how='align')
     
+    projected_order_counts = all_data.select(
+      pl.col('COHORT')
+      ,get_projected_order_counts_expr(longtail_value=longtail_value, col_regex='^TERM_\d+$')
+    )
 
-    order_projections_matrix = pl.from_dicts(all_cohort_projections)
+    # fetch holiday skip adjustments
+    skip_adjustment_arrow_table = cursor.execute(f'''SELECT DISTINCT
+      'TERM_' || term_id::STRING AS term_id
+      , 1 + holiday_skip_adjustment AS holiday_skip_multiplier
+    FROM { database }.mugwort.skip_adjustments 
+    WHERE term_id BETWEEN 
+      (SELECT MIN(term_id) FROM { database }.mugwort.future_terms) -- cohort model prediction starting term (first future term)
+    AND 
+      (SELECT MAX(term_id) FROM { database }.mugwort.combined_oven_sales) -- cohort model prediction ending term (last term with predicted oven sales)
+    ORDER BY term_id;
+    ''').fetch_arrow_all()
 
-    print(order_projections_matrix)
+    skip_adjustment_matrix = pl.from_arrow(skip_adjustment_arrow_table)
+
+    print(skip_adjustment_matrix)
+    print(correction_factor_matrix)
+    print(projected_order_counts)
     
-
+    projected_order_counts_transpose = projected_order_counts.select(
+      pl.when(pl.col('^TERM_\d+$') < 0).then(None).otherwise(pl.col('^TERM_\d+$')).name.keep()
+    ).transpose() 
+    final_order_projections_transpose = projected_order_counts_transpose * skip_adjustment_matrix.get_column('HOLIDAY_SKIP_MULTIPLIER') * correction_factor_matrix.get_column('CORRECTION_FACTOR')
+    final_order_projections = final_order_projections_transpose.transpose(column_names=projection_terms_array)
+    
+    print(final_order_projections)
+    
 
   projection_terms_array = SQLExecuteQueryOperator(
     task_id='get_projection_terms',
@@ -137,7 +166,16 @@ def orderProjections() -> None:
   compute_order_projections = computeOrderProjections(projection_terms_array.output, cohort_age_dict.output)
 
   chain(projection_terms_array, cohort_age_dict, compute_order_projections)
-    
 
+
+
+def get_projected_order_counts_expr(longtail_value: float, col_regex: str):
+  # set up conditional logic to get point from agg retention curve
+  projected_order_counts_expr = pl.when(pl.col(col_regex) > 78).then((longtail_value ** (pl.col(col_regex).cast(pl.Int64) - 78)) * pl.col('AGG_WEEK_78') * pl.col('INIT_ORDER_VAL'))
   
+  for week_num in range(79):
+    projected_order_counts_expr.when(pl.col(col_regex) == week_num).then(pl.col(f'AGG_WEEK_{week_num}') * pl.col('INIT_ORDER_VAL'))
   
+  projected_order_counts_expr = projected_order_counts_expr.otherwise(pl.col(col_regex)).name.keep()
+
+  return projected_order_counts_expr
