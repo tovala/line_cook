@@ -8,7 +8,8 @@ WITH last_known_age AS (SELECT
   cohort
   , term_id AS last_known_term
   , cohort_age AS last_known_term_age
-FROM "{{ params.runtime_schema_prefix }}_{{ run_id }}".COHORT_AGE WHERE term_id = (SELECT MAX(term_id) FROM "{{ params.runtime_schema_prefix }}_{{ run_id }}".COHORT_AGE)),
+FROM "{{ params.runtime_schema_prefix }}_{{ run_id }}".COHORT_AGE 
+WHERE term_id = (SELECT MAX(term_id) FROM "{{ params.runtime_schema_prefix }}_{{ run_id }}".COHORT_AGE)),
 all_model_cohorts AS (
 SELECT 
     COALESCE(lka.cohort, ft.cohort) as cohort
