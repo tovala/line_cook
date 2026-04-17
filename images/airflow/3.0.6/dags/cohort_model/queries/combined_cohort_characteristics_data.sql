@@ -9,17 +9,23 @@ AS
     , CASE 
       WHEN rcd.on_commitment::BOOLEAN 
       THEN ocm.commitment
-      WHEN NOT rcd.on_commitment::BOOLEAN THEN ocm.non_commitment
+      WHEN NOT rcd.on_commitment::BOOLEAN
+      THEN ocm.non_commitment
     END AS on_commitment_ratio
     , CASE 
-      WHEN rcd.price_bucket_id = 1 THEN pbm."1"
-      WHEN rcd.price_bucket_id = 2 THEN pbm."2"
-      WHEN rcd.price_bucket_id = 3 THEN pbm."3"
+      WHEN rcd.price_bucket_id = 1
+      THEN pbm."1"
+      WHEN rcd.price_bucket_id = 2
+      THEN pbm."2"
+      WHEN rcd.price_bucket_id = 3
+      THEN pbm."3"
       ELSE NULL
     END AS price_bucket_ratio
     , CASE 
-      WHEN NOT rcd.on_commitment::BOOLEAN AND rcd.price_bucket_id = 4 THEN cmur.unknown_cohort_characteristics
-      WHEN rcd.on_commitment::BOOLEAN AND rcd.price_bucket_id = 4 THEN NULL -- this isn't modeled in the current retention curves (on commitment but unknown purchase price)
+      WHEN NOT rcd.on_commitment::BOOLEAN AND rcd.price_bucket_id = 4 
+      THEN cmur.unknown_cohort_characteristics
+      WHEN rcd.on_commitment::BOOLEAN AND rcd.price_bucket_id = 4 
+      THEN NULL -- this isn't modeled in the current retention curves (on commitment but unknown purchase price)
       ELSE cmur.known_cohort_characteristics
     END AS known_unknown_multiplier
     , COALESCE(on_commitment_ratio * price_bucket_ratio * known_unknown_multiplier, known_unknown_multiplier) AS percentage_of_cohort -- if known characteristics, use the calculated percent of cohort, else use unkown characteristics multiplier
