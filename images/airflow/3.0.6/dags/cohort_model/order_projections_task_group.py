@@ -153,6 +153,7 @@ def orderProjections() -> None:
     task_id='get_cohort_age_dict',
     conn_id='snowflake',
     sql='queries/dataframes/future_term_cohort_age_matrix.sql',
+    split_statements=True,
     handler=fetch_all_future_term_cohort_age
   )
 
