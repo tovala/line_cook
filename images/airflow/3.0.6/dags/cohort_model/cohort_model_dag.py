@@ -1,7 +1,7 @@
 import os
 from pendulum import duration
 
-from airflow.sdk import dag, chain, task_group, Param, task
+from airflow.sdk import dag, chain, Param
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
 

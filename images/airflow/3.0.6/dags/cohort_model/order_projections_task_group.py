@@ -1,8 +1,6 @@
-from functools import reduce
 from typing import List, Dict
 import ast
 import polars as pl
-import numpy as np
 
 from airflow.sdk import task_group, chain, task
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
@@ -10,16 +8,6 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 from common.sql_operator_handlers import fetch_results_array
 
-
-def fetch_all_future_term_cohort_age(cursor):
-  cohort_future_term_age_dict = {}
-  results = cursor.fetchall()
-  for row in results:
-    key = row[0]
-    val_array = ast.literal_eval(row[1])
-    cohort_future_term_age_dict |= {key: val_array}
-
-  return cohort_future_term_age_dict
 
 @task_group(group_id='order_projections')
 def orderProjections() -> None:
@@ -157,7 +145,7 @@ def orderProjections() -> None:
   projection_terms_array = SQLExecuteQueryOperator(
     task_id='get_projection_terms',
     conn_id='snowflake',
-    sql='queries/dataframes/prediction_terms_vector.sql',
+    sql='queries/dataframes/projection_terms_vector.sql',
     handler=fetch_results_array
   )
 
@@ -165,6 +153,9 @@ def orderProjections() -> None:
     task_id='get_cohort_age_dict',
     conn_id='snowflake',
     sql='queries/dataframes/future_term_cohort_age_matrix.sql',
+    params={
+      'projection_terms_array': projection_terms_array.output
+    },
     handler=fetch_all_future_term_cohort_age
   )
 
@@ -172,6 +163,18 @@ def orderProjections() -> None:
 
   chain(projection_terms_array, cohort_age_dict, compute_order_projections)
 
+
+### Helper Fns ###
+# Handler for retrieving a Dict[int, List[int]] representing the matrix of cohort age for all terms being projected
+def fetch_all_future_term_cohort_age(cursor):
+  cohort_future_term_age_dict = {}
+  results = cursor.fetchall()
+  for row in results:
+    key = row[0]
+    val_array = ast.literal_eval(row[1])
+    cohort_future_term_age_dict |= {key: val_array}
+
+  return cohort_future_term_age_dict
 
 
 def get_projected_order_counts_expr(longtail_value: float, col_regex: str):
