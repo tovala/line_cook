@@ -16,7 +16,13 @@ SELECT
     , COALESCE(last_known_term, ft.cohort) AS last_known_term
     , COALESCE(last_known_term_age, 0) AS last_known_term_age
 FROM "{{ params.runtime_schema_prefix }}_{{ run_id }}".FUTURE_COHORT_INITIAL_ORDER_PREDICTIONS AS ft 
-FULL JOIN last_known_age AS lka ON ft.cohort = lka.cohort)
+FULL JOIN last_known_age AS lka ON ft.cohort = lka.cohort),
+projection_terms_array AS (
+    SELECT
+        ARRAY_AGG(term_id) 
+    FROM mugwort.future_terms 
+    WHERE term_id <= (SELECT MAX(term_id) FROM mugwort.combined_oven_sales)
+)
 SELECT cohort,
-TRANSFORM(AS_ARRAY({{ params.projection_terms_array }}), ter INT -> (ter - last_known_term) + last_known_term_age) AS future_term_cohort_age
+TRANSFORM(projection_terms_array, ter INT -> (ter - last_known_term) + last_known_term_age) AS future_term_cohort_age
 FROM all_model_cohorts WHERE cohort IS NOT NULL ORDER BY cohort;
