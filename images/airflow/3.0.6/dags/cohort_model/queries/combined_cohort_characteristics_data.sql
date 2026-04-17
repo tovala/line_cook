@@ -3,11 +3,12 @@ AS
   SELECT 
     rcd.id AS curve_definition_id
     ,rcd.price_bucket_id AS price_bucket_id
-    , rcd.purchASe_month AS purchase_month
+    , rcd.purchase_month AS purchase_month
     , rcd.on_commitment AS on_commitment
     , pmm.cohort AS cohort
     , CASE 
-      WHEN rcd.on_commitment::BOOLEAN THEN ocm.commitment
+      WHEN rcd.on_commitment::BOOLEAN 
+      THEN ocm.commitment
       WHEN NOT rcd.on_commitment::BOOLEAN THEN ocm.non_commitment
     END AS on_commitment_ratio
     , CASE 
