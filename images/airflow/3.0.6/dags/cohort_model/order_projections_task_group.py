@@ -124,9 +124,6 @@ def orderProjections() -> None:
 
     skip_adjustment_matrix = pl.from_arrow(skip_adjustment_arrow_table)
 
-    print(skip_adjustment_matrix)
-    print(correction_factor_matrix)
-    print(projected_order_counts)
     
     projected_order_counts_transpose = projected_order_counts.select(
       pl.when(pl.col('^TERM_\d+$') < 0).then(None).otherwise(pl.col('^TERM_\d+$')).name.keep()
@@ -136,8 +133,9 @@ def orderProjections() -> None:
 
     final_order_projections = pl.concat([projected_order_counts.select(pl.col('COHORT')), order_projections_corrected], how='horizontal')
     
+    final_order_projections_csv = final_order_projections.write_csv('cohort_model_v1_test_2.csv')
     print(final_order_projections)
-    final_order_projections_csv = final_order_projections.write_csv()
+
 
     return final_order_projections_csv
     
@@ -180,8 +178,7 @@ def get_projected_order_counts_expr(longtail_value: float, col_regex: str):
   projected_order_counts_expr = pl.when(pl.col(col_regex) > 78).then((longtail_value ** (pl.col(col_regex).cast(pl.Int64) - 78)) * pl.col('AGG_WEEK_78') * pl.col('INIT_ORDER_VAL'))
   
   for week_num in range(79):
-    projected_order_counts_expr.when(pl.col(col_regex) == week_num).then(pl.col(f'AGG_WEEK_{week_num}') * pl.col('INIT_ORDER_VAL'))
+    projected_order_counts_expr = projected_order_counts_expr.when(pl.col(col_regex) == week_num).then(pl.col(f'AGG_WEEK_{week_num}') * pl.col('INIT_ORDER_VAL'))
   
   projected_order_counts_expr = projected_order_counts_expr.otherwise(pl.col(col_regex)).name.keep()
-
   return projected_order_counts_expr
