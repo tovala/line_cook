@@ -113,7 +113,7 @@ def orderProjections() -> None:
     # fetch holiday skip adjustments
     skip_adjustment_arrow_table = cursor.execute(f'''SELECT DISTINCT
       'TERM_' || term_id::STRING AS term_id
-      , 1 + holiday_skip_adjustment AS holiday_skip_multiplier
+      , 1 + skip_adjustment AS holiday_skip_multiplier
     FROM { database }.mugwort.skip_adjustments 
     WHERE term_id BETWEEN 
       (SELECT MIN(term_id) FROM { database }.mugwort.future_terms) -- cohort model prediction starting term (first future term)
@@ -133,11 +133,22 @@ def orderProjections() -> None:
 
     final_order_projections = pl.concat([projected_order_counts.select(pl.col('COHORT')), order_projections_corrected], how='horizontal')
     
-    final_order_projections_csv = final_order_projections.write_csv('cohort_model_v1_test_2.csv')
+    
+    
+    cohort_age_matrix.write_csv('cm_review/cohort_age_input.csv')
+
+    lookback_projected_order_counts.write_csv('cm_review/lookback_projected.csv')
+    lookback_order_sum_by_cohort_matrix.write_csv('cm_review/lookback_actual.csv')
+
+    agg_order_retention_curves.write_csv('cm_review/retention_curves.csv')
+    inital_order_values_by_cohort_matrix.write_csv('cm_review/inital_orders.csv')
+    skip_adjustment_matrix.write_csv('cm_review/skip_adj.csv')
+    correction_factor_matrix.write_csv('cm_review/correction_factor.csv')
+    projected_order_counts.write_csv('cm_review/projected_order_counts_step_1.csv')
+    order_projections_skip_adj.write_csv('cm_review/projected_order_counts_w_skips_step_2.csv')
+    final_order_projections.write_csv('cm_review/projected_order_counts_final_step_3.csv')
     print(final_order_projections)
 
-
-    return final_order_projections_csv
     
 
   projection_terms_array = SQLExecuteQueryOperator(

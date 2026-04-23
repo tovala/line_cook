@@ -6,19 +6,19 @@ WITH sales_splits AS (
     COALESCE(cohort_id, term_id) AS cohort
     ,SUM(
       CASE 
-        WHEN is_sale_period AND NOT is_holiday 
+        WHEN is_sale_period
         THEN projected_d2c_sales 
         ELSE 0 
       END) AS sale_d2c_total_sales -- for each day of sales in that week, add the daily d2c sales prediction to the sum of d2c sale orders for week when the is_sale_period flag is set
+    --,SUM(
+    --  CASE 
+    --    WHEN NOT is_sale_period
+    --    THEN projected_d2c_sales
+    --    ELSE 0
+    --  END) AS holiday_d2c_total_sales -- for each day of sales in that week, add the daily d2c sales prediction to the sum of d2c holiday orders for week when the is_holiday flag is set
     ,SUM(
       CASE 
-        WHEN is_holiday AND NOT is_sale_period
-        THEN projected_d2c_sales
-        ELSE 0
-      END) AS holiday_d2c_total_sales -- for each day of sales in that week, add the daily d2c sales prediction to the sum of d2c holiday orders for week when the is_holiday flag is set
-    ,SUM(
-      CASE 
-        WHEN NOT is_sale_period AND NOT is_holiday
+        WHEN NOT is_sale_period
         THEN projected_d2c_sales
         ELSE 0
       END) AS non_holiday_d2c_total_sales -- for each day of sales in that week, add the daily d2c sales prediction to the sum of non-holiday d2c orders when no special flags are set
@@ -36,11 +36,11 @@ six_week_vectors AS (
         (ORDER BY cohort
         ROWS BETWEEN 5 PRECEDING AND CURRENT ROW)
     ) AS sale_d2c_prev_6_attach_weeks
-    ,ARRAY_REVERSE(
-        ARRAY_AGG(holiday_d2c_total_sales) OVER  
-        (ORDER BY cohort
-        ROWS BETWEEN 5 PRECEDING AND CURRENT ROW)
-    ) AS holiday_d2c_prev_6_attach_weeks
+    --,ARRAY_REVERSE(
+    --    ARRAY_AGG(holiday_d2c_total_sales) OVER  
+    --    (ORDER BY cohort
+    --    ROWS BETWEEN 5 PRECEDING AND CURRENT ROW)
+    --) AS holiday_d2c_prev_6_attach_weeks
     ,ARRAY_REVERSE(
         ARRAY_AGG(non_holiday_d2c_total_sales) OVER
         (ORDER BY cohort
@@ -77,10 +77,10 @@ init_order_split AS (
       sale_d2c_prev_6_attach_weeks::VECTOR(FLOAT, 6),
       {{ params.six_week_attach_rates_sale }}::VECTOR(FLOAT, 6)
     ) as init_sale_order_count
-    ,VECTOR_INNER_PRODUCT(
-      holiday_d2c_prev_6_attach_weeks::VECTOR(FLOAT, 6),
-      {{ params.six_week_attach_rates_d2c_holiday }}::VECTOR(FLOAT, 6)
-    ) as init_holiday_order_count
+    --,VECTOR_INNER_PRODUCT(
+    --  holiday_d2c_prev_6_attach_weeks::VECTOR(FLOAT, 6),
+    --  {{ params.six_week_attach_rates_d2c_holiday }}::VECTOR(FLOAT, 6)
+    --) as init_holiday_order_count
     ,VECTOR_INNER_PRODUCT(
       non_holiday_d2c_prev_6_attach_weeks::VECTOR(FLOAT, 6),
       {{ params.six_week_attach_rates_d2c_non_holiday }}::VECTOR(FLOAT, 6)
@@ -95,5 +95,5 @@ init_order_split AS (
 -- **TOTAL PREDICTED INITIAL ORDERS FOR A COHORT** is the Sum( v_s * v_r for [non_holiday_d2c, sale_d2c, holiday_d2c, amazon])
 SELECT
   cohort
-  ,(init_sale_order_count + init_holiday_order_count + init_non_holiday_order_count + init_amazon_order_count) as init_order_val
+  ,(init_sale_order_count + init_non_holiday_order_count + init_amazon_order_count) as init_order_val -- TODO: add back holiday 
 FROM init_order_split;
