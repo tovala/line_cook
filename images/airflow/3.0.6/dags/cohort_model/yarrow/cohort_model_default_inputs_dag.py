@@ -6,6 +6,7 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from common.slack_notifications import slack_param
 from cohort_model.yarrow.extended_monthly_oven_sales_predictions_task_group import extendedMonthlyOvenSalesPredictions
 from cohort_model.yarrow.cohort_mix_projections_task_group import cohortMixProjections
+from cohort_model.yarrow.retention_curves_task_group import retentionCurves
 
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
