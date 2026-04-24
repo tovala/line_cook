@@ -6,9 +6,9 @@ from common.extended_operators import TemplatedCopyFromExternalStageToSnowflakeO
 
 @task_group(group_id='extended_monthly_oven_sales_predictions')
 def extendedMonthlyOvenSalesPredictions(table: str, table_columns_file: str):
-  '''Retention Curves
+  '''Extended Monthly Oven Sales Predictions
 
-  Description: Current State for V1. Pull manual retention curve csv from S3, create aggregate retention curve for each cohort.
+  Description: long-term oven sales predictions by month for terms beyond the current growth team oven sales predictions.
 
   Schedule: TBD
 

@@ -1,69 +1,86 @@
-from typing import List, Dict
 import ast
+import os
+from typing import List, Dict
+
 import polars as pl
 
 from airflow.sdk import task_group, chain, task
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+from airflow.providers.amazon.aws.transfers.local_to_s3 import LocalFilesystemToS3Operator
 
-from common.sql_operator_handlers import fetch_results_array
+from cohort_model.common_functions import get_cohort_age_matrix, get_projected_order_counts_expr
 
+AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
 
 @task_group(group_id='order_projections')
-def orderProjections() -> None:
+def orderProjections(projection_terms_array: List[str]) -> None:
     
   @task
-  def computeOrderProjections(projection_terms_array: List[int], cohort_age_dict: Dict[str, List[int]], **context):
+  def computeOrderProjections(projection_terms_array: List[str], **context) -> str:
     dag_params = context['params']
+    run_id = context['run_id']
+    ti = context['ti'] 
+    
+    start_term = ti.xcom_pull(task_ids='get_projection_start_term', key='return_value')
+    end_term = ti.xcom_pull(task_ids='get_projection_end_term', key='return_value')
+
     database = dag_params.get('database')
-    runtime_schema = dag_params.get('runtime_schema_prefix') + '_' + context['run_id']
+    runtime_schema = dag_params.get('runtime_schema_prefix') + '_' + run_id
     lookback_window = dag_params.get('lookback_adjustment_window')
     longtail_value = dag_params.get('longtail_weekly_retention_multiplier')
 
+    local_filename = f'{run_id}/order_projections.csv'
 
     hook = SnowflakeHook(snowflake_conn_id='snowflake')
     conn = hook.get_conn()
     cursor = conn.cursor()
 
-    cohort_age_matrix = pl.DataFrame(cohort_age_dict).transpose(include_header=True, header_name='COHORT', column_names = projection_terms_array).cast({'COHORT': pl.Int64})
+    cohort_age_matrix = get_cohort_age_matrix()
 
     # Set Up dataframes from Snowflake Queries
     # fetch aggregate order retention curve generated for this run as a DataFrame
-    agg_order_retention_curves_arrow_table = cursor.execute(f'''SELECT *
-    FROM { database }."{ runtime_schema }".AGGREGATE_ORDER_RETENTION_CURVES;
-    ''').fetch_arrow_all()
+    agg_order_retention_curves_arrow_table = cursor.execute(
+      f'''SELECT
+            *
+          FROM { database }."{ runtime_schema }".AGGREGATE_ORDER_RETENTION_CURVES;
+      '''
+    ).fetch_arrow_all()
 
     agg_order_retention_curves = pl.from_arrow(agg_order_retention_curves_arrow_table)
 
     # fetch inital order values by cohort
-    init_order_val_arrow_table = cursor.execute(f'''SELECT 
-      cohort
-      ,order_count AS init_order_val 
-    FROM { database }."{ runtime_schema }".HISTORICAL_MEAL_ORDERS
-    WHERE term_id = cohort
-    UNION
-    SELECT 
-      cohort
-      ,init_order_val 
-    FROM { database }."{ runtime_schema }".FUTURE_COHORT_INITIAL_ORDER_PREDICTIONS
-    ORDER BY cohort;
-    ''').fetch_arrow_all()
+    init_order_val_arrow_table = cursor.execute(
+      f'''SELECT 
+            cohort
+            ,order_count AS init_order_val 
+          FROM { database }."{ runtime_schema }".HISTORICAL_MEAL_ORDERS
+          WHERE term_id = cohort
+          UNION
+          SELECT 
+            *
+          FROM { database }.mugwort.FUTURE_COHORT_INITIAL_ORDER_PREDICTIONS
+          ORDER BY cohort;
+      '''
+    ).fetch_arrow_all()
 
     inital_order_values_by_cohort_matrix = pl.from_arrow(init_order_val_arrow_table)
 
     # fetch cohort ages during the lookback window terms
-    lookback_cohort_age_arrow_table  = cursor.execute(f'''WITH lookback_cohort_age AS (
-    SELECT 
-      cohort
-      , term_id
-      , cohort_age
-    FROM { database }."{ runtime_schema }".cohort_age
-    QUALIFY ROW_NUMBER() OVER (PARTITION BY cohort ORDER BY term_id DESC)<= { lookback_window }
-    )
-    SELECT 
-      *
-    FROM lookback_cohort_age PIVOT (MIN(cohort_age) FOR term_id IN (ANY ORDER BY term_id)) ORDER BY cohort;
-    ''').fetch_arrow_all()
+    lookback_cohort_age_arrow_table  = cursor.execute(
+      f'''WITH lookback_cohort_age AS (
+            SELECT 
+              cohort
+              , term_id
+              , cohort_age
+            FROM { database }."{ runtime_schema }".cohort_age
+            QUALIFY ROW_NUMBER() OVER (PARTITION BY cohort ORDER BY term_id DESC)<= { lookback_window }
+          )
+          SELECT 
+            *
+          FROM lookback_cohort_age PIVOT (MIN(cohort_age) FOR term_id IN (ANY ORDER BY term_id)) ORDER BY cohort;
+      '''
+    ).fetch_arrow_all()
 
     lookback_cohort_age_matrix = pl.from_arrow(lookback_cohort_age_arrow_table)
       
@@ -79,18 +96,22 @@ def orderProjections() -> None:
 
     # Calculate Correction Factor
     # fetch total order count within lookback window
-    lookback_order_sum_arrow_table = cursor.execute(f'''WITH lookback as (
-    SELECT 
-      *
-    FROM { database }."{ runtime_schema}".historical_meal_orders qualify ROW_NUMBER() OVER (PARTITION BY cohort ORDER BY term_id desc)<= { lookback_window })
-    SELECT 
-        cohort
-        ,CASE WHEN COUNT(term_id) = { lookback_window } 
-          THEN SUM(order_count)
-          ELSE NULL 
-        END AS actual_order_counts_total
-    FROM lookback GROUP BY cohort ORDER BY cohort;
-    ''').fetch_arrow_all()
+    lookback_order_sum_arrow_table = cursor.execute(
+      f'''WITH lookback as (
+            SELECT 
+              *
+            FROM { database }."{ runtime_schema}".historical_meal_orders
+            QUALIFY ROW_NUMBER() OVER (PARTITION BY cohort ORDER BY term_id desc)<= { lookback_window }
+          )
+          SELECT 
+            cohort
+            ,CASE WHEN COUNT(term_id) = { lookback_window } 
+                  THEN SUM(order_count)
+                  ELSE NULL 
+            END AS actual_order_counts_total
+          FROM lookback GROUP BY cohort ORDER BY cohort;
+      '''
+    ).fetch_arrow_all()
 
     lookback_order_sum_by_cohort_matrix = pl.from_arrow(lookback_order_sum_arrow_table)
 
@@ -111,16 +132,15 @@ def orderProjections() -> None:
     )
 
     # fetch holiday skip adjustments
-    skip_adjustment_arrow_table = cursor.execute(f'''SELECT DISTINCT
-      'TERM_' || term_id::STRING AS term_id
-      , 1 + skip_adjustment AS holiday_skip_multiplier
-    FROM { database }.mugwort.skip_adjustments 
-    WHERE term_id BETWEEN 
-      (SELECT MIN(term_id) FROM { database }.mugwort.future_terms) -- cohort model prediction starting term (first future term)
-    AND 
-      (SELECT MAX(term_id) FROM { database }.mugwort.combined_oven_sales) -- cohort model prediction ending term (last term with predicted oven sales)
-    ORDER BY term_id;
-    ''').fetch_arrow_all()
+    skip_adjustment_arrow_table = cursor.execute(
+      f'''SELECT DISTINCT
+            'TERM_' || term_id::STRING AS term_id
+            , 1 + skip_adjustment AS holiday_skip_multiplier
+          FROM { database }.mugwort.skip_adjustments 
+          WHERE term_id BETWEEN { start_term } AND { end_term }
+          ORDER BY term_id;
+      '''
+    ).fetch_arrow_all()
 
     skip_adjustment_matrix = pl.from_arrow(skip_adjustment_arrow_table)
 
@@ -132,64 +152,18 @@ def orderProjections() -> None:
     order_projections_corrected = order_projections_skip_adj.select(pl.col('^TERM_\d+$')) * correction_factor_matrix.get_column('CORRECTION_FACTOR')
 
     final_order_projections = pl.concat([projected_order_counts.select(pl.col('COHORT')), order_projections_corrected], how='horizontal')
-    
-    
-    
-    cohort_age_matrix.write_csv('cm_review/cohort_age_input.csv')
+    final_order_projections.write_csv(local_filename)
+    return local_filename
 
-    lookback_projected_order_counts.write_csv('cm_review/lookback_projected.csv')
-    lookback_order_sum_by_cohort_matrix.write_csv('cm_review/lookback_actual.csv')
 
-    agg_order_retention_curves.write_csv('cm_review/retention_curves.csv')
-    inital_order_values_by_cohort_matrix.write_csv('cm_review/inital_orders.csv')
-    skip_adjustment_matrix.write_csv('cm_review/skip_adj.csv')
-    correction_factor_matrix.write_csv('cm_review/correction_factor.csv')
-    projected_order_counts.write_csv('cm_review/projected_order_counts_step_1.csv')
-    order_projections_skip_adj.write_csv('cm_review/projected_order_counts_w_skips_step_2.csv')
-    final_order_projections.write_csv('cm_review/projected_order_counts_final_step_3.csv')
-    print(final_order_projections)
-
-    
-
-  projection_terms_array = SQLExecuteQueryOperator(
-    task_id='get_projection_terms',
-    conn_id='snowflake',
-    sql='queries/dataframes/projection_terms_vector.sql',
-    handler=fetch_results_array
+  compute_order_projections = computeOrderProjections(projection_terms_array)
+  
+  order_projections_to_S3 = LocalFilesystemToS3Operator(
+    task_id='order_projections_output',
+    filename=f'{AIRFLOW_HOME}/{compute_order_projections}',
+    dest_key='outputs/{{ run_id }}/order_projections.csv',
+    dest_bucket='tovala-data-cohort-model',
+    replace=True,
   )
 
-  cohort_age_dict = SQLExecuteQueryOperator(
-    task_id='get_cohort_age_dict',
-    conn_id='snowflake',
-    sql='queries/dataframes/future_term_cohort_age_matrix.sql',
-    split_statements=True,
-    handler=fetch_all_future_term_cohort_age
-  )
-
-  compute_order_projections = computeOrderProjections(projection_terms_array.output, cohort_age_dict.output)
-
-  chain(projection_terms_array, cohort_age_dict, compute_order_projections)
-
-
-### Helper Fns ###
-# Handler for retrieving a Dict[int, List[int]] representing the matrix of cohort age for all terms being projected
-def fetch_all_future_term_cohort_age(cursor):
-  cohort_future_term_age_dict = {}
-  results = cursor.fetchall()
-  for row in results:
-    key = row[0]
-    val_array = ast.literal_eval(row[1])
-    cohort_future_term_age_dict |= {key: val_array}
-
-  return cohort_future_term_age_dict
-
-
-def get_projected_order_counts_expr(longtail_value: float, col_regex: str):
-  # set up conditional logic to get point from agg retention curve
-  projected_order_counts_expr = pl.when(pl.col(col_regex) > 78).then((longtail_value ** (pl.col(col_regex).cast(pl.Int64) - 78)) * pl.col('AGG_WEEK_78') * pl.col('INIT_ORDER_VAL'))
-  
-  for week_num in range(79):
-    projected_order_counts_expr = projected_order_counts_expr.when(pl.col(col_regex) == week_num).then(pl.col(f'AGG_WEEK_{week_num}') * pl.col('INIT_ORDER_VAL'))
-  
-  projected_order_counts_expr = projected_order_counts_expr.otherwise(pl.col(col_regex)).name.keep()
-  return projected_order_counts_expr
+  chain(compute_order_projections, order_projections_to_S3)
