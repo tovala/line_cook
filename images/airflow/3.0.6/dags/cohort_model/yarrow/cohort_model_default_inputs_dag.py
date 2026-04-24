@@ -4,8 +4,10 @@ from airflow.sdk import dag, chain, Param
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 from common.slack_notifications import slack_param
+
 from cohort_model.yarrow.extended_monthly_oven_sales_predictions_task_group import extendedMonthlyOvenSalesPredictions
 from cohort_model.yarrow.cohort_mix_projections_task_group import cohortMixProjections
+from cohort_model.yarrow.create_default_inputs_from_csv_task_group import defaultInputsFromCSV
 
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
@@ -64,10 +66,13 @@ def cohortModelDefaultInputs():
   )
 
   create_cohort_characteristics_projections = cohortMixProjections()
+
+  create_six_week_attach_rates = defaultInputsFromCSV('OVEN_SALES_SIX_WEEK_ATTACH_RATES', 'six_week_attach_rates.csv')
+  create_meals_per_order_assumptions = defaultInputsFromCSV('OVEN_SALES_MEALS_PER_ORDER_ASSUMPTIONS', 'meals_per_order_assumptions.csv')
   
 
 
-  chain(create_file_format, create_cohort_model_inputs_stage, [create_extended_sales_prediction_table, create_cohort_characteristics_projections])
+  chain(create_file_format, create_cohort_model_inputs_stage, [create_extended_sales_prediction_table, create_cohort_characteristics_projections, create_six_week_attach_rates, create_meals_per_order_assumptions])
 
     
 

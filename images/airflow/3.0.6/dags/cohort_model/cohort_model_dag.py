@@ -1,13 +1,14 @@
 import os
+from pendulum import duration
 
-from airflow.sdk import dag, chain, task_group, Param, task
+from airflow.sdk import dag, chain, Param
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
-from airflow.providers.snowflake.transfers.copy_into_snowflake import CopyFromExternalStageToSnowflakeOperator
 
 from common.slack_notifications import slack_param
-from cohort_model.snapshot_to_s3_task_group import snapshotSnowflakeToS3
-from cohort_model.default_inputs import LOOKBACK_ADJUSTMENT_WINDOW, LONGTAIL_WEEKLY_RETENTION_MULTIPLIER
-from cohort_model.cohort_model_params import mealsPerOrderAssumptionsParam, sixWeekAttachRateParam
+from common.sql_operator_handlers import fetch_single_result, fetch_results_array
+from cohort_model.generate_aggregate_curves_task_group import generateAggregateRetentionCurves
+from cohort_model.runtime_queries_task_group import runtimeQueries
+from cohort_model.order_projections_task_group import orderProjections
 
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
@@ -19,28 +20,20 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
     # TODO: add schedule
     # schedule=MultipleCronTriggerTimetable('30 8 * * 1', '25 22 * * 3', timezone='America/Chicago'),
     catchup=False,
+    default_args={
+      'retries': 2,
+      'retry_delay': duration(seconds=2),
+      'retry_exponential_backoff': True,
+      'max_retry_delay': duration(minutes=5),
+    },
     tags=['internal'],
     params={
         'channel_name': slack_param(),
         'database': Param('MASALA', type='string'),
-        'schema': Param('MUGWORT', type='string'),
-        'runtime_schema': Param('COHORT_MODEL_TEMP', type='string'),
-        'refresh_cohort_mix_projections': Param(False, type='boolean'),
-        'refresh_retention_curves': Param(False, type='boolean'),
-        'lookback_adjustment_window': Param(LOOKBACK_ADJUSTMENT_WINDOW, type='number'),
-        'longtail_weekly_retention_multiplier': Param(LONGTAIL_WEEKLY_RETENTION_MULTIPLIER, type='number'),
-        'meals_per_order_d2c_not_holiday': mealsPerOrderAssumptionsParam('D2C Not Holiday', 6.200),
-        'meals_per_order_d2c_holiday': mealsPerOrderAssumptionsParam('D2C Holiday', 5.680),
-        'meals_per_order_sale': mealsPerOrderAssumptionsParam('Sale', 6.000),
-        'meals_per_order_amazon': mealsPerOrderAssumptionsParam('Amazon', 5.200),
-        'meals_per_order_costco': mealsPerOrderAssumptionsParam('Costco', 5.000),
-        'meals_per_order_other': mealsPerOrderAssumptionsParam('Other', 5.200),
-        'six_week_attach_rates_d2c_not_holiday': sixWeekAttachRateParam('D2C Not Holiday', [0.721, 0.188, 0.026, 0.010, 0.010, 0.000]),
-        'six_week_attach_rates_d2c_holiday': sixWeekAttachRateParam('D2C Holiday', [0.704, 0.109, 0.061, 0.023, 0.029, 0.021]),
-        'six_week_attach_rates_sale': sixWeekAttachRateParam('Sale', [0.704, 0.109, 0.061, 0.023, 0.029, 0.021]),
-        'six_week_attach_rates_amazon': sixWeekAttachRateParam('Amazon', [0.000, 0.000, 0.200, 0.050, 0.000, 0.000]),
-        'six_week_attach_rates_costco': sixWeekAttachRateParam('Costco', [0.000, 0.000, 0.150, 0.100, 0.000, 0.000]),
-        'six_week_attach_rates_other': sixWeekAttachRateParam('Other', [0.000, 0.000, 0.200, 0.050, 0.000, 0.000]),
+        'schema': Param('YARROW', type='string'),
+        'runtime_schema_prefix': Param('COHORT_MODEL', type='string'),
+        'lookback_adjustment_window': Param(5, type='number'),
+        'longtail_weekly_retention_multiplier': Param(0.9945, type='number'),
     },
     template_searchpath = f'{AIRFLOW_HOME}/dags/common/templates'
 )
@@ -55,102 +48,50 @@ def cohortModel():
   Variables:
 
   '''
-
-  INPUT_MODELS = ['actual_oven_sales', 'combined_oven_sales', 'historical_meal_orders', 'projected_oven_sales', 'weekly_meal_and_meal_order_counts']
-  CSV_INPUTS = ['cohort_mix_projections', 'daily_oven_d2c_sales_splits', 'daily_oven_sales_projections', 'meal_retention_curves', 'model_order_retention_curves']
-    
-  #### Custom Task Definitions
-  @task_group(group_id='create_temp_table')
-  def createTempTable(model: str) -> None:
-    create_empty_model = SQLExecuteQueryOperator(
-      task_id='create_cohort_models', 
-      conn_id='snowflake', 
-      sql='create_table.sql',
-      params={
-        'table': model,
-        'table_columns_file': f'queries/{model}/table_columns.sql'
-      }
-    )
-
-    load_model_default = SQLExecuteQueryOperator(
-      task_id='load_model_default', 
-      conn_id='snowflake', 
-      sql='create_table.sql',
-      params={
-        'table': model,
-        'table_columns_file': f'queries/{model}/default_input.sql'
-      }
-    )
-          
-    # TODO: Add S3 override here - maybe add an override param? like a list of models w override - set comparison to standard list to avoid doing both?
-    # copy_from_csv = CopyFromExternalStageToSnowflakeOperator.partial(
-    #   task_id='copyTable', 
-    #   snowflake_conn_id='snowflake',
-    #   stage='MASALA.CHILI_V2.cohort_model_input_stage',
-    #   file_format="(TYPE = 'csv')",
-    #   params={
-    #       'table': f'CHILI_V2.{model}',
-    #       'pattern': f'.*{model}.*.parquet'
-    #   }
-    # )
-
-    chain(create_empty_model, load_model_default)
-
-  #### Task Instances
-  cohort_model_input_stage = SQLExecuteQueryOperator(
-    task_id='createCohortModelInputStage', 
-    conn_id='snowflake', 
-    sql='create_stage.sql',
-    params={
-      'parent_database': 'MASALA',
-      'schema_name': 'CHILI_V2',
-      'stage_name': 'cohort_model_input_stage',
-      'url': 's3://tovala-data-cohort-model/input/',
-      'storage_integration': 'COHORT_MODEL_STORAGE_INTEGRATION',
-      'file_type': 'csv',
-    },
-  )
-
-  ## TODO: add retention curve task group here - use the cohort model input stage - if refresh flag = True
-
-  ## TODO: add cohort mix projection task group here - use cohort model input stage - if refresh flag = True
-
-  @task.branch
-  def refreshManualInputs(context):
-    # TODO: set up logic for when to trigger the load inputs task groups
-    pass
-
-
-
-  create_temp_schema = SQLExecuteQueryOperator(
-    task_id='create_temp_schema',
+  create_runtime_schema = SQLExecuteQueryOperator(
+    task_id='create_runtime_schema',
     conn_id='snowflake',
-    sql='CREATE SCHEMA IF NOT EXISTS {{ params.schema }};'
+    sql='CREATE SCHEMA IF NOT EXISTS {{ params.database }}."{{ params.runtime_schema_prefix }}_{{ run_id }}";'
+  ).as_setup()
+
+  create_agg_retention_curves = generateAggregateRetentionCurves()
+
+  create_temp_queries = runtimeQueries(default_queries=['historical_meal_orders', 'actual_oven_sales'])
+
+  start_term = SQLExecuteQueryOperator(
+    task_id='get_projection_start_term',
+    conn_id='snowflake',
+    sql='SELECT MIN(term_id) FROM {{ params.database }}.mugwort.future_terms',
+    handler=fetch_single_result
   )
 
-  #create_temp_tables = createTempTable.expand(model=INPUT_MODELS)
+  end_term = SQLExecuteQueryOperator(
+    task_id='get_projection_end_term',
+    conn_id='snowflake',
+    sql='SELECT MAX(term_id) from {{ params.database }}.mugwort.combined_oven_sales',
+    handler=fetch_single_result
+  )
 
-  # TODO: pull input csvs from S3 to tables in temp schema
-  #copy_from_csv = CopyFromExternalStageToSnowflakeOperator.partial(
-  #task_id='copyTable', 
-  #  snowflake_conn_id='snowflake',
-  #  stage='MASALA.CHILI_V2.cohort_model_input_stage',
-  #  file_format="(TYPE = 'csv')",
-  #  params={
-  #    'table': f'CHILI_V2.{model}',
-  #    'pattern': f'.*{model}.*.parquet'
-  #  }
-  #)
+  projection_terms_array = SQLExecuteQueryOperator(
+    task_id='get_projection_terms',
+    conn_id='snowflake',
+    sql='queries/projection_terms_array.sql',
+    handler=fetch_results_array
+  )
+
+  run_order_projections = orderProjections(projection_terms_array.output)
 
   #snapshot_inputs = snapshotSnowflakeToS3()
-
-  drop_temp_schema = SQLExecuteQueryOperator(
-    task_id='drop_temp_schema',
+  
+  delete_runtime_schema = SQLExecuteQueryOperator(
+    task_id='drop_runtime_schema',
     conn_id='snowflake',
-    sql='DROP SCHEMA {{ params.schema }};'
-  )
-    
+    sql='DROP SCHEMA {{ params.database }}."{{ params.runtime_schema_prefix }}_{{ run_id }}";'
+  ).as_teardown()
 
-  chain([create_temp_schema, cohort_model_input_stage], drop_temp_schema)
+  chain([start_term, end_term], projection_terms_array, run_order_projections)
+  chain(create_runtime_schema, [create_temp_queries, create_agg_retention_curves], run_order_projections, delete_runtime_schema)
+
+    
 
 cohortModel()
