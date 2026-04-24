@@ -56,7 +56,7 @@ def cohortModel():
 
   create_agg_retention_curves = generateAggregateRetentionCurves()
 
-  create_temp_queries = runtimeQueries(default_queries=['historical_meal_orders', 'actual_oven_sales', 'future_cohort_initial_order_predictions', 'cohort_age'])
+  create_temp_queries = runtimeQueries(default_queries=['historical_meal_orders', 'actual_oven_sales'])
 
   start_term = SQLExecuteQueryOperator(
     task_id='get_projection_start_term',
@@ -77,12 +77,6 @@ def cohortModel():
     conn_id='snowflake',
     sql='queries/projection_terms_array.sql',
     handler=fetch_results_array
-  )
-
-  cohort_age_matrix = SQLExecuteQueryOperator(
-    task_id='get_cohort_age_matrix',
-    conn_id='snowflake',
-    sql= 'queries/projection_terms_cohort_age_matrix.sql'
   )
 
   run_order_projections = orderProjections(projection_terms_array.output)
