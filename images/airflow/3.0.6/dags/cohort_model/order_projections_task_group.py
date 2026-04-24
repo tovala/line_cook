@@ -15,7 +15,6 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
 
 @task_group(group_id='order_projections')
 def orderProjections(projection_terms_array: List[str]) -> None:
-    
   @task
   def computeOrderProjections(projection_terms_array: List[str], **context) -> str:
     dag_params = context['params']
@@ -30,13 +29,13 @@ def orderProjections(projection_terms_array: List[str]) -> None:
     lookback_window = dag_params.get('lookback_adjustment_window')
     longtail_value = dag_params.get('longtail_weekly_retention_multiplier')
 
-    local_filename = f'{run_id}/order_projections.csv'
+    local_filename = 'order_projections.csv'
 
     hook = SnowflakeHook(snowflake_conn_id='snowflake')
     conn = hook.get_conn()
     cursor = conn.cursor()
 
-    cohort_age_matrix = get_cohort_age_matrix()
+    cohort_age_matrix = get_cohort_age_matrix(start_term=start_term, end_term=end_term)
 
     # Set Up dataframes from Snowflake Queries
     # fetch aggregate order retention curve generated for this run as a DataFrame
@@ -59,7 +58,7 @@ def orderProjections(projection_terms_array: List[str]) -> None:
           UNION
           SELECT 
             *
-          FROM { database }.mugwort.FUTURE_COHORT_INITIAL_ORDER_PREDICTIONS
+          FROM { database }.mugwort.FUTURE_COHORT_INITIAL_ORDER_PROJECTIONS
           ORDER BY cohort;
       '''
     ).fetch_arrow_all()
@@ -73,7 +72,7 @@ def orderProjections(projection_terms_array: List[str]) -> None:
               cohort
               , term_id
               , cohort_age
-            FROM { database }."{ runtime_schema }".cohort_age
+            FROM { database }.mugwort.cohort_age
             QUALIFY ROW_NUMBER() OVER (PARTITION BY cohort ORDER BY term_id DESC)<= { lookback_window }
           )
           SELECT 
@@ -82,13 +81,13 @@ def orderProjections(projection_terms_array: List[str]) -> None:
       '''
     ).fetch_arrow_all()
 
-    lookback_cohort_age_matrix = pl.from_arrow(lookback_cohort_age_arrow_table)
+    lookback_cohort_age_matrix = get_cohort_age_matrix(start_term=start_term, end_term=end_term, lookback_window=lookback_window)
       
     lookback_all_data = pl.concat([lookback_cohort_age_matrix, agg_order_retention_curves, inital_order_values_by_cohort_matrix], how='align')
     
     lookback_projected_order_counts = lookback_all_data.select(
       pl.col('COHORT')
-      ,get_projected_order_counts_expr(longtail_value=longtail_value, col_regex='^\d+$')
+      ,get_projected_order_counts_expr(longtail_value=longtail_value, col_regex='^TERM_\d+$')
     ).select(
       pl.col('COHORT')
       ,PROJECTED_ORDER_COUNTS_TOTAL = pl.sum_horizontal(pl.exclude('COHORT'))
@@ -134,17 +133,19 @@ def orderProjections(projection_terms_array: List[str]) -> None:
     # fetch holiday skip adjustments
     skip_adjustment_arrow_table = cursor.execute(
       f'''SELECT DISTINCT
-            'TERM_' || term_id::STRING AS term_id
+            'TERM_' || ft.term_id::STRING AS term_id
             , 1 + skip_adjustment AS holiday_skip_multiplier
-          FROM { database }.mugwort.skip_adjustments 
-          WHERE term_id BETWEEN { start_term } AND { end_term }
+          FROM { database }.mugwort.skip_adjustments AS sa
+          RIGHT JOIN { database }.mugwort.future_terms AS ft
+          ON sa.term_id = ft.term_id
+          WHERE ft.term_id BETWEEN { start_term } AND { end_term }
+          AND NOT is_skipped_term
           ORDER BY term_id;
       '''
     ).fetch_arrow_all()
-
+    
     skip_adjustment_matrix = pl.from_arrow(skip_adjustment_arrow_table)
 
-    
     projected_order_counts_transpose = projected_order_counts.select(
       pl.when(pl.col('^TERM_\d+$') < 0).then(None).otherwise(pl.col('^TERM_\d+$')).name.keep()
     ).transpose() 
@@ -155,7 +156,6 @@ def orderProjections(projection_terms_array: List[str]) -> None:
     final_order_projections.write_csv(local_filename)
     return local_filename
 
-
   compute_order_projections = computeOrderProjections(projection_terms_array)
   
   order_projections_to_S3 = LocalFilesystemToS3Operator(
@@ -163,7 +163,7 @@ def orderProjections(projection_terms_array: List[str]) -> None:
     filename=f'{AIRFLOW_HOME}/{compute_order_projections}',
     dest_key='outputs/{{ run_id }}/order_projections.csv',
     dest_bucket='tovala-data-cohort-model',
-    replace=True,
+    replace=True
   )
 
   chain(compute_order_projections, order_projections_to_S3)

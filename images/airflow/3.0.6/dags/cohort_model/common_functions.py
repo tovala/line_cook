@@ -1,32 +1,58 @@
 import polars as pl
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
-def get_cohort_age_matrix(start_term: int, end_term: int ) -> pl.DataFrame:
+def get_cohort_age_matrix(start_term: int, end_term: int, **kwargs) -> pl.DataFrame:
   hook = SnowflakeHook(snowflake_conn_id='snowflake')
   conn = hook.get_conn()
   cursor = conn.cursor()
 
-  # fetch cohort age by projection term
-  cohort_age_matrix_arrow_table = cursor.execute(
-    f'''WITH cohort_age AS (
-          SELECT 
-            'TERM_' || term_id AS term
-            ,cohort
-            , cohort_age
-          FROM masala.mugwort.cohort_age
-          WHERE cohort <= { end_term }
-          AND cohort_age IS NOT NULL
-          AND term_id BETWEEN { start_term } AND { end_term }
-        )
-        SELECT 
-            *
-        FROM cohort_age
-        PIVOT 
-            (MIN(cohort_age) FOR term IN (ANY ORDER BY term)) 
-        ORDER BY cohort;'''
-  ).fetch_arrow_all()
+  lookback_window = kwargs.get('lookback_window')
 
-  cohort_age_matrix = pl.from_arrow(cohort_age_matrix_arrow_table)
+  # default - get cohort ages for all terms within the projection window
+  sql_query = f'''SELECT 
+                  'TERM_' || term_id AS term
+                  , cohort
+                  , cohort_age
+                FROM masala.mugwort.cohort_age
+              WHERE cohort <= { end_term }
+              AND cohort_age IS NOT NULL
+              AND term_id BETWEEN { start_term } AND { end_term }
+              ORDER BY term;'''
+  
+  # if lookback_window kwarg is passed, only get cohort age matrix for the lookback window
+  if lookback_window:
+    sql_query = f'''WITH all_cohorts AS (
+                      SELECT 
+                          cohort
+                          , offset_without_holidays 
+                      FROM wash.cohorts 
+                      UNION
+                      SELECT 
+                          cohort
+                          , offset_without_holidays 
+                      FROM mugwort.future_cohorts
+                      WHERE cohort <= { end_term }
+                    )
+                    , projection_terms AS (
+                        SELECT
+                            term_id
+                            , week_without_holidays
+                        FROM wash.cohorts
+                        WHERE term_id < { start_term }
+                        ORDER BY term_id DESC
+                        FETCH FIRST { lookback_window } ROWS
+                    )
+                    SELECT 
+                      'TERM_' || pt.term_id AS term 
+                      , c.cohort
+                      , pt.week_without_holidays + c.offset_without_holidays AS cohort_age
+                    FROM projection_terms pt
+                    CROSS JOIN all_cohorts c;'''
+  
+  cohort_age_matrix_arrow_table = cursor.execute(sql_query).fetch_arrow_all()
+
+  cohort_ages = pl.from_arrow(cohort_age_matrix_arrow_table)
+  cohort_age_matrix = cohort_ages.pivot('TERM', index='COHORT', values='COHORT_AGE')
   return cohort_age_matrix
 
 def get_projected_order_counts_expr(longtail_value: float, col_regex: str):
