@@ -1,12 +1,10 @@
-import ast
 import os
-from typing import List, Dict
+from typing import List
 
 import polars as pl
 
 from airflow.sdk import task_group, chain, task
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.amazon.aws.transfers.local_to_s3 import LocalFilesystemToS3Operator
 
 from cohort_model.common_functions import get_cohort_age_matrix, get_projected_order_counts_expr
