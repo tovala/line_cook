@@ -152,6 +152,16 @@ def orderProjections(projection_terms_array: List[str]) -> None:
 
     final_order_projections = pl.concat([projected_order_counts.select(pl.col('COHORT')), order_projections_corrected], how='horizontal')
     final_order_projections.write_csv(local_filename)
+
+    inital_order_values_by_cohort_matrix.write_csv('test_04-27/inital_orders.csv')
+    projected_order_counts.write_csv('test_04-27/step_1.csv')
+    order_projections_skip_adj.write_csv('test_04-27/step_2.csv')
+    order_projections_corrected.write_csv('test_04-27/step_3.csv')
+    final_order_projections.write_csv('test_04-27/final_orders.csv')
+    correction_factor_matrix.write_csv('test_04-27/corr_factors.csv')
+    correction_factor_order_counts.write_csv('test_04-27/corr_factor_order_counts.csv')
+
+
     return local_filename
 
   compute_order_projections = computeOrderProjections(projection_terms_array)
