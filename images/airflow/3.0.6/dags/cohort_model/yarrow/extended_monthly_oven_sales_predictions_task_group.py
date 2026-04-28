@@ -35,7 +35,7 @@ def extendedMonthlyOvenSalesPredictions(table: str, table_columns_file: str):
     file_format='{{ params.database }}.{{ params.schema }}.{{ params.file_format_name }}',
     table='{{ params.database }}.{{ params.schema }}.%s' % (table),
     files=['extended_monthly_sales_predictions.csv'],
-    copy_options='MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE'
+    copy_options='MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE INCLUDE_METADATA = (loaded_at = METADATA$START_SCAN_TIME)'
   )
 
   chain(create_table, copy_from_s3)

@@ -107,7 +107,7 @@ def cohortModel():
   run_order_projections = orderProjections(projection_terms_array.output)
 
   #snapshot_inputs = snapshotSnowflakeToS3()
-  
+
   delete_runtime_schema = SQLExecuteQueryOperator(
     task_id='drop_runtime_schema',
     conn_id='snowflake',
