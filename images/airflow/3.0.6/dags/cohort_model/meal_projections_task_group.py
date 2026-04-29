@@ -33,6 +33,28 @@ def mealProjections(projection_terms_array: List[str]) -> None:
 
     order_projections_matrix = pl.read_csv(f'{AIRFLOW_HOME}/{order_projections_csv}')
 
+    init_meal_counts = cursor.execute(f'''
+      WITH future_meal_counts AS (
+        SELECT
+            term_id
+            ,SUM((CASE
+                WHEN is_sale_period AND NOT is_d2c_holiday
+                THEN (projected_d2c_sales * {d2c_sale})
+                WHEN is_d2c_holiday
+                THEN (projected_d2c_sales * {d2c_holiday})
+                ELSE (projected_d2c_sales * {d2c_nonholiday})
+            END + (projected_amazon_sales * {amazon}))) AS meal_count
+        from mugwort.combined_oven_sales GROUP BY term_id
+        )
+        select 
+            COALESCE(hmo.cohort, fmc.term_id) AS cohort
+            , COALESCE(hmo.meal_count, fmc.meal_count) AS meal_count
+        from MASALA."COHORT_MODEL_manual__2026-04-27T20:56:27.669400+00:00".HISTORICAL_MEAL_ORDERS hmo
+        FULL JOIN future_meal_counts fmc ON fmc.term_id = hmo.cohort
+        WHERE hmo.term_id = hmo.cohort OR hmo.cohort IS NULL
+        ORDER BY all;
+    ''')
+
 
 
   compute_meal_projections = computeMealProjections(projection_terms_array)

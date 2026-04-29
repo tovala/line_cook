@@ -4,9 +4,9 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 from common.extended_operators import TemplatedCopyFromExternalStageToSnowflakeOperator
 
-@task_group(group_id='extended_monthly_oven_sales_predictions')
-def extendedMonthlyOvenSalesPredictions(table: str, table_columns_file: str):
-  '''Extended Monthly Oven Sales Predictions
+@task_group(group_id='extended_daily_oven_sales_projections')
+def extendedDailyOvenSalesProjections(table: str, table_columns_file: str):
+  '''Extended Daily Oven Sales Projections
 
   Description: long-term oven sales predictions by month for terms beyond the current growth team oven sales predictions.
 
@@ -34,7 +34,7 @@ def extendedMonthlyOvenSalesPredictions(table: str, table_columns_file: str):
     stage='{{ params.database }}.{{ params.schema }}.{{ params.stage }}',
     file_format='{{ params.database }}.{{ params.schema }}.{{ params.file_format_name }}',
     table='{{ params.database }}.{{ params.schema }}.%s' % (table),
-    files=['extended_monthly_sales_predictions.csv'],
+    files=['extended_daily_sales_projections.csv'],
     copy_options='MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE INCLUDE_METADATA = (loaded_at = METADATA$START_SCAN_TIME)'
   )
 

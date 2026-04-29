@@ -64,21 +64,6 @@ def orderProjections(projection_terms_array: List[str]) -> None:
     inital_order_values_by_cohort_matrix = pl.from_arrow(init_order_val_arrow_table)
 
     # fetch cohort ages during the lookback window terms
-    lookback_cohort_age_arrow_table  = cursor.execute(
-      f'''WITH lookback_cohort_age AS (
-            SELECT 
-              cohort
-              , term_id
-              , cohort_age
-            FROM { database }.mugwort.cohort_age
-            QUALIFY ROW_NUMBER() OVER (PARTITION BY cohort ORDER BY term_id DESC)<= { lookback_window }
-          )
-          SELECT 
-            *
-          FROM lookback_cohort_age PIVOT (MIN(cohort_age) FOR term_id IN (ANY ORDER BY term_id)) ORDER BY cohort;
-      '''
-    ).fetch_arrow_all()
-
     lookback_cohort_age_matrix = get_cohort_age_matrix(start_term=start_term, end_term=end_term, lookback_window=lookback_window)
       
     lookback_all_data = pl.concat([lookback_cohort_age_matrix, agg_order_retention_curves, inital_order_values_by_cohort_matrix], how='align')
@@ -150,17 +135,8 @@ def orderProjections(projection_terms_array: List[str]) -> None:
     order_projections_skip_adj = (projected_order_counts_transpose * skip_adjustment_matrix.get_column('HOLIDAY_SKIP_MULTIPLIER')).transpose(column_names=projection_terms_array)
     order_projections_corrected = order_projections_skip_adj.select(pl.col('^TERM_\d+$')) * correction_factor_matrix.get_column('CORRECTION_FACTOR')
 
-    final_order_projections = pl.concat([projected_order_counts.select(pl.col('COHORT')), order_projections_corrected], how='horizontal')
+    final_order_projections = pl.concat([projected_order_counts.select(pl.col('COHORT')), order_projections_corrected.select(pl.all().round())], how='horizontal')
     final_order_projections.write_csv(local_filename)
-
-    inital_order_values_by_cohort_matrix.write_csv('test_04-27/inital_orders.csv')
-    projected_order_counts.write_csv('test_04-27/step_1.csv')
-    order_projections_skip_adj.write_csv('test_04-27/step_2.csv')
-    order_projections_corrected.write_csv('test_04-27/step_3.csv')
-    final_order_projections.write_csv('test_04-27/final_orders.csv')
-    correction_factor_matrix.write_csv('test_04-27/corr_factors.csv')
-    correction_factor_order_counts.write_csv('test_04-27/corr_factor_order_counts.csv')
-
 
     return local_filename
 

@@ -17,7 +17,7 @@ def get_cohort_age_matrix(start_term: int, end_term: int, **kwargs) -> pl.DataFr
               WHERE cohort <= { end_term }
               AND cohort_age IS NOT NULL
               AND term_id BETWEEN { start_term } AND { end_term }
-              ORDER BY term;'''
+              ORDER BY ALL;'''
   
   # if lookback_window kwarg is passed, only get cohort age matrix for the lookback window
   if lookback_window:
@@ -45,9 +45,10 @@ def get_cohort_age_matrix(start_term: int, end_term: int, **kwargs) -> pl.DataFr
                     SELECT 
                       'TERM_' || pt.term_id AS term 
                       , c.cohort
-                      , pt.week_without_holidays + c.offset_without_holidays AS cohort_age
+                      , pt.week_without_holidays + c.offset_without_holidays - 1 AS cohort_age
                     FROM projection_terms pt
-                    CROSS JOIN all_cohorts c;'''
+                    CROSS JOIN all_cohorts c
+                    ORDER BY ALL;'''
   
   cohort_age_matrix_arrow_table = cursor.execute(sql_query).fetch_arrow_all()
 
