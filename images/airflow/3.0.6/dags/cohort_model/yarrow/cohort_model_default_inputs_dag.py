@@ -5,7 +5,7 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 from common.slack_notifications import slack_param
 
-from cohort_model.yarrow.extended_monthly_oven_sales_predictions_task_group import extendedMonthlyOvenSalesPredictions
+from cohort_model.yarrow.extended_daily_oven_sales_projections_task_group import extendedDailyOvenSalesProjections
 from cohort_model.yarrow.cohort_mix_projections_task_group import cohortMixProjections
 from cohort_model.yarrow.create_default_inputs_from_csv_task_group import defaultInputsFromCSV
 
@@ -60,9 +60,9 @@ def cohortModelDefaultInputs():
     sql='create_stage.sql'
   )
 
-  create_extended_sales_prediction_table = extendedMonthlyOvenSalesPredictions(
-    table='extended_monthly_oven_sales_predictions',
-    table_columns_file='queries/extended_monthly_sales_predictions/table_columns.sql'
+  create_extended_sales_prediction_table = extendedDailyOvenSalesProjections(
+    table='extended_daily_oven_sales_projections',
+    table_columns_file='queries/extended_daily_sales_projections/table_columns.sql'
   )
 
   create_cohort_characteristics_projections = cohortMixProjections()
