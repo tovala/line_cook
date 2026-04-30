@@ -1,6 +1,21 @@
+from datetime import timedelta
+
+from airflow.exceptions import AirflowFailException
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator, BranchSQLOperator
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.providers.snowflake.utils.common import enclose_param
-from airflow.sdk import chain, Param, task_group
+from airflow.sdk import chain, Param, task, task_group
+from snowflake.connector.constants import QueryStatus
+
+_SNOWFLAKE_CONN_ID = 'snowflake'
+
+_RUNNING_QUERY_STATUSES = {
+  QueryStatus.RUNNING,
+  QueryStatus.QUEUED,
+  QueryStatus.QUEUED_REPARING_WAREHOUSE,
+  QueryStatus.RESUMING_WAREHOUSE,
+  QueryStatus.NO_DATA,
+}
 
 
 def chili_macros():
@@ -33,7 +48,7 @@ def chili_params(table, stage, columns, storage_integration, s3_url, **kwargs):
     'prefix': Param(None, type=['string', 'null']),
     'columns': Param(columns, type='string'),
     'where_clause': Param(None, type=['string', 'null']),
-    'file_format': Param('JSON', type='string'),
+    'file_format': Param("TYPE = 'JSON'", type='string'),
     'pattern': Param(None, type=['string', 'null'])
   }
 
@@ -48,10 +63,10 @@ def chili_params(table, stage, columns, storage_integration, s3_url, **kwargs):
   return params_dict
 
 
-def _external_stage_select(columns, where_clause, schema, stage, prefix):
+def _external_stage_select(columns, where_clause, database, schema, stage, prefix):
   return f'''SELECT
     {columns}
-  FROM @{schema}.{'/'.join([stage, prefix]) if prefix else stage}
+  FROM @{database}.{schema}.{'/'.join([stage, prefix]) if prefix else stage}
   {'WHERE' + where_clause if where_clause else ''}
   '''
 
@@ -59,45 +74,83 @@ def generate_create_chili_table_query(database, schema, table, columns, where_cl
   clean_run_id = run_id.replace(':', '-').replace('+', '-').replace('.', '-')
 
   return f'''CREATE OR REPLACE TABLE {database}.{schema}.{table} AS (
-    {_external_stage_select(columns, where_clause, schema, stage, clean_run_id)}
+    {_external_stage_select(columns, where_clause, database, schema, stage, clean_run_id)}
   );
   '''
 
 def generate_copy_into_chili_query(database, schema, table, columns, where_clause, stage, prefix, pattern, file_format):
   return f'''COPY INTO {database}.{schema}.{table} FROM (
-    {_external_stage_select(columns, where_clause, schema, stage, prefix)}
+    {_external_stage_select(columns, where_clause, database, schema, stage, prefix)}
   )
   {'PATTERN=' + enclose_param(pattern) if pattern else ''}
-  FILE_FORMAT= (TYPE = '{file_format}');
+  FILE_FORMAT= ({file_format});
   '''
 
 @task_group(group_id='chili_load')
 def chiliLoad():
   table_exists = BranchSQLOperator(
     task_id='check_table_exists',
-    conn_id='snowflake',
+    conn_id=_SNOWFLAKE_CONN_ID,
     sql='check_table_existence.sql',
-    follow_task_ids_if_true='chili_load.chili_copy_into',
+    follow_task_ids_if_true='chili_load.submit_chili_copy_into',
     follow_task_ids_if_false='chili_load.create_chili_table',
   )
 
   create_stage = SQLExecuteQueryOperator(
     task_id='create_stage',
-    conn_id='snowflake', 
+    conn_id=_SNOWFLAKE_CONN_ID,
     sql='create_stage.sql'
   )
 
   create_chili_table = SQLExecuteQueryOperator(
     task_id='create_chili_table',
-    conn_id='snowflake',
+    conn_id=_SNOWFLAKE_CONN_ID,
     sql='{{ generate_create(params.database, params.schema, params.table, params.columns, params.where_clause, params.stage, run_id) }}'
   )
 
-  chili_copy_into = SQLExecuteQueryOperator(
-    task_id='chili_copy_into',
-    conn_id='snowflake',
-    sql='{{ generate_copy_into(params.database, params.schema, params.table, params.columns, params.where_clause, params.stage, params.prefix, params.pattern, params.file_format) }}',
-    trigger_rule='none_failed' # should run in the case when the upstream create_chili_table task is skipped by branching
-  )
+  @task(task_id='submit_chili_copy_into', trigger_rule='none_failed')
+  def submit_chili_copy_into(**context):
+    p = context['params']
+    sql = generate_copy_into_chili_query(
+      database=p['database'], schema=p['schema'], table=p['table'],
+      columns=p['columns'], where_clause=p['where_clause'], stage=p['stage'],
+      prefix=p['prefix'], pattern=p['pattern'], file_format=p['file_format'],
+    )
+    cursor = SnowflakeHook(snowflake_conn_id=_SNOWFLAKE_CONN_ID).get_conn().cursor()
+    cursor.execute_async(sql)
+    return cursor.sfqid
 
-  chain([table_exists, create_stage], create_chili_table, chili_copy_into)
+  @task.sensor(
+    task_id='wait_chili_copy_into',
+    poke_interval=15,
+    timeout=3600,
+    mode='reschedule',
+    retries=3,
+    retry_delay=timedelta(seconds=30),
+  )
+  def wait_chili_copy_into(query_id):
+    status = SnowflakeHook(snowflake_conn_id=_SNOWFLAKE_CONN_ID).get_conn().get_query_status(query_id)
+    if status == QueryStatus.SUCCESS:
+      return True
+    if status in _RUNNING_QUERY_STATUSES:
+      return False
+    raise AirflowFailException(f"Snowflake query {query_id} ended with status {status.name}")
+
+  @task(
+    task_id='cancel_chili_copy_into',
+    trigger_rule='one_failed',
+    retries=2,
+    retry_delay=timedelta(seconds=30),
+  )
+  def cancel_chili_copy_into(query_id):
+    if not query_id:
+      return
+    cursor = SnowflakeHook(snowflake_conn_id=_SNOWFLAKE_CONN_ID).get_conn().cursor()
+    cursor.execute("SELECT SYSTEM$CANCEL_QUERY(%s)", (query_id,))
+
+  query_id = submit_chili_copy_into()
+  wait = wait_chili_copy_into(query_id)
+  cancel = cancel_chili_copy_into(query_id)
+  wait >> cancel
+
+  chain([table_exists, create_stage], create_chili_table, query_id)

@@ -1,7 +1,8 @@
-CREATE STAGE IF NOT EXISTS {{ params.database }}.{{ params.schema }}.{{ params.stage }} 
+CREATE OR REPLACE STAGE {{ params.database }}.{{ params.schema }}.{{ params.stage }}
     URL = {{ params.s3_url }}
-    -- Storage integration objects should only be created once within Snowflake. 
-    -- Re-running/replacing them will require an update to AWS role Trust relationships > Trusted entities policy.
+    -- Note: STORAGE_INTEGRATION objects themselves should only be created once.
+    -- Re-running/replacing them requires updating the AWS role's trust relationships.
+    -- This stage just references the existing integration, so recreating the stage is safe.
     STORAGE_INTEGRATION = {{ params.storage_integration }}
-    FILE_FORMAT = ( TYPE = {{ params.file_format }} )
+    FILE_FORMAT = ( {{ params.file_format }} )
     COPY_OPTIONS = ( ON_ERROR = 'continue' );
