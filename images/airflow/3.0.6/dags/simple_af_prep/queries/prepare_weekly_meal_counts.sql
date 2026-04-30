@@ -41,14 +41,7 @@ SELECT
     , meal 
     , production_cd 
     , cycle_1_production_count
-    -- Note: We are indefinitely running a test (for R&D) where we over-produce each meal by 10 in C2 Chicago. 
-    -- This forces Emily to manually decrement meal counts in Retool right before SimpleAF runs to ensure the algorithm has actual production counts (excluding extra test meal counts)
-    -- We're automating that decrementation with the following CASE statement
-    , CASE
-        WHEN facility_network = 'chicago' 
-        THEN cycle_2_production_count - 5
-        ELSE cycle_2_production_count
-    END AS cycle_2_production_count
+    , cycle_2_production_count
     , is_customer_facing
     , pkey 
 FROM recorded_meal_counts
