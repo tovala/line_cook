@@ -108,7 +108,7 @@ def chiliLoad():
     sql='{{ generate_create(params.database, params.schema, params.table, params.columns, params.where_clause, params.stage, run_id) }}'
   )
 
-  @task(task_id='submit_chili_copy_into', trigger_rule='none_failed')
+  @task(task_id='submit_chili_copy_into', trigger_rule='none_failed', retries=0)
   def submit_chili_copy_into(**context):
     p = context['params']
     sql = generate_copy_into_chili_query(
