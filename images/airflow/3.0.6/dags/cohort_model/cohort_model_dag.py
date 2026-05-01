@@ -33,11 +33,17 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
     tags=['internal'],
     params={
         'channel_name': slack_param(),
-        'database': Param('MASALA', type='string'),
-        'schema': Param('YARROW', type='string'),
-        'runtime_schema_prefix': Param('COHORT_MODEL', type='string'),
-        'lookback_adjustment_window': Param(5, type='number'),
-        'longtail_weekly_retention_multiplier': Param(0.9945, type='number'),
+        'database': Param('MASALA', type='string', title='Snowflake Database Name'),
+        'schema': Param('YARROW', type='string', title='Snowflake Source Schema', description='Static Non-DBT schema containing cohort model inputs. *NOTE: must exist'),
+        'runtime_schema_prefix': Param('COHORT_MODEL', type='string', title='Runtime Snowflake Schema Prefix', description='To ensure unique schema name - format "{prefix}_{run_id}". Schema only exists for the duration of the run.'),
+        # Snapshot Settings Params
+        's3_url': Param('s3://tovala-data-cohort-model/output/', type='string', title= 'S3 Destination URL', section='Snapshot Settings'),
+        'file_format': Param('parquet', type='string', enum=['parquet', 'csv', 'json'], title='Output File Format', description='File type of runtime table snapshots', section='Snapshot Settings'),
+        'stage': Param('cohort_model_snapshot_stage', type='string', title='Snowflake External Stage Name', description='Name of external stage to use for snapshots. Will be created if does not already exist.', section='Snapshot Settings'),
+        'storage_integration': Param('COHORT_MODEL_STORAGE_INTEGRATION', type='string', title='Snowflake/S3 Storage Integration.', description='*NOTE: must exist. See sous-chef repo for existing configured storage integrations.', section='Snapshot Settings'),
+        # Default Assumptions Params
+        'lookback_adjustment_window': Param(5, title='Correction Factor Lookback Window', type='number', section='Default Assumptions'),
+        'longtail_weekly_retention_multiplier': Param(0.9945, title='Rentention Curve Longtail Weekly Multiplier', type='number', section='Default Assumptions'),
     },
     template_searchpath = f'{AIRFLOW_HOME}/dags/common/templates'
 )
