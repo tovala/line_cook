@@ -1,3 +1,4 @@
+import polars as pl
 from airflow.exceptions import AirflowException
 
 def fetch_single_result(cursor):
