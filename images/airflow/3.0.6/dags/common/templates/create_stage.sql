@@ -4,7 +4,7 @@ CREATE STAGE IF NOT EXISTS {{ params.database }}.{{ params.schema }}.{{ params.s
     -- Re-running/replacing them will require an update to AWS role Trust relationships > Trusted entities policy.
     STORAGE_INTEGRATION = {{ params.storage_integration }}
     
-    {% if params.file_format_name %}
+    {% if params.file_format_name is defined %}
     FILE_FORMAT = '{{ params.database}}.{{ params.schema }}.{{ params.file_format_name }}'
     {% else %}
     FILE_FORMAT = ( TYPE = {{ params.file_format }} )

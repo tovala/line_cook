@@ -10,6 +10,7 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from cohort_model.generate_aggregate_curves_task_group import generateAggregateRetentionCurves
 from cohort_model.order_projections_task_group import orderProjections
 from cohort_model.runtime_queries_task_group import runtimeQueries
+from cohort_model.snapshot_to_s3_task_group import snapshotSnowflakeToS3
 from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_WATCHER_EXECUTION_CONFIG, PROD_DBT_PROFILE_CONFIG
 from common.slack_notifications import slack_param
 from common.sql_operator_handlers import fetch_single_result, fetch_results_array
@@ -106,16 +107,19 @@ def cohortModel():
 
   run_order_projections = orderProjections(projection_terms_array.output)
 
-  #snapshot_inputs = snapshotSnowflakeToS3()
+  
 
+  snapshot_inputs = snapshotSnowflakeToS3()
+  
   delete_runtime_schema = SQLExecuteQueryOperator(
     task_id='drop_runtime_schema',
     conn_id='snowflake',
     sql='DROP SCHEMA {{ params.database }}."{{ params.runtime_schema_prefix }}_{{ run_id }}";'
   ).as_teardown()
 
+  
+  chain(create_runtime_schema, [create_temp_queries, create_agg_retention_curves], run_order_projections, snapshot_inputs, delete_runtime_schema)
   chain([start_term, end_term], projection_terms_array, run_order_projections)
-  chain(create_runtime_schema, [create_temp_queries, create_agg_retention_curves], run_order_projections, delete_runtime_schema)
 
     
 
