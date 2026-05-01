@@ -11,8 +11,9 @@ CHILD_DAGS = [
   'chili_box_fillometer',
   'chili_cdn_menu',
   'chili_marketing_incentives',
+  'chili_midline',
   # Append each chili child dag_id here as its table migrates off spice_rack:
-  # device_to_serial, micro_logs, midline, oven_logs, shipment_file,
+  # device_to_serial, micro_logs, oven_logs, shipment_file,
   # tovala_assist, tovala_preset.
 ]
 
