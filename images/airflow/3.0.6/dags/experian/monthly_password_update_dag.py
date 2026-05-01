@@ -3,6 +3,8 @@ from zoneinfo import ZoneInfo
 
 import json
 import re
+import secrets
+import string
 import requests
 from requests.auth import HTTPBasicAuth
 from requests import HTTPError, RequestException
@@ -12,7 +14,6 @@ from airflow.sdk import dag, task, Variable
 from airflow.exceptions import AirflowException
 from common.slack_notifications import bad_boy, good_boy
 
-NEW_PASSWORD_URL = 'https://ss3.experian.com/securecontrol/reset/passwordreset?command=requestnewpassword&application=netconnect&version=1'
 UPDATE_PASSWORD_URL = 'https://ss3.experian.com/securecontrol/reset/passwordreset?newpassword=%s&command=resetpassword&application=netconnect&version=1'
 
 @dag(
@@ -46,27 +47,20 @@ def monthlyExperianPasswordUpdate():
   '''
   @task()
   def fetchNewPassword():
-      """Fetches and parses suggested pw from Experian API
+      """Randomly generates a password s.t. it has at least one uppercase, one lowercase, one symbol, and one digit
       :return: new password suggestion
       """      
-      try:
-        password_html = requests.post(
-          url= NEW_PASSWORD_URL,
-          headers={
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive'
-          },
-          auth=HTTPBasicAuth(Variable.get('experian_username'), Variable.get('experian_password')),
-        )
-
-        # Experian returns this as plain text for some unholy reason
-        new_password = re.findall('^<Response><newPassword>(.*)</newPassword></Response>$', password_html.text)
-        assert len(new_password) == 1
-      except:
-        raise AirflowException('No password returned.')
-
-      return new_password[0]
+      symbols = '!$^*'
+      required = [
+          secrets.choice(string.ascii_uppercase),
+          secrets.choice(string.ascii_lowercase),
+          secrets.choice(string.digits),
+          secrets.choice(symbols),
+      ]
+      remaining = [secrets.choice(string.ascii_letters + string.digits + symbols) for _ in range(12)]
+      password = required + remaining
+      secrets.SystemRandom().shuffle(password)
+      return ''.join(password)
 
   @task()
   def updateSavedPassword(new_password):

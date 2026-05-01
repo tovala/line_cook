@@ -88,7 +88,7 @@ def processDeleteRequests(capi_token:str, delete_request:Dict[str, Any]) -> None
     Output:
       (bool) - True, unless exception is raised.
     '''
-    email = delete_request['Email']
+    user_id = delete_request['UserID']
     cio_auth = HTTPBasicAuth(Variable.get('cio_site_id'), Variable.get('cio_api_key'))
 
     cio_response = requests.post(
@@ -99,9 +99,7 @@ def processDeleteRequests(capi_token:str, delete_request:Dict[str, Any]) -> None
         },
         data=json.dumps({
           'type': 'person',
-          'identifiers': {
-              'email': email
-          },
+          'identifiers': {'id': user_id},
           'action': 'delete'
         })
       )
@@ -329,4 +327,4 @@ def processDeleteRequests(capi_token:str, delete_request:Dict[str, Any]) -> None
   closed_ticket = updateZendeskTicketToClosed(delete_request)
   zendesk_delete = deleteUserZendesk(closed_ticket['zendesk_requester_id'])
 
-  chain([capi_delete, airtable_delete, cio_delete, typeform_delete], closed_ticket, zendesk_delete)
+  chain([airtable_delete, cio_delete, typeform_delete], capi_delete, closed_ticket, zendesk_delete)
