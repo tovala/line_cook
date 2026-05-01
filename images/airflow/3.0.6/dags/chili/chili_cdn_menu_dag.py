@@ -29,7 +29,6 @@ COLUMNS = '''
                    columns=COLUMNS,
                    storage_integration='CDN_MENU_STORAGE_INTEGRATION',
                    s3_url='s3://menu-delivery-files-release-20230727190758320400000002/menu/',
-                   file_format="TYPE = 'JSON'",
                    pattern=r'menu/(.*)\.json'
     )
   },

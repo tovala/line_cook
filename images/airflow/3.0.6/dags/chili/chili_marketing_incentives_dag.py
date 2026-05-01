@@ -36,8 +36,7 @@ COLUMNS = '''
                    stage='marketing_incentives_stage',
                    columns=COLUMNS,
                    storage_integration='MARKETING_INCENTIVES_STORAGE_INTEGRATION',
-                   s3_url='s3://tovala-software-data-release/offeravailability/',
-                   file_format="TYPE = 'JSON'"
+                   s3_url='s3://tovala-software-data-release/offeravailability/'
     )
   },
   template_searchpath=f'{AIRFLOW_HOME}/dags/common/templates',

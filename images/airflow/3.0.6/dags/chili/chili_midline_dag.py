@@ -31,7 +31,6 @@ COLUMNS = '''
                    columns=COLUMNS,
                    storage_integration='MIDLINE_STORAGE_INTEGRATION',
                    s3_url='s3://oven-manufacturing-logs/',
-                   file_format="TYPE = 'JSON'",
                    pattern=r'(midline|(midline[1-9]))/.*\.json'
     )
   },

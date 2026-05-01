@@ -1,7 +1,7 @@
 from pendulum import duration
 
 from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
-from airflow.sdk import dag
+from airflow.sdk import dag, Param
 from airflow.timetables.trigger import CronTriggerTimetable
 from airflow.utils.state import DagRunState
 
@@ -23,6 +23,8 @@ CHILD_DAGS = [
   on_success_callback=good_boy,
   schedule=CronTriggerTimetable('0 */3 * * *', timezone='America/Chicago'),
   catchup=False,
+  # Native rendering preserves the bool type of full_refresh when passed via conf.
+  render_template_as_native_obj=True,
   default_args={
     'retries': 2,
     'retry_delay': duration(seconds=2),
@@ -32,6 +34,7 @@ CHILD_DAGS = [
   tags=['internal', 'data-integration', 'chili'],
   params={
     'channel_name': slack_param(),
+    'full_refresh': Param(False, type='boolean'),
   }
 )
 def chili():
@@ -40,6 +43,7 @@ def chili():
       task_id=f'trigger_{child_dag_id}',
       trigger_dag_id=child_dag_id,
       trigger_run_id='triggered_{{ run_id }}',
+      conf={'full_refresh': '{{ params.full_refresh }}'},
       wait_for_completion=True,
       poke_interval=30,
       failed_states=[DagRunState.FAILED],

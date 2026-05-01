@@ -48,7 +48,8 @@ def chili_params(table, stage, columns, storage_integration, s3_url, **kwargs):
     'prefix': Param(None, type=['string', 'null']),
     'columns': Param(columns, type='string'),
     'where_clause': Param(None, type=['string', 'null']),
-    'file_format': Param("TYPE = 'JSON'", type='string'),
+    'file_format': Param('JSON', type='string'),
+    'file_format_name': Param(None, type=['string', 'null']),
     'pattern': Param(None, type=['string', 'null'])
   }
 
@@ -78,16 +79,20 @@ def generate_create_chili_table_query(database, schema, table, columns, where_cl
   );
   '''
 
-def generate_copy_into_chili_query(database, schema, table, columns, where_clause, stage, prefix, pattern, file_format):
+def generate_copy_into_chili_query(database, schema, table, columns, where_clause, stage, prefix, pattern, file_format, file_format_name):
+  if file_format_name:
+    file_format_clause = f"FILE_FORMAT = '{database}.{schema}.{file_format_name}'"
+  else:
+    file_format_clause = f"FILE_FORMAT = (TYPE = '{file_format}')"
   return f'''COPY INTO {database}.{schema}.{table} FROM (
     {_external_stage_select(columns, where_clause, database, schema, stage, prefix)}
   )
   {'PATTERN=' + enclose_param(pattern) if pattern else ''}
-  FILE_FORMAT= ({file_format});
+  {file_format_clause};
   '''
 
 @task_group(group_id='chili_load')
-def chiliLoad():
+def chiliLoad(file_format_options=None):
   table_exists = BranchSQLOperator(
     task_id='check_table_exists',
     conn_id=_SNOWFLAKE_CONN_ID,
@@ -102,6 +107,15 @@ def chiliLoad():
     sql='create_stage.sql'
   )
 
+  if file_format_options is not None:
+    create_file_format = SQLExecuteQueryOperator(
+      task_id='create_file_format',
+      conn_id=_SNOWFLAKE_CONN_ID,
+      sql='create_file_format.sql',
+      params={'file_format_options': file_format_options}
+    )
+    create_file_format >> create_stage
+
   create_chili_table = SQLExecuteQueryOperator(
     task_id='create_chili_table',
     conn_id=_SNOWFLAKE_CONN_ID,
@@ -114,7 +128,8 @@ def chiliLoad():
     sql = generate_copy_into_chili_query(
       database=p['database'], schema=p['schema'], table=p['table'],
       columns=p['columns'], where_clause=p['where_clause'], stage=p['stage'],
-      prefix=p['prefix'], pattern=p['pattern'], file_format=p['file_format'],
+      prefix=p['prefix'], pattern=p['pattern'],
+      file_format=p['file_format'], file_format_name=p.get('file_format_name'),
     )
     cursor = SnowflakeHook(snowflake_conn_id=_SNOWFLAKE_CONN_ID).get_conn().cursor()
     cursor.execute_async(sql)

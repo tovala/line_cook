@@ -29,7 +29,8 @@ Copy [chili_box_fillometer_dag.py](chili_box_fillometer_dag.py); update `dag_id`
 
 For Slack notifications, see [../experian/experian_chili_load_dag.py](../experian/experian_chili_load_dag.py).
 
-- `file_format` drops outer parens — e.g. `"TYPE = 'JSON' STRIP_OUTER_ARRAY = TRUE"`
+- `file_format` is just the type name, defaults to `'JSON'` — usually omit
+- For extra format options (e.g. `STRIP_OUTER_ARRAY = TRUE`), pass `file_format_name='<name>'` in `chili_params(...)` and `chiliLoad(file_format_options='<options>')`. This creates/uses a Snowflake-named file format object — see [chili_box_fillometer_dag.py](chili_box_fillometer_dag.py).
 - `pattern` is matched bucket-relative; escape `.` with raw strings: `r'.../[0-9]+\.json'`
 
 ## 3. Validate
@@ -45,7 +46,7 @@ If COPY INTO processes records but loads 0, the stage's `ON_ERROR = 'continue'` 
 | spice_rack | line_cook |
 |---|---|
 | `stage_url` | `s3_url` |
-| `stage_file_format_string` | `file_format` (drop outer parens) |
+| `stage_file_format_string` | `file_format` (just the TYPE); for extras use `file_format_name` + `chiliLoad(file_format_options=...)` |
 | `stage_name` | `stage` (append `_stage`) |
 | `copy_into_options` PATTERN | `pattern` (escape `.`) |
 | SELECT block | `COLUMNS` |

@@ -30,7 +30,7 @@ COLUMNS = '''
                    columns=COLUMNS,
                    storage_integration='BOX_FILLOMETER_STORAGE_INTEGRATION',
                    s3_url='s3://misevala/prod/box_fillometer/order_boxes/',
-                   file_format="TYPE = 'JSON' STRIP_OUTER_ARRAY = TRUE",
+                   file_format_name='json_strip_outer_array_file_format',
                    pattern=r'prod/box_fillometer/order_boxes/([0-9]+)-([A-Za-z0-9]+)-cycle([0-9]+)\.orders\.json'
     )
   },
@@ -38,6 +38,6 @@ COLUMNS = '''
   user_defined_macros=chili_macros()
 )
 def boxFillometerLoad(): #CHANGE
-  chiliLoad()
+  chiliLoad(file_format_options='STRIP_OUTER_ARRAY = TRUE')
 
 boxFillometerLoad() #CHANGE
