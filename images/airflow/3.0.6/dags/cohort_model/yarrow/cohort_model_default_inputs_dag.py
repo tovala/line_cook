@@ -1,9 +1,10 @@
 import os
+from pendulum import duration
 
 from airflow.sdk import dag, chain, Param
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
-from common.slack_notifications import slack_param
+from common.slack_notifications import slack_param, good_boy, bad_boy
 
 from cohort_model.yarrow.extended_daily_oven_sales_projections_task_group import extendedDailyOvenSalesProjections
 from cohort_model.yarrow.cohort_mix_projections_task_group import cohortMixProjections
@@ -14,12 +15,17 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
 
 @dag(
     dag_id='cohort_model_yarrow_tables',
-    # on_failure_callback=bad_boy,
-    # on_success_callback=good_boy,
-    # TODO: add schedule
-    # schedule=MultipleCronTriggerTimetable('30 8 * * 1', '25 22 * * 3', timezone='America/Chicago'),
+    on_failure_callback=bad_boy,
+    on_success_callback=good_boy,
+    schedule=None, # This dag will only run when manually triggered (or eventually when triggered by file upload to S3)
     catchup=False,
-    tags=['internal'],
+    default_args={
+        'retries': 2,
+        'retry_delay': duration(seconds=2),
+        'retry_exponential_backoff': True,
+        'max_retry_delay': duration(minutes=5),
+    },
+    tags=['internal', 'cohort-model'],
     params={
       'channel_name': slack_param(),
       'database': Param('MASALA', type='string'),
