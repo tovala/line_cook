@@ -15,7 +15,7 @@ def snapshotSnowflakeToS3():
     return [{
       'table': t,
       'stage': 'cohort_model_snapshot_stage',
-      's3_url': 's3://tovala-data-cohort-model/output/',
+      's3_url': 's3://tovala-data-cohort-model/outputs/',
       'storage_integration': 'COHORT_MODEL_STORAGE_INTEGRATION',
       'file_format': 'csv'
       } for t in table_names_array
@@ -27,7 +27,7 @@ def snapshotSnowflakeToS3():
     sql='create_stage.sql',
     params={
       'stage': 'cohort_model_snapshot_stage',
-      's3_url': 's3://tovala-data-cohort-model/output/',
+      's3_url': 's3://tovala-data-cohort-model/outputs/',
       'storage_integration': 'COHORT_MODEL_STORAGE_INTEGRATION',
       'file_format': 'csv',
     },
