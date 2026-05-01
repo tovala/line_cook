@@ -11,9 +11,9 @@ from cohort_model.generate_aggregate_curves_task_group import generateAggregateR
 from cohort_model.order_projections_task_group import orderProjections
 from cohort_model.runtime_queries_task_group import runtimeQueries
 from cohort_model.snapshot_to_s3_task_group import snapshotSnowflakeToS3
-from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_WATCHER_EXECUTION_CONFIG, PROD_DBT_PROFILE_CONFIG, TEST_DBT_PROFILE_CONFIG
-from common.slack_notifications import slack_param
+from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_WATCHER_EXECUTION_CONFIG, PROD_DBT_PROFILE_CONFIG
 from common.sql_operator_handlers import fetch_single_result, fetch_results_array
+from common.slack_notifications import slack_param
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
 
@@ -62,7 +62,7 @@ def cohortModel():
   run_mugwort = DbtTaskGroup(
     group_id='mugwort_cohort_model_inputs',
     project_config=DBT_PROJECT_CONFIG,
-    profile_config=TEST_DBT_PROFILE_CONFIG,
+    profile_config=PROD_DBT_PROFILE_CONFIG,
     execution_config=DBT_WATCHER_EXECUTION_CONFIG,
     render_config=RenderConfig(
       selector='mugwort',
