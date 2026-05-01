@@ -1,9 +1,28 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from airflow.providers.slack.notifications.slack import SlackNotifier
 from airflow.sdk import Param
+from airflow.utils.state import TaskInstanceState
 
 SLACK_WEBHOOK_CONNECTION_ID = 'tovala_slack'
+
+
+def _earliest_failed_task_instance(context: Dict[str, Any]) -> Optional[Any]:
+    # DAG-level on_failure_callback hands us a context whose 'task'/'task_instance'
+    # often points at the most-recently-finished task (e.g. a teardown or a
+    # trigger_rule='one_failed' cleanup task), not the upstream task that actually
+    # broke. Pull the real failures out of the DAG run instead.
+    dag_run = context.get('dag_run')
+    if dag_run is None:
+        return None
+    try:
+        failed = [ti for ti in dag_run.get_task_instances() if ti.state == TaskInstanceState.FAILED]
+    except Exception:
+        return None
+    if not failed:
+        return None
+    failed.sort(key=lambda ti: (ti.start_date is None, ti.start_date))
+    return failed[0]
 
 def slack_param(channel_name: str='#team-data-airflow-notifications'):
     '''
@@ -17,12 +36,14 @@ def slack_param(channel_name: str='#team-data-airflow-notifications'):
 
 # Shamelessly poached from: https://github.com/enchant3dmango/lugvloei/blob/65726392386200c2420ee8f70b3682834c1ddaad/utilities/slack.py#L105
 def generate_failure_message(context: Dict[str, Any]) ->  Dict[str, Any]:
-    dag_id        = context.get('task_instance').dag_id
-    dag_owner     = context.get("dag").owner
-    task_id       = context.get('task').task_id
-    log_url       = context.get('task_instance').log_url
-    retry_count   = context.get('task_instance').try_number - 1
-    run_id        = context.get('task_instance').run_id
+    ti            = _earliest_failed_task_instance(context) or context.get('task_instance')
+    dag           = context.get('dag')
+    dag_id        = dag.dag_id if dag else ti.dag_id
+    dag_owner     = dag.owner if dag else ''
+    task_id       = ti.task_id
+    log_url       = ti.log_url
+    retry_count   = ti.try_number - 1
+    run_id        = ti.run_id
     error_message = (str(context.get("exception"))[:140] + '...') if len(
         str(context.get("exception"))) > 140 else str(context.get("exception"))
 
