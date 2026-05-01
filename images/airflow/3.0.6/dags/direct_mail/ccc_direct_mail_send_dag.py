@@ -21,7 +21,7 @@ from airflow.providers.amazon.aws.transfers.s3_to_sftp import S3ToSFTPOperator
   },
   tags=['external'],
   params={
-    'channel_name': slack_param('#team-data-notifications'),
+    'channel_name': slack_param(),
   }
 )
 def ccc_direct_mail_send():

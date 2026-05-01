@@ -25,7 +25,7 @@ terraform apply -target=module.<name>_storage_integration
 
 ## 2. line_cook — create the DAG
 
-Copy [chili_box_fillometer_dag.py](chili_box_fillometer_dag.py); update `dag_id`, `COLUMNS`, and `chili_params(...)`. Keep `schedule=None` — the parent `chili` DAG (cron `0 2,5,8,11,14,17,20,23 * * *`, matching `spice_rack/Jenkins/Jenkinsfile_Chili`) triggers all chili child DAGs. Register the new `dag_id` there.
+Copy [chili_box_fillometer_dag.py](chili_box_fillometer_dag.py); update `dag_id`, `COLUMNS`, and `chili_params(...)`. Keep `schedule=None` — the parent `chili` DAG (cron `0 */3 * * *`, every 3 hours) triggers all chili child DAGs. Append the new `dag_id` to `CHILD_DAGS` in [chili_dag.py](chili_dag.py).
 
 For Slack notifications, see [../experian/experian_chili_load_dag.py](../experian/experian_chili_load_dag.py).
 
