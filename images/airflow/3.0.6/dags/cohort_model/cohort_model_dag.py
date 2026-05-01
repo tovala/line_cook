@@ -3,7 +3,7 @@ import datetime
 from pendulum import duration
 from cosmos import DbtTaskGroup, RenderConfig, LoadMode, TestBehavior
 
-from airflow.sdk import dag, chain, Param
+from airflow.sdk import dag, chain, chain_linear, Param
 from airflow.timetables.trigger import CronTriggerTimetable
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
@@ -11,7 +11,7 @@ from cohort_model.generate_aggregate_curves_task_group import generateAggregateR
 from cohort_model.order_projections_task_group import orderProjections
 from cohort_model.runtime_queries_task_group import runtimeQueries
 from cohort_model.snapshot_to_s3_task_group import snapshotSnowflakeToS3
-from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_WATCHER_EXECUTION_CONFIG, PROD_DBT_PROFILE_CONFIG
+from common.dbt_cosmos_config import DBT_PROJECT_CONFIG, DBT_WATCHER_EXECUTION_CONFIG, PROD_DBT_PROFILE_CONFIG, TEST_DBT_PROFILE_CONFIG
 from common.slack_notifications import slack_param
 from common.sql_operator_handlers import fetch_single_result, fetch_results_array
 
@@ -58,14 +58,14 @@ def cohortModel():
   Variables:
 
   '''
-  '''
+
   run_mugwort = DbtTaskGroup(
     group_id='mugwort_cohort_model_inputs',
     project_config=DBT_PROJECT_CONFIG,
-    profile_config=PROD_DBT_PROFILE_CONFIG,
+    profile_config=TEST_DBT_PROFILE_CONFIG,
     execution_config=DBT_WATCHER_EXECUTION_CONFIG,
     render_config=RenderConfig(
-      selector='cohort_model_runtime',
+      selector='mugwort',
       load_method=LoadMode.DBT_LS,
       enable_mock_profile=False,
       test_behavior=TestBehavior.AFTER_ALL
@@ -78,7 +78,6 @@ def cohortModel():
       'execution_timeout': datetime.timedelta(minutes=10),
     },
   )
-  '''
 
   create_runtime_schema = SQLExecuteQueryOperator(
     task_id='create_runtime_schema',
@@ -123,9 +122,10 @@ def cohortModel():
     sql='DROP SCHEMA {{ params.database }}."{{ params.runtime_schema_prefix }}_{{ run_id }}";'
   ).as_teardown()
 
-  
-  chain(create_runtime_schema, [create_temp_queries, create_agg_retention_curves], run_order_projections, snapshot_inputs, delete_runtime_schema)
-  chain([start_term, end_term], projection_terms_array, run_order_projections)
+  # start and end term are referenced via template in the query file
+  chain(run_mugwort, [start_term, end_term], projection_terms_array)
+
+  chain_linear([create_runtime_schema, run_mugwort], [create_temp_queries, create_agg_retention_curves, projection_terms_array], run_order_projections, snapshot_inputs, delete_runtime_schema)
 
     
 
