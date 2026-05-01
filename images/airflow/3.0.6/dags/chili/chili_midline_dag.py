@@ -18,6 +18,7 @@ COLUMNS = '''
   dag_id='chili_midline',
   schedule=None, # Triggered by chili dag
   catchup=False,
+  max_active_runs=1,
   default_args={
     'retries': 2,
     'retry_delay': duration(seconds=2),

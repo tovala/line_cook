@@ -16,6 +16,7 @@ COLUMNS = '''
   dag_id='chili_box_fillometer',
   schedule=None, # Triggered by chili dag
   catchup=False,
+  max_active_runs=1,
   default_args={
     'retries': 2,
     'retry_delay': duration(seconds=2),

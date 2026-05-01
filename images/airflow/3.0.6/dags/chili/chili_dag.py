@@ -12,8 +12,9 @@ CHILD_DAGS = [
   'chili_cdn_menu',
   'chili_marketing_incentives',
   'chili_midline',
+  'chili_shipment_file',
   # Append each chili child dag_id here as its table migrates off spice_rack:
-  # device_to_serial, micro_logs, oven_logs, shipment_file,
+  # device_to_serial, micro_logs, oven_logs,
   # tovala_assist, tovala_preset.
 ]
 
@@ -23,6 +24,7 @@ CHILD_DAGS = [
   on_success_callback=good_boy,
   schedule=CronTriggerTimetable('0 */3 * * *', timezone='America/Chicago'),
   catchup=False,
+  max_active_runs=1,
   default_args={
     'retries': 2,
     'retry_delay': duration(seconds=2),

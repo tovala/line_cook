@@ -15,6 +15,7 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
   on_success_callback=good_boy,
   schedule=None, # Externally triggered by ccc_direct_mail_download
   catchup=False,
+  max_active_runs=1,
   default_args={
     'retries': 2,
     'retry_delay': duration(seconds=2),
