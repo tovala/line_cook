@@ -6,18 +6,24 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from common.sql_operator_handlers import fetch_results_array
 
 @task_group()
-def snapshotSnowflakeToS3():
-  '''
+def snapshotSnowflakeToS3(
+  file_format: str = 'parquet',
+  stage: str = 'cohort_model_snapshot_stage',
+  s3_url: str = 's3://tovala-data-cohort-model/output/',
+  storage_integration: str = 'COHORT_MODEL_STORAGE_INTEGRATION',
+):
+  '''Task Group that creates an SF external stage and copies all tables from the runtime schema
+  into S3.
   '''
 
   @task()
   def formatParams(table_names_array: List[str]) -> List[Dict[str, str]]:
     return [{
       'table': t,
-      'stage': 'cohort_model_snapshot_stage',
-      's3_url': 's3://tovala-data-cohort-model/outputs/',
-      'storage_integration': 'COHORT_MODEL_STORAGE_INTEGRATION',
-      'file_format': 'csv'
+      'stage': stage,
+      's3_url': s3_url,
+      'storage_integration': storage_integration,
+      'file_format': file_format
       } for t in table_names_array
     ]
     
@@ -26,10 +32,10 @@ def snapshotSnowflakeToS3():
     conn_id='snowflake', 
     sql='create_stage.sql',
     params={
-      'stage': 'cohort_model_snapshot_stage',
-      's3_url': 's3://tovala-data-cohort-model/outputs/',
-      'storage_integration': 'COHORT_MODEL_STORAGE_INTEGRATION',
-      'file_format': 'csv',
+      'stage': stage,
+      's3_url': s3_url,
+      'storage_integration': storage_integration,
+      'file_format': file_format,
     },
   )
 

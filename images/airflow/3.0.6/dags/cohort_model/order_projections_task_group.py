@@ -147,7 +147,7 @@ def orderProjections(projection_terms_array: List[str]) -> None:
   order_projections_to_S3 = LocalFilesystemToS3Operator(
     task_id='order_projections_output',
     filename=f'{AIRFLOW_HOME}/{compute_order_projections}',
-    dest_key='outputs/{{ run_id }}/order_projections.csv',
+    dest_key='output/{{ run_id }}/order_projections.csv',
     dest_bucket='tovala-data-cohort-model',
     replace=True
   )
