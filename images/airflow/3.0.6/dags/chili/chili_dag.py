@@ -9,8 +9,9 @@ from common.slack_notifications import bad_boy, good_boy, slack_param
 
 CHILD_DAGS = [
   'chili_box_fillometer',
+  'chili_cdn_menu',
   # Append each chili child dag_id here as its table migrates off spice_rack:
-  # cdn_menu, device_to_serial, marketing_incentives_logs, micro_logs,
+  # device_to_serial, marketing_incentives_logs, micro_logs,
   # midline, oven_logs, shipment_file, tovala_assist, tovala_preset.
 ]
 
