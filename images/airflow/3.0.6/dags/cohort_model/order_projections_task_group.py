@@ -14,7 +14,7 @@ AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
 @task_group(group_id='order_projections')
 def orderProjections(projection_terms_array: List[str]) -> None:
   @task
-  def computeOrderProjections(projection_terms_array: List[str], **context) -> str:
+  def computeOrderProjections(projection_terms_array: List[str], **context) -> None:
     dag_params = context['params']
     run_id = context['run_id']
     ti = context['ti'] 
@@ -27,7 +27,8 @@ def orderProjections(projection_terms_array: List[str]) -> None:
     lookback_window = dag_params.get('lookback_adjustment_window')
     longtail_value = dag_params.get('longtail_weekly_retention_multiplier')
 
-    local_filename = 'order_projections.csv'
+    #local_filename = 'order_projections.csv'
+    output_s3_destination = dag_params.get('s3_url') + run_id + '/' + 'order_projections.parquet'
 
     hook = SnowflakeHook(snowflake_conn_id='snowflake')
     conn = hook.get_conn()
@@ -137,19 +138,14 @@ def orderProjections(projection_terms_array: List[str]) -> None:
     order_projections_corrected = order_projections_skip_adj.select(pl.col('^TERM_\d+$')) * correction_factor_matrix.get_column('CORRECTION_FACTOR')
 
     final_order_projections = pl.concat([projected_order_counts.select(pl.col('COHORT')), order_projections_corrected.select(pl.all().round())], how='horizontal')
-    final_order_projections.write_csv(local_filename)
-
-    
-    return local_filename
+    final_order_projections.write_parquet(output_s3_destination, compression='snappy')
 
   compute_order_projections = computeOrderProjections(projection_terms_array)
   
-  order_projections_to_S3 = LocalFilesystemToS3Operator(
+  '''  order_projections_to_S3 = LocalFilesystemToS3Operator(
     task_id='order_projections_output',
     filename=f'{AIRFLOW_HOME}/{compute_order_projections}',
     dest_key='output/{{ run_id }}/order_projections.csv',
     dest_bucket='tovala-data-cohort-model',
     replace=True
-  )
-
-  chain(compute_order_projections, order_projections_to_S3)
+  )'''

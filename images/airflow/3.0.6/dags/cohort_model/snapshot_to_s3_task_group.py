@@ -39,4 +39,4 @@ def snapshotSnowflakeToS3():
     sql='queries/snapshot/unload_to_stage.sql'
   ).expand(params=formatted_params_list)
 
-  chain(cohort_model_snapshot_stage, get_table_names, unload_tables)
+  chain(cohort_model_snapshot_stage, get_table_names, formatted_params_list, unload_tables)
