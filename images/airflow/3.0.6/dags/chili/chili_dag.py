@@ -25,6 +25,8 @@ CHILD_DAGS = [
   schedule=CronTriggerTimetable('0 */3 * * *', timezone='America/Chicago'),
   catchup=False,
   max_active_runs=1,
+  # Cap concurrent child triggers 
+  max_active_tasks=2,
   default_args={
     'retries': 2,
     'retry_delay': duration(seconds=2),
