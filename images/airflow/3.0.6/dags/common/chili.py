@@ -158,10 +158,13 @@ def chiliLoad(file_format_options=None):
     retry_delay=timedelta(seconds=30),
   )
   def cancel_chili_copy_into(query_id):
-    if not query_id:
-      return
-    cursor = SnowflakeHook(snowflake_conn_id=_SNOWFLAKE_CONN_ID).get_conn().cursor()
-    cursor.execute("SELECT SYSTEM$CANCEL_QUERY(%s)", (query_id,))
+    # Best-effort cancel of the in-flight COPY INTO. Always raise after so the
+    # DAG run reflects the upstream failure that triggered us — without this,
+    # we'd be the only success-state leaf and the run would be marked success.
+    if query_id:
+      cursor = SnowflakeHook(snowflake_conn_id=_SNOWFLAKE_CONN_ID).get_conn().cursor()
+      cursor.execute("SELECT SYSTEM$CANCEL_QUERY(%s)", (query_id,))
+    raise AirflowFailException("Upstream chili task failed; query cancellation attempted.")
 
   query_id = submit_chili_copy_into()
   wait = wait_chili_copy_into(query_id)
