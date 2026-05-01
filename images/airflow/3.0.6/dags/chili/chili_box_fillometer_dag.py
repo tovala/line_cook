@@ -6,7 +6,6 @@ from common.chili import chili_params, chili_macros, chiliLoad
 
 AIRFLOW_HOME = os.environ["AIRFLOW_HOME"]
 
-#CHANGE
 COLUMNS = '''
   TRY_PARSE_JSON($1) AS raw_data
   , METADATA$FILENAME AS filename
@@ -14,7 +13,7 @@ COLUMNS = '''
 '''
 
 @dag(
-  dag_id='chili_box_fillometer', #CHANGE
+  dag_id='chili_box_fillometer',
   schedule=None, # Triggered by chili dag
   catchup=False,
   default_args={
@@ -24,7 +23,7 @@ COLUMNS = '''
     'max_retry_delay': duration(minutes=5),
   },
   tags=['internal', 'data-integration', 'chili'],
-  params={ #CHANGE
+  params={
     **chili_params(table='box_fillometer_logs',
                    stage='box_fillometer_stage',
                    columns=COLUMNS,
@@ -37,7 +36,7 @@ COLUMNS = '''
   template_searchpath=f'{AIRFLOW_HOME}/dags/common/templates',
   user_defined_macros=chili_macros()
 )
-def boxFillometerLoad(): #CHANGE
+def boxFillometerLoad():
   chiliLoad(file_format_options='STRIP_OUTER_ARRAY = TRUE')
 
-boxFillometerLoad() #CHANGE
+boxFillometerLoad()
