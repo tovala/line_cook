@@ -131,13 +131,15 @@ def orderProjections(projection_terms_array: List[str]) -> None:
 
     projected_order_counts_transpose = projected_order_counts.select(
       pl.when(pl.col('^TERM_\d+$') < 0).then(None).otherwise(pl.col('^TERM_\d+$')).name.keep()
-    ).transpose() 
+    ).transpose()
+
     order_projections_skip_adj = (projected_order_counts_transpose * skip_adjustment_matrix.get_column('HOLIDAY_SKIP_MULTIPLIER')).transpose(column_names=projection_terms_array)
     order_projections_corrected = order_projections_skip_adj.select(pl.col('^TERM_\d+$')) * correction_factor_matrix.get_column('CORRECTION_FACTOR')
 
     final_order_projections = pl.concat([projected_order_counts.select(pl.col('COHORT')), order_projections_corrected.select(pl.all().round())], how='horizontal')
     final_order_projections.write_csv(local_filename)
 
+    
     return local_filename
 
   compute_order_projections = computeOrderProjections(projection_terms_array)
